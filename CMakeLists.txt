@@ -5,7 +5,7 @@ project(grizzly CXX)
 add_definitions(-std=c++1z -Wall)
 include_directories(/usr/local/include)
 
-add_library(grizzly SHARED "")
+add_library(grizzly STATIC "")
 install(TARGETS grizzly DESTINATION lib)
 
 set(HEADERS
