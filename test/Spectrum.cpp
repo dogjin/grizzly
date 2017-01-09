@@ -83,4 +83,20 @@ TEST_CASE("Spectrum")
         for (auto& value: imaginary)
             CHECK(value == doctest::Approx(0));
     }
+    
+    SUBCASE("replace real data")
+    {
+        spectrum.replaceRealData(std::vector<float>{0, 0, 0, 0});
+        
+        for (auto& value: spectrum)
+            CHECK(value.real() == 0);
+    }
+    
+    SUBCASE("replace imaginary data")
+    {
+        spectrum.replaceImaginaryData(std::vector<float>{0, 0, 0, 0});
+        
+        for (auto& value: spectrum)
+            CHECK(value.imag() == 0);
+    }
 }

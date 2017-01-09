@@ -134,7 +134,7 @@ namespace dsp
     void UpSample<T>::recomputeFilter()
     {
         // Construct the kernel
-        filterKernel = createSymmetricSincWindow<T>(filterSize, 0.5 / factor);
+        filterKernel = createSincWindow<T>(filterSize, 0.5 / factor, filterSize / 2 - 0.5);
         
         // Construct the window
         auto window = createSymmetricKaiserWindow<T>(filterSize, betaFactor);

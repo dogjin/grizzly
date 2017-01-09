@@ -119,7 +119,8 @@ namespace dsp
             if (real.size() != data.size())
                 throw std::runtime_error("Sizes not equal");
             
-            std::transform(data.begin(), data.end(), real.begin(), data.begin(), [](std::complex<T> lhs, T rhs) { lhs.real(rhs); });
+            for (auto bin = 0; bin < data.size(); ++bin)
+                data[bin].real(real[bin]);
         }
         
         //! Replace the imaginary data of the spectrum
@@ -128,7 +129,8 @@ namespace dsp
             if (imaginary.size() != data.size())
                 throw std::invalid_argument("Sizes not equal");
             
-            std::transform(data.begin(), data.end(), imaginary.begin(), data.begin(), [](std::complex<T> lhs, T rhs) { lhs.imag(rhs); });
+            for (auto bin = 0; bin < data.size(); ++bin)
+                data[bin].imag(imaginary[bin]);
         }
         
         //! Replace the magnitudes of the spectrum

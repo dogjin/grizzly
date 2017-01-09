@@ -143,39 +143,23 @@ namespace dsp
         return window;
     }
     
-    // Create a sinc window
+    //! Create a sinc window
+    /*! @param size The window size
+        @param bandWidth The band width in radians
+        @param peakPosition The peak position */
     template <typename T>
-    std::vector<T> createSincWindow(std::size_t size, unit::radian<double> cutOff)
-    {
-        std::vector<T> sinc(size);
-
-        auto halfSize = size / 2.l;
-        for (auto i = 0; i < size; ++i)
-        {
-            auto indexMinusHalfSize = i - halfSize;
-            if (indexMinusHalfSize == 0)
-                sinc[i] = cutOff.value / math::PI<double>;
-            else
-                sinc[i] = sin(cutOff.value * indexMinusHalfSize) / (math::PI<double> * indexMinusHalfSize);
-        }
-
-        return sinc;
-    }
-    
-    //! Create a symmetrical sinc window
-    template <typename T>
-    std::vector<T> createSymmetricSincWindow(std::size_t size, unit::radian<double> cutOff)
+    std::vector<T> createSincWindow(std::size_t size, unit::radian<double> bandWidth, float peakPosition)
     {
         std::vector<T> sinc(size);
         
-        auto halfSize = (size - 1) / 2.l;
         for (auto i = 0; i < size; ++i)
         {
-            auto indexMinusHalfSize = i - halfSize;
-            if (indexMinusHalfSize == 0)
-                sinc[i] = cutOff.value / math::PI<double>;
+            auto x = (i - peakPosition) / size;
+            
+            if (x == 0)
+                sinc[i] = 1;
             else
-                sinc[i] = sin(cutOff.value * indexMinusHalfSize) / (math::PI<double> * indexMinusHalfSize);
+                sinc[i] = (sin(bandWidth.value * x * size) / size) / (bandWidth.value * x);
         }
         
         return sinc;

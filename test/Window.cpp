@@ -104,26 +104,24 @@ TEST_CASE("Window")
     {
         SUBCASE("symmetric")
         {
-            auto window = createSymmetricSincWindow<float>(10, M_PI);
-            
+            auto window = createSincWindow<float>(10, M_PI, 4.5);
             CHECK(window[4] == window[5]);
             
-            window = createSymmetricSincWindow<float>(10, 0.1);
-            
+            window = createSincWindow<float>(10, 0.1, 4.5);
             CHECK(window[4] == window[5]);
         }
         
         SUBCASE("periodic")
         {
-            auto window = createSincWindow<float>(10, M_PI);
+            auto window = createSincWindow<float>(10, M_PI, 5);
             float peakValue = *max_element(window.begin(), window.end());
             
             CHECK(peakValue == doctest::Approx(1));
             
-            window = createSincWindow<float>(10, 0.1);
+            window = createSincWindow<float>(10, 0.1, 5);
             peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(0.1 / M_PI));
+            CHECK(peakValue == doctest::Approx(1));
         }
     }
     

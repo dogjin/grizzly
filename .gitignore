@@ -1,6 +1,4 @@
 **/build
-**/Make
-**/Xcode
 *.DS_Store
 documentation/html/
 documentation/latex/

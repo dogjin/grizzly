@@ -29,6 +29,7 @@ set(SOURCES
     SegmentEnvelope.cpp
     SpectralCentroid.cpp
     Spectrum.cpp
+    UpSample.cpp
     Waveform.cpp
     Window.cpp
     ZTransform.cpp)
