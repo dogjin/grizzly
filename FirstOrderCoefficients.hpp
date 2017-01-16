@@ -29,6 +29,7 @@
 #define GRIZZLY_FIRST_ORDER_COEFFICIENTS_HPP
 
 #include <cmath>
+#include <stdexcept>
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
 
@@ -63,10 +64,18 @@ namespace dsp
     template <typename T>
     constexpr void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        const auto w = math::TWO_PI<double> * cutOff.value / sampleRate.value;
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (cutOff.value < 0)
+            throw std::invalid_argument("negative cut-off");
         
-        coefficients.b1 = exp(-w);
-        coefficients.a0 = 1.0 - coefficients.b1;
+        if (cutOff.value > (sampleRate.value / 2))
+            return throughPass(coefficients);
+        
+        const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
+        
+        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0 - b1;
         coefficients.a1 = 0;
     }
     
@@ -75,13 +84,18 @@ namespace dsp
     template <typename T>
     constexpr void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (timeConstantFactor < 0)
+            throw std::invalid_argument("negative timeConstantFactor");
+        
         if (time.value <= 0)
             return throughPass(coefficients);
-            
-        const auto w = timeConstantFactor / (time.value * sampleRate.value);
         
-        coefficients.b1 = exp(-w);
-        coefficients.a0 = 1.0 - coefficients.b1;
+        const auto b1 = exp(-timeConstantFactor / (time.value * sampleRate.value));
+        
+        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0 - b1;
         coefficients.a1 = 0;
     }
     
@@ -89,10 +103,40 @@ namespace dsp
     template <typename T>
     constexpr void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        const auto w = math::TWO_PI<double> * cutOff.value / sampleRate.value;
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (cutOff.value < 0)
+            throw std::invalid_argument("negative cut-off");
         
-        coefficients.b1 = exp(-w);
-        coefficients.a0 = (1.0 - coefficients.b1) / 2;
+        if (cutOff.value > (sampleRate.value / 2))
+            return throughPass(coefficients);
+        
+        const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
+        const auto s = (z - 1) / (z + 1);
+        
+        coefficients.b1 = s;
+        coefficients.a0 = (1.0 + s) / 2;
+        coefficients.a1 = coefficients.a0;
+    }
+    
+    //! Set filter to low pass filtering using one pole and one zero, given a samplerate, time and and a time constant factor.
+    /*! @param timeConstantFactor: Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
+    template <typename T>
+    constexpr void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
+    {
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (timeConstantFactor < 0)
+            throw std::invalid_argument("negative timeConstantFactor");
+        
+        if (time.value <= 0)
+            return throughPass(coefficients);
+        
+        const auto z = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
+        const auto s = (z - 1) / (z + 1);
+        
+        coefficients.b1 = s;
+        coefficients.a0 = (1.0 + s) / 2;
         coefficients.a1 = coefficients.a0;
     }
     
@@ -100,10 +144,24 @@ namespace dsp
     template <typename T>
     constexpr void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        const auto w = math::TWO_PI<double> * cutOff.value / sampleRate.value;
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (cutOff.value < 0)
+            throw std::invalid_argument("negative cut-off");
         
-        coefficients.b1 = exp(-w) - 1;
-        coefficients.a0 = 1.0 + coefficients.b1;
+        if (cutOff > sampleRate)
+        {
+            coefficients = FirstOrderCoefficients<T>();
+            return;
+        }
+        
+        if (cutOff.value == 0)
+            return throughPass(coefficients);
+        
+        const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
+        
+        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0 + b1;
         coefficients.a1 = 0;
     }
     
@@ -111,10 +169,25 @@ namespace dsp
     template <typename T>
     constexpr void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        const auto w = math::TWO_PI<double> * cutOff.value / sampleRate.value;
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        if (cutOff.value < 0)
+            throw std::invalid_argument("negative cut-off");
         
-        coefficients.b1 = exp(-w);
-        coefficients.a0 = (1 + coefficients.b1) / 2;
+        if (cutOff.value > (sampleRate.value / 2))
+        {
+            coefficients = FirstOrderCoefficients<T>();
+            return;
+        }
+        
+        if (cutOff.value == 0)
+            return throughPass(coefficients);
+        
+        const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
+        const auto s = (1 - z) / (z + 1);
+        
+        coefficients.b1 = -s;
+        coefficients.a0 = (1 + s) / 2;
         coefficients.a1 = -coefficients.a0;
     }
     
@@ -127,15 +200,17 @@ namespace dsp
         coefficients.a1 = 1;
     }
     
-    //    //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
-    //    template <typename T>
-    //    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
-    //    {
-    //        auto g = tan(M_PI * (centerFrequency.value / sampleRate.value));
-    //        coefficients.b1 = -(g-1)/(g+1);//coefficient;
-    //        coefficients.a0 = (g-1)/(g+1);//-coefficient;
-    //        coefficients.a1 = 1;
-    //    }
+    //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
+    template <typename T>
+    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
+    {
+        auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
+        auto s = (z - 1) / (z + 1);
+        
+        coefficients.b1 = s;//coefficient;
+        coefficients.a0 = -s;//-coefficient;
+        coefficients.a1 = 1;
+    }
     
 }
 
