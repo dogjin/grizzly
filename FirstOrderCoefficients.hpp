@@ -96,6 +96,17 @@ namespace dsp
         coefficients.a1 = coefficients.a0;
     }
     
+    //! Set filter to high pass filtering using one pole, given a samplerate and a cutoff
+    template <typename T>
+    constexpr void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    {
+        const auto w = math::TWO_PI<double> * cutOff.value / sampleRate.value;
+        
+        coefficients.b1 = exp(-w) - 1;
+        coefficients.a0 = 1.0 + coefficients.b1;
+        coefficients.a1 = 0;
+    }
+    
     //! Set filter to high pass filtering using one pole and one zero, given a samplerate and a cutoff
     template <typename T>
     constexpr void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
@@ -106,6 +117,26 @@ namespace dsp
         coefficients.a0 = (1 + coefficients.b1) / 2;
         coefficients.a1 = -coefficients.a0;
     }
+    
+    //! Set filter to high all-pass filtering using one pole and one zero, given a coefficient value for a0 and b1
+    template <typename T>
+    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
+    {
+        coefficients.b1 = coefficient;
+        coefficients.a0 = -coefficient;
+        coefficients.a1 = 1;
+    }
+    
+    //    //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
+    //    template <typename T>
+    //    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
+    //    {
+    //        auto g = tan(M_PI * (centerFrequency.value / sampleRate.value));
+    //        coefficients.b1 = -(g-1)/(g+1);//coefficient;
+    //        coefficients.a0 = (g-1)/(g+1);//-coefficient;
+    //        coefficients.a1 = 1;
+    //    }
+    
 }
 
 #endif /* GRIZZLY_FIRST_ORDER_COEFFICIENTS_HPP */
