@@ -31,6 +31,7 @@
 #include <cmath>
 #include <experimental/optional>
 #include <unit/hertz.hpp>
+#include <unit/time.hpp>
 
 #include <dsperados/math/constants.hpp>
 
@@ -73,6 +74,13 @@ namespace dsp
         void setCutOff(unit::hertz<float> cutOff, unit::hertz<float> sampleRate)
         {
             auto unresolvedCutOffGain = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
+            cutOffGain = unresolvedCutOffGain / (1.0 + unresolvedCutOffGain);
+        }
+        
+        //! Set time
+        void setTime(unit::second<float> time, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f)
+        {
+            auto unresolvedCutOffGain = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
             cutOffGain = unresolvedCutOffGain / (1.0 + unresolvedCutOffGain);
         }
         
