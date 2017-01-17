@@ -69,7 +69,8 @@ namespace dsp
         if (cutOff.value < 0)
             throw std::invalid_argument("negative cut-off");
         
-        if (cutOff.value > (sampleRate.value / 2))
+        // return through-pass when cut-off is above sample rate
+        if (cutOff > sampleRate)
             return throughPass(coefficients);
         
         const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
@@ -89,6 +90,7 @@ namespace dsp
         if (timeConstantFactor < 0)
             throw std::invalid_argument("negative timeConstantFactor");
         
+        // return through-pass when time <= than zero
         if (time.value <= 0)
             return throughPass(coefficients);
         
@@ -108,6 +110,7 @@ namespace dsp
         if (cutOff.value < 0)
             throw std::invalid_argument("negative cut-off");
         
+        // return through-pass when cut-off is above nyquist
         if (cutOff.value > (sampleRate.value / 2))
             return throughPass(coefficients);
         
@@ -129,10 +132,17 @@ namespace dsp
         if (timeConstantFactor < 0)
             throw std::invalid_argument("negative timeConstantFactor");
         
+        // return through-pass when time <= than zero
         if (time.value <= 0)
             return throughPass(coefficients);
         
-        const auto z = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
+        auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
+        
+        // return through-pass when normalizedAngularFrequency is higher than pi (nyquist)
+        if (normalizedAngularFrequency > math::PI<float>)
+            return throughPass(coefficients);
+        
+        const auto z = std::tan(normalizedAngularFrequency / 2);
         const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
@@ -149,12 +159,14 @@ namespace dsp
         if (cutOff.value < 0)
             throw std::invalid_argument("negative cut-off");
         
+        // return 0 for all coefficients when cut-off is above sample rate
         if (cutOff > sampleRate)
         {
             coefficients = FirstOrderCoefficients<T>();
             return;
         }
         
+        // return through-pass if cut-off is zero
         if (cutOff.value == 0)
             return throughPass(coefficients);
         
@@ -174,12 +186,14 @@ namespace dsp
         if (cutOff.value < 0)
             throw std::invalid_argument("negative cut-off");
         
+        // return 0 for all coefficients when cut-off is above nyquist
         if (cutOff.value > (sampleRate.value / 2))
         {
             coefficients = FirstOrderCoefficients<T>();
             return;
         }
         
+        // return through-pass if cut-off is zero
         if (cutOff.value == 0)
             return throughPass(coefficients);
         

@@ -41,7 +41,7 @@ namespace dsp
         void write(const T& x)
         {
             // Compute the output
-            y = coefficients.a0 * x + coefficients.a1 * xz1 + coefficients.b1 * yz1;
+            y = coefficients.a0 * x + coefficients.a1 * xz1 - coefficients.b1 * yz1;
             
             // Update the delays
             xz1 = x;
