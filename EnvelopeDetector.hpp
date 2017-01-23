@@ -55,7 +55,7 @@ namespace dsp
         //! Write new input to the detector
         void write(const T& x)
         {
-            y = releaseCoefficients.b1 * y + attackCoefficients.a0 * std::max<T>(x - y, 0);
+            y = -releaseCoefficients.b1 * y + attackCoefficients.a0 * std::max<T>(x - y, 0);
         }
         
         //! Read the last computed value
@@ -64,13 +64,13 @@ namespace dsp
         //! Set the attack time
         void setAttackTime(unit::second<float> attackTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePoleZero(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
         }
         
         //! Set the attack time
         void setReleaseTime(unit::second<float> releaseTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePoleZero(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
         }
         
         //! Set time-constant factor
@@ -125,13 +125,13 @@ namespace dsp
         //! Set the attack time
         void setAttackTime(unit::second<float> attackTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePoleZero(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
         }
         
         //! Set the release time
         void setReleaseTime(unit::second<float> releaseTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePoleZero(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
         }
         
         //! Set time-constant factor
@@ -216,6 +216,10 @@ namespace dsp
         //! Reset envelope state
         void reset() { lowPassFilter.setState(0); }
         
+    public:
+        //! Boolian for release mode
+        bool releaseToInput = true;
+        
     private:
         //! First order filter
         FirstOrderFilter<T, CoeffType> lowPassFilter;
@@ -228,9 +232,6 @@ namespace dsp
         
         //! Time constant factor
         float timeConstantFactor = 5;
-        
-        //! Boolian for release mode
-        bool releaseToInput = true;
     };
     
 }

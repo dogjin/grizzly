@@ -70,7 +70,7 @@ TEST_CASE("FirstOrderFilter")
         
         SUBCASE("lowPassOnePoleZero")
         {
-            lowPassOnePoleZero(coefficients, 44100, 10000);
+            lowPassOnePoleZero(coefficients, 44100, unit::hertz<float>(10000));
             
             CHECK(coefficients.a0 == doctest::Approx(0.379716732279352));
             CHECK(coefficients.a1 == doctest::Approx(0.379716732279352));
