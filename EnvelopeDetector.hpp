@@ -64,13 +64,19 @@ namespace dsp
         //! Set the attack time
         void setAttackTime(unit::second<float> attackTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePoleZero(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
         }
         
         //! Set the attack time
         void setReleaseTime(unit::second<float> releaseTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            lowPassOnePoleZero(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+        }
+        
+        //! Set time-constant factor
+        void setTimeConstantFactor(float factor)
+        {
+            timeConstantFactor = factor;
         }
         
         //! Set envelope state
@@ -119,13 +125,19 @@ namespace dsp
         //! Set the attack time
         void setAttackTime(unit::second<float> attackTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePoleZero(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
         }
         
-        //! Set the attack time
+        //! Set the release time
         void setReleaseTime(unit::second<float> releaseTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            lowPassOnePoleZero(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+        }
+        
+        //! Set time-constant factor
+        void setTimeConstantFactor(float factor)
+        {
+            timeConstantFactor = factor;
         }
         
         //! Set envelope state
@@ -183,13 +195,19 @@ namespace dsp
         //! Set the attack time
         void setAttackTime(unit::second<float> attackTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePoleZero(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
         }
         
         //! Set the attack time
         void setReleaseTime(unit::second<float> releaseTime, unit::hertz<float> sampleRate)
         {
-            lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            lowPassOnePoleZero(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+        }
+        
+        //! Set time-constant factor
+        void setTimeConstantFactor(float factor)
+        {
+            timeConstantFactor = factor;
         }
         
         //! Set envelope state
