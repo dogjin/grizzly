@@ -170,8 +170,8 @@ namespace dsp
         /*! @param timeConstantFactor see FirstOrderCoefficients.hpp 
             @Param releaseToInput Setting this to true means that the release trajectory will reach to the current input. Else, the envelope will descend to zero. */
         EnvelopeDetectorDigital(bool releaseToInput, double timeConstantFactor = 5) :
-            timeConstantFactor(timeConstantFactor),
-            releaseToInput(releaseToInput)
+            releaseToInput(releaseToInput),
+            timeConstantFactor(timeConstantFactor)
         {
             
         }
