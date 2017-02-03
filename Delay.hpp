@@ -36,7 +36,7 @@ namespace dsp
 {
     //! A simple sample delay object
     /*! Delay based on a circular buffer, capable of interpolation */
-    template <class T>
+    template <typename T>
     class Delay
     {
     public:
@@ -48,17 +48,17 @@ namespace dsp
         }
         
         //! Push a sample in the delay line
-        template <class... Args>
+        template <typename... Args>
         void write(Args&&... args)
         {
             data.emplace_back(std::forward<Args&&>(args)...);
         }
         
         //! Read from the delay line
-        template <class Index, class Interpolator = math::LinearInterpolation>
-        T read(Index index, Interpolator interpolator = Interpolator()) const
+        template <typename Index, typename Interpolator>
+        T read(Index index, Interpolator interpolator = math::linearInterpolation) const
         {
-            return interpolate(data.rbegin(), data.rend(), index, interpolator, math::ClampedAccess());
+            return interpolate(data.rbegin(), data.rend(), index, interpolator, math::clampAccess);
         }
         
         //! Set the maximum delay
