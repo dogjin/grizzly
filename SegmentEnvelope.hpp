@@ -113,8 +113,8 @@ namespace dsp
         /*! Jump directly to a certain point, changing the current segment accordingly. */
         void setTime(unit::second<Time> to);
         
-        //! Reset the envelope to its starting position
-        void reset() { setTime(0); }
+        //! Reset the envelope to its starting position, and enable its hold
+        void reset() { setTime(0); enableHold(); }
         
     // --- Segment insertion/removal --- //
         
@@ -172,6 +172,15 @@ namespace dsp
             hold = std::experimental::nullopt;
         }
         
+        //! Retrieve the hold point
+        std::experimental::optional<Time> getHold() const
+        {
+            if (hold)
+                return hold->timePoint.value;
+            else
+                return std::experimental::nullopt;
+        }
+        
     // --- Access to the segments --- //
         
         //! Get a segment
@@ -179,6 +188,11 @@ namespace dsp
         
         //! Get a segment, const
         const auto& operator[](size_t index) const { return segments[index]; }
+        
+        auto begin() { return segments.begin(); }
+        auto begin() const { return segments.begin(); }
+        auto end() { return segments.end(); }
+        auto end() const { return segments.end(); }
         
     // --- Utility construction functions --- //
         
@@ -251,7 +265,7 @@ namespace dsp
     template <class Value, class Time>
     void SegmentEnvelope<Value, Time>::setTime(unit::second<Time> to)
     {
-        if (segments.empty() || to <= 0)
+        if (segments.empty() || to.value <= 0)
         {
             envelopeTime = 0;
             segmentTime = 0;
