@@ -16,7 +16,7 @@
  GNU General Public License for more details.
  
  You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>
+ along with this program. If not, see <http://www.gnu.org/licenses/>
  
  --------------------------------------------------------------------
  
@@ -55,11 +55,11 @@ namespace dsp
         {
         public:
             //! Construct a segment
-            /*! @param destination The destination value, starting from the pervious destination or zero at envelope start
-                @param duration: The duration in seconds to get to the destination.
+            /*! @param amplitude: The amplitude value, starting from the pervious amplitude or zero at envelope start
+                @param duration: The duration in seconds to get to the destination amplitude.
                 @param ease An: easing function to alther the shape of the segment */
-            Segment(Value destination, unit::second<Time> duration, std::function<double(double)> ease = nullptr) :
-                destination(destination),
+            Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr) :
+                amplitude(amplitude),
                 duration(duration),
                 ease(ease)
             {
@@ -69,12 +69,12 @@ namespace dsp
             //! Given a time within the segment and its starting value, compute an interpolated value
             Value interpolate(unit::second<Time> time, const Value& startValue)
             {
-                return math::interpolateLinear(computeTimeProportion(time), startValue, destination);
+                return math::interpolateLinear(computeTimeProportion(time), startValue, amplitude);
             }
             
         public:
-            //! Destination value
-            Value destination = 0;
+            //! Destination amplitude
+            Value amplitude = 0;
             
             //! Duration
             unit::second<Time> duration = 0;
@@ -189,6 +189,7 @@ namespace dsp
         //! Get a segment, const
         const auto& operator[](size_t index) const { return segments[index]; }
         
+        // Begin and end for ranged for-loop
         auto begin() { return segments.begin(); }
         auto begin() const { return segments.begin(); }
         auto end() { return segments.end(); }
@@ -232,18 +233,22 @@ namespace dsp
     template <class Value, class Time>
     void SegmentEnvelope<Value, Time>::increment(unit::second<Time> increment)
     {
-        if (segments.empty() || index >= segments.size())
+        // If we've reached the last segment, bail out
+        if (index >= segments.size())
             return;
         
+        // Increment the overall time, and the time within the segment
         segmentTime += increment;
         envelopeTime += increment;
         
+        // If we've got a hold, it's enabled, pause at the hold time
         if (hold && hold->enabled && envelopeTime >= hold->timePoint)
         {
             segmentTime -= envelopeTime - hold->timePoint;
             envelopeTime = hold->timePoint;
         }
         
+        // Make sure we're at the correct index
         while (index < segments.size() && segmentTime >= segments[index].duration)
         {
             segmentTime -= segments[index].duration;
@@ -254,12 +259,11 @@ namespace dsp
     template <class Value, class Time>
     Value SegmentEnvelope<Value, Time>::read()
     {
-        if (segments.empty())
-            return 0;
-        else if (index >= segments.size())
-            return segments.back().destination;
+        // If we've reached the last segment, return the last amplitude
+        if (index >= segments.size())
+            return segments.empty() ? 0 : segments.back().amplitude;
         
-        return segments[index].interpolate(segmentTime, index == 0 ? Value(0) : segments[index - 1].destination);
+        return segments[index].interpolate(segmentTime, index == 0 ? Value(0) : segments[index - 1].amplitude);
     }
     
     template <class Value, class Time>
