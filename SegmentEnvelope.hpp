@@ -57,7 +57,7 @@ namespace dsp
             /*! @param amplitude: The amplitude value, starting from the pervious amplitude or zero at envelope start
                 @param duration: The duration in seconds to get to the destination amplitude.
                 @param ease An: easing function to alther the shape of the segment */
-            Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr);
+            Segment(SegmentEnvelope& envelope, Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr);
             
             //! Set the duration
             /*! Any negative duration will be clamped to 0 */
@@ -65,6 +65,9 @@ namespace dsp
             
             //! Get the duration
             const unit::second<Time>& getDuration() const { return duration; }
+            
+            //! Retrieve the absolute time of the segment
+            unit::second<Time> getAbsoluteTime() const;
             
             //! Given a time within the segment and its starting value, compute an interpolated value
             Value interpolate(unit::second<Time> time, const Value& startValue);
@@ -81,6 +84,9 @@ namespace dsp
             double computeTimeProportion(unit::second<Time> time);
             
         private:
+            //! The envelope that owns this segment
+            SegmentEnvelope& envelope;
+            
             //! Duration
             unit::second<Time> duration = 0;
         };
@@ -90,7 +96,13 @@ namespace dsp
         SegmentEnvelope() = default;
         
         //! Construct an envelope with segments
-        SegmentEnvelope(std::initializer_list<Segment> segments);
+        SegmentEnvelope(std::initializer_list<std::tuple<Value, unit::second<Time>>> segments);
+        
+        //! Move constructor
+        SegmentEnvelope(SegmentEnvelope&& rhs) { operator=(std::move(rhs)); }
+            
+        //! Move assignment
+        SegmentEnvelope& operator=(SegmentEnvelope&& rhs);
         
         //! Increment the internal time of the envelope
         void increment(unit::second<Time> increment);
@@ -136,6 +148,12 @@ namespace dsp
         std::experimental::optional<Time> getHold() const;
         
     // --- Access to the segments --- //
+        
+        //! Retrieve the previous segment
+        const Segment* previous(const Segment& segment) const;
+        
+        //! Retrieve the next segment
+        const Segment* next(const Segment& segment) const;
         
         //! Get a segment
         auto& operator[](size_t index) { return segments[index]; }
@@ -185,10 +203,33 @@ namespace dsp
     };
     
     template <class Value, class Time>
-    SegmentEnvelope<Value, Time>::SegmentEnvelope(std::initializer_list<Segment> segments) :
-        segments{segments}
+    SegmentEnvelope<Value, Time>::SegmentEnvelope(std::initializer_list<std::tuple<Value, unit::second<Time>>> segments)
     {
+        for (auto& segment : segments)
+            this->segments.emplace_back(*this, std::get<0>(segment), std::get<1>(segment));
+    }
         
+    template <class Value, class Time>
+    SegmentEnvelope<Value, Time>& SegmentEnvelope<Value, Time>::operator=(SegmentEnvelope&& rhs)
+    {
+        segments.clear();
+        for (auto& segment : rhs.segments)
+            segments.emplace_back(*this, segment.amplitude, segment.getDuration(), segment.ease);
+        rhs.segments.clear();
+        
+        index = rhs.index;
+        rhs.index = 0;
+        
+        segmentTime = rhs.segmentTime;
+        rhs.segmentTime = 0;
+        
+        envelopeTime = rhs.envelopeTime;
+        rhs.envelopeTime = 0;
+        
+        hold = rhs.hold;
+        rhs.hold = std::experimental::nullopt;
+        
+        return *this;
     }
     
     template <class Value, class Time>
@@ -220,6 +261,13 @@ namespace dsp
     template <class Value, class Time>
     Value SegmentEnvelope<Value, Time>::read()
     {
+        // Make sure we're at the correct index
+        while (index < segments.size() && segmentTime >= segments[index].getDuration())
+        {
+            segmentTime -= segments[index].getDuration();
+            ++index;
+        }
+        
         // If we've reached the last segment, return the last amplitude
         if (index >= segments.size())
             return segments.empty() ? 0 : segments.back().amplitude;
@@ -277,14 +325,14 @@ namespace dsp
     template <typename... Args>
     void SegmentEnvelope<Value, Time>::emplace(Args&&... args)
     {
-        segments.emplace_back(std::forward<Args&&>(args)...);
+        segments.emplace_back(*this, std::forward<Args&&>(args)...);
     }
     
     template <class Value, class Time>
     template <typename... Args>
     void SegmentEnvelope<Value, Time>::insert(std::size_t index, Args&&... args)
     {
-        segments.insert(segments.begin() + index, std::forward<Args&&>(args)...);
+        segments.insert(segments.begin() + index, *this, std::forward<Args&&>(args)...);
         setTime(envelopeTime);
     }
     
@@ -334,6 +382,36 @@ namespace dsp
     }
     
     template <class Value, class Time>
+    const typename SegmentEnvelope<Value, Time>::Segment* SegmentEnvelope<Value, Time>::previous(const Segment& segment) const
+    {
+        auto it = std::find_if(segments.rbegin(), segments.rend(), [&](const auto& s){ return &s == &segment; });
+        if (it == segments.rend())
+            return nullptr;
+        
+        std::advance(it, 1);
+        if (it == segments.rend())
+            return nullptr;
+        
+        return &*it;
+    }
+    
+    template <class Value, class Time>
+    const typename SegmentEnvelope<Value, Time>::Segment* SegmentEnvelope<Value, Time>::next(const Segment& segment) const
+    {
+        auto it = std::find_if(segments.begin(), segments.end(), [&](const auto& s){ return &s == &segment; });
+        if (it == segments.end())
+            return nullptr;
+        
+        std::advance(it, 1);
+        if (it == segments.end())
+            return nullptr;
+        
+        return &*it;
+    }
+    
+// --- Static constructors --- //
+    
+    template <class Value, class Time>
     SegmentEnvelope<Value, Time> SegmentEnvelope<Value, Time>::ar(unit::second<Time> attack, unit::second<Time> release, bool hold)
     {
         SegmentEnvelope<Value, Time> env = {{1, attack}, {0, release}};
@@ -353,9 +431,10 @@ namespace dsp
 // --- Segment --- //
     
     template <class Value, class Time>
-    SegmentEnvelope<Value, Time>::Segment::Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease) :
+    SegmentEnvelope<Value, Time>::Segment::Segment(SegmentEnvelope& envelope, Value amplitude, unit::second<Time> duration, std::function<double(double)> ease) :
         amplitude(amplitude),
         ease(ease),
+        envelope(envelope),
         duration(duration)
     {
         
@@ -381,6 +460,13 @@ namespace dsp
         
         double x = time.value / static_cast<double>(duration.value);
         return ease ? ease(x) : x;
+    }
+    
+    template <class Value, class Time>
+    unit::second<Time> SegmentEnvelope<Value, Time>::Segment::getAbsoluteTime() const
+    {
+        auto prev = envelope.previous(*this);
+        return prev ? (prev->getAbsoluteTime() + prev->getDuration()) : 0;
     }
 }
 
