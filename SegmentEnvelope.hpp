@@ -44,8 +44,7 @@
 namespace dsp
 {
     //! Segment Envelope
-    /*! Envelope generator using segments.
-        A segment represents a single path over time. */
+    /*! Envelope generator using sequential segments */
     template <class Value, class Time = float>
     class SegmentEnvelope
     {
@@ -58,38 +57,32 @@ namespace dsp
             /*! @param amplitude: The amplitude value, starting from the pervious amplitude or zero at envelope start
                 @param duration: The duration in seconds to get to the destination amplitude.
                 @param ease An: easing function to alther the shape of the segment */
-            Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr) :
-                amplitude(amplitude),
-                duration(duration),
-                ease(ease)
-            {
-                
-            }
+            Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr);
+            
+            //! Set the duration
+            /*! Any negative duration will be clamped to 0 */
+            void setDuration(unit::second<Time> duration);
+            
+            //! Get the duration
+            const unit::second<Time>& getDuration() const { return duration; }
             
             //! Given a time within the segment and its starting value, compute an interpolated value
-            Value interpolate(unit::second<Time> time, const Value& startValue)
-            {
-                return math::interpolateLinear(computeTimeProportion(time), startValue, amplitude);
-            }
+            Value interpolate(unit::second<Time> time, const Value& startValue);
             
         public:
             //! Destination amplitude
             Value amplitude = 0;
-            
-            //! Duration
-            unit::second<Time> duration = 0;
             
             //! Ease function to shape the segment
             std::function<double(double)> ease = [](auto x){ return math::easeLinear(x); };
             
         private:
             //! Return the eased proportion along the time axis of this axis
-            double computeTimeProportion(unit::second<Time> time)
-            {
-                assert(duration.value != 0); // This function should never be called with a duration of 0
-                double x = time.value / static_cast<double>(duration.value);
-                return ease ? ease(x) : x;
-            }
+            double computeTimeProportion(unit::second<Time> time);
+            
+        private:
+            //! Duration
+            unit::second<Time> duration = 0;
         };
         
     public:
@@ -97,13 +90,9 @@ namespace dsp
         SegmentEnvelope() = default;
         
         //! Construct an envelope with segments
-        SegmentEnvelope(std::initializer_list<Segment> segments) :
-            segments{segments}
-        {
-            
-        }
+        SegmentEnvelope(std::initializer_list<Segment> segments);
         
-        //! Increment the time
+        //! Increment the internal time of the envelope
         void increment(unit::second<Time> increment);
         
         //! Return the current envelope value
@@ -114,72 +103,37 @@ namespace dsp
         void setTime(unit::second<Time> to);
         
         //! Reset the envelope to its starting position, and enable its hold
-        void reset() { setTime(0); enableHold(); }
+        void reset();
         
     // --- Segment insertion/removal --- //
         
         //! Add a segment
         template <typename... Args>
-        void addSegment(Args&&... args)
-        {
-            segments.emplace_back(std::forward<Args&&>(args)...);
-        }
+        void emplace(Args&&... args);
         
         //! Insert a segment
         template <typename... Args>
-        void insertSegment(std::size_t index, Args&&... args)
-        {
-            segments.insert(segments.begin() + index, std::forward<Args&&>(args)...);
-            setTime(envelopeTime);
-        }
+        void insert(std::size_t index, Args&&... args);
         
         //! Erase a segment
-        void eraseSegment(std::size_t index)
-        {
-            if (segments.empty() || index >= segments.size())
-                return;
-            
-            segments.erase(segments.begin() + index);
-            setTime(envelopeTime);
-        }
+        void eraseSegment(std::size_t index);
         
     // --- Hold point manipulation --- //
         
         //! Set a hold point (and enable it on default)
-        void setAndEnableHoldPoint(unit::second<Time> at)
-        {
-            hold = Hold{at, true};
-        }
-        
-        //! Enable the holdpoint, if there is one
-        void enableHold()
-        {
-            if (hold)
-                hold->enabled = true;
-        }
-        
-        //! Disable the holdpoint, if there is one
-        /*! The hold time will be remembered for enable calls in the future */
-        void disableHold()
-        {
-            if (hold)
-                hold->enabled = false;
-        }
+        void setAndEnableHoldPoint(unit::second<Time> at);
         
         //! Remove hold point
-        void removeHoldPoint()
-        {
-            hold = std::experimental::nullopt;
-        }
+        void removeHoldPoint();
+        
+        //! Enable the hold point, if there is one
+        void enableHold();
+        
+        //! Disable the hold point, if there is one
+        void disableHold();
         
         //! Retrieve the hold point
-        std::experimental::optional<Time> getHold() const
-        {
-            if (hold)
-                return hold->timePoint.value;
-            else
-                return std::experimental::nullopt;
-        }
+        std::experimental::optional<Time> getHold() const;
         
     // --- Access to the segments --- //
         
@@ -205,7 +159,7 @@ namespace dsp
         
     private:
         //! Hold point
-        /*! Containts a time point from which the envelope stops incrementing and a boolian to indicate whether the hold is enabled or not. */
+        /*! Contraints a time point from which the envelope stops incrementing and a boolian to indicate whether the hold is enabled or not. */
         struct Hold
         {
             unit::second<Time> timePoint = 0;
@@ -231,6 +185,13 @@ namespace dsp
     };
     
     template <class Value, class Time>
+    SegmentEnvelope<Value, Time>::SegmentEnvelope(std::initializer_list<Segment> segments) :
+        segments{segments}
+    {
+        
+    }
+    
+    template <class Value, class Time>
     void SegmentEnvelope<Value, Time>::increment(unit::second<Time> increment)
     {
         // If we've reached the last segment, bail out
@@ -249,9 +210,9 @@ namespace dsp
         }
         
         // Make sure we're at the correct index
-        while (index < segments.size() && segmentTime >= segments[index].duration)
+        while (index < segments.size() && segmentTime >= segments[index].getDuration())
         {
-            segmentTime -= segments[index].duration;
+            segmentTime -= segments[index].getDuration();
             ++index;
         }
     }
@@ -278,12 +239,12 @@ namespace dsp
         }
         
         // accumulate all segments durations
-        auto envelopeDuration = std::accumulate(segments.begin(), segments.end(), unit::second<Time>(0) , [](const auto& acc, const auto& segment) { return acc + segment.duration; } );
+        auto envelopeDuration = std::accumulate(segments.begin(), segments.end(), unit::second<Time>(0) , [](const auto& acc, const auto& segment) { return acc + segment.getDuration(); } );
         
         if (to >= envelopeDuration)
         {
             envelopeTime = envelopeDuration;
-            segmentTime = segments.back().duration;
+            segmentTime = segments.back().getDuration();
             index = segments.size();
             return;
         }
@@ -293,9 +254,9 @@ namespace dsp
         unit::second<Time> partialTime = 0;
         for (auto i = 0; i < segments.size(); ++i)
         {
-            if (partialTime + segments[i].duration < envelopeTime)
+            if (partialTime + segments[i].getDuration() < envelopeTime)
             {
-                partialTime += segments[i].duration;
+                partialTime += segments[i].getDuration();
                 continue;
             }
             
@@ -303,6 +264,73 @@ namespace dsp
             segmentTime = envelopeTime - partialTime;
             break;
         }
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::reset()
+    {
+        setTime(0);
+        enableHold();
+    }
+    
+    template <class Value, class Time>
+    template <typename... Args>
+    void SegmentEnvelope<Value, Time>::emplace(Args&&... args)
+    {
+        segments.emplace_back(std::forward<Args&&>(args)...);
+    }
+    
+    template <class Value, class Time>
+    template <typename... Args>
+    void SegmentEnvelope<Value, Time>::insert(std::size_t index, Args&&... args)
+    {
+        segments.insert(segments.begin() + index, std::forward<Args&&>(args)...);
+        setTime(envelopeTime);
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::eraseSegment(std::size_t index)
+    {
+        if (segments.empty() || index >= segments.size())
+            return;
+        
+        segments.erase(segments.begin() + index);
+        setTime(envelopeTime);
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::setAndEnableHoldPoint(unit::second<Time> at)
+    {
+        hold = Hold{at, true};
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::removeHoldPoint()
+    {
+        hold = std::experimental::nullopt;
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::enableHold()
+    {
+        if (hold)
+            hold->enabled = true;
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::disableHold()
+    {
+        if (hold)
+            hold->enabled = false;
+    }
+    
+    template <class Value, class Time>
+    std::experimental::optional<Time> SegmentEnvelope<Value, Time>::getHold() const
+    {
+        if (hold)
+            return hold->timePoint.value;
+        else
+            return std::experimental::nullopt;
     }
     
     template <class Value, class Time>
@@ -320,6 +348,39 @@ namespace dsp
         SegmentEnvelope<Value, Time> env = {{1, attack}, {sustain, decay}, {0, release}};
         env.setAndEnableHoldPoint(attack + decay);
         return env;
+    }
+    
+// --- Segment --- //
+    
+    template <class Value, class Time>
+    SegmentEnvelope<Value, Time>::Segment::Segment(Value amplitude, unit::second<Time> duration, std::function<double(double)> ease) :
+        amplitude(amplitude),
+        ease(ease),
+        duration(duration)
+    {
+        
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::Segment::setDuration(unit::second<Time> duration)
+    {
+        this->duration = duration.value < 0 ? 0 : duration;
+    }
+    
+    template <class Value, class Time>
+    Value SegmentEnvelope<Value, Time>::Segment::interpolate(unit::second<Time> time, const Value& startValue)
+    {
+        return math::interpolateLinear(computeTimeProportion(time), startValue, amplitude);
+    }
+    
+    template <class Value, class Time>
+    double SegmentEnvelope<Value, Time>::Segment::computeTimeProportion(unit::second<Time> time)
+    {
+        // This function should never be called with a duration of 0
+        assert(duration.value != 0);
+        
+        double x = time.value / static_cast<double>(duration.value);
+        return ease ? ease(x) : x;
     }
 }
 
