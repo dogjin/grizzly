@@ -128,7 +128,10 @@ namespace dsp
         void insert(std::size_t index, Args&&... args);
         
         //! Erase a segment
-        void eraseSegment(std::size_t index);
+        void erase(std::size_t index);
+        
+        //! Clear all segments
+        void clear();
         
     // --- Hold point manipulation --- //
         
@@ -337,13 +340,23 @@ namespace dsp
     }
     
     template <class Value, class Time>
-    void SegmentEnvelope<Value, Time>::eraseSegment(std::size_t index)
+    void SegmentEnvelope<Value, Time>::erase(std::size_t index)
     {
         if (segments.empty() || index >= segments.size())
             return;
         
         segments.erase(segments.begin() + index);
         setTime(envelopeTime);
+    }
+    
+    template <class Value, class Time>
+    void SegmentEnvelope<Value, Time>::clear()
+    {
+        segments.clear();
+        index = 0;
+        segmentTime = 0;
+        envelopeTime = 0;
+        hold = std::experimental::nullopt;
     }
     
     template <class Value, class Time>
