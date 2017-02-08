@@ -167,12 +167,9 @@ namespace dsp
             @param inImaginary: Address of the real part of output, containing at least size elements */
         virtual void inverseComplex(const double* inReal, const double* inImaginary, double* outReal, double* outImaginary) = 0;
         
-        //! Return the size this FFT operates with (= equal to the size of the input)
-        std::size_t getSize() const { return size; }
-        
-    protected:
+    public:
         //! The frame size
-        std::size_t size = 0;
+        const std::size_t size = 0;
     };
     
     template <class InputIterator1, class InputIterator2, class ComplexOutputIterator>
