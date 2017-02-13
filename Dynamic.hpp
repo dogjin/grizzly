@@ -71,7 +71,7 @@ namespace dsp
         if (ratio <= 0)
             throw std::invalid_argument("ratio <= zero");
         
-        const auto slope = 1.0f / ratio - 1.0f;
+        const auto slope = 1.f - (1.0f / ratio);
         const auto halfKnee = knee.value * 0.5f;
         
         //! Throughput
@@ -80,7 +80,7 @@ namespace dsp
         
         //! Apply expansion
         if (x.value < threshold.value - halfKnee)
-            return slope * (threshold.value - x.value);
+            return -slope * (x.value - threshold.value);
         
         //! Apply compression within knee range
         return slope * (threshold.value + halfKnee - x.value) * (threshold.value + halfKnee - x.value) / (2.0f * knee.value);
