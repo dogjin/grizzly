@@ -28,7 +28,9 @@
 #ifndef GRIZZLY_DYNAMIC_HPP
 #define GRIZZLY_DYNAMIC_HPP
 
+#include <cassert>
 #include <stdexcept>
+
 #include <unit/amplitude.hpp>
 
 namespace dsp
@@ -60,6 +62,9 @@ namespace dsp
         if (x.value <= threshold.value - halfKnee)
             return 0;
         
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
+        
         //! Apply compression within knee range
         return slope * (x.value - threshold.value + halfKnee) * (x.value - threshold.value + halfKnee) / (2.0f * knee.value);
     }
@@ -81,6 +86,9 @@ namespace dsp
         //! Apply expansion
         if (x.value < threshold.value - halfKnee)
             return -slope * (x.value - threshold.value);
+        
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
         
         //! Apply compression within knee range
         return slope * (threshold.value + halfKnee - x.value) * (threshold.value + halfKnee - x.value) / (2.0f * knee.value);

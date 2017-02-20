@@ -14,9 +14,11 @@ set(HEADERS
 	AnalyticTransform.hpp
 	Biquad.hpp
 	BiquadCoefficients.hpp
+    Cascade.hpp
     CircularBuffer.hpp
     CombFilter.hpp
 	Convolution.hpp
+    CrossOverFilter.hpp
 	Delay.hpp
 	DownSample.hpp
     Dynamic.hpp
