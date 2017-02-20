@@ -33,6 +33,7 @@ set(HEADERS
     ImpulseResponse.hpp
 	MidSide.hpp
 	MultiTapResonator.hpp
+    PinkNoise.hpp
     Ramp.hpp
     SegmentEnvelope.hpp
     ShortTimeFourierTransform.hpp

@@ -34,6 +34,7 @@
 #include <unit/time.hpp>
 
 #include <dsperados/math/constants.hpp>
+#include <dsperados/math/utility.hpp>
 
 namespace dsp
 {
@@ -58,6 +59,17 @@ namespace dsp
         coefficients.a0 = 1;
         coefficients.a1 = 0;
         coefficients.b1 = 0;
+    }
+    
+    template <typename T>
+    constexpr void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, float a0 = 0.5f)
+    {
+        if (sampleRate.value < 0)
+            throw std::invalid_argument("negative sample rate");
+        
+        coefficients.b1 = 0;
+        coefficients.a0 = math::clamp<float>(a0, 0, 1);
+        coefficients.a1 = 1 - coefficients.a0;
     }
     
     //! Set filter to low pass filtering using one pole, given a samplerate and a cutoff
