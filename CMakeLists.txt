@@ -32,6 +32,7 @@ set(HEADERS
 	HighFrequencyContent.hpp
     ImpulseResponse.hpp
 	MidSide.hpp
+    MultiCrossoverFilter.hpp
 	MultiTapResonator.hpp
     PinkNoise.hpp
     Ramp.hpp

@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016 Dsperados <info@dsperados.com>
+ Copyright (C) 2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,10 @@
 
 #ifndef GRIZZLY_CASCADE_HPP
 #define GRIZZLY_CASCADE_HPP
+
+#include <functional>
+#include <stdexcept>
+#include <vector>
 
 namespace dsp
 {
@@ -61,7 +65,7 @@ namespace dsp
         //! Read the last stage
         T readOutput() const
         {
-            if (!output.size())
+            if (output.empty())
                 return input;
             
             return output.back();
@@ -146,6 +150,12 @@ namespace dsp
         {
             return stages.size();
         }
+        
+        //! Return a single stage
+        std::function<T(T)>& operator[](size_t index) { return stages[index]; };
+        
+        //! Return a single stage
+        const std::function<T(T)>& operator[](size_t index) const { return stages[index]; };
         
     private:
         //! The stage functions
