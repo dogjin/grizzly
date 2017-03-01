@@ -385,6 +385,7 @@ namespace dsp
         }
         a[0] = 0;
     }
+}
 
 
     /* -------- initializing routines -------- */
@@ -392,6 +393,8 @@ namespace dsp
 
     #include <math.h>
 
+namespace dsp
+{
     void makewt(int nw, int *ip, double *w)
     {
         void makeipt(int nw, int *ip);
@@ -490,6 +493,7 @@ namespace dsp
             }
         }
     }
+}
 
 
     /* -------- child routines -------- */
@@ -549,6 +553,8 @@ namespace dsp
     #endif /* USE_CDFT_WINTHREADS */
 
 
+namespace dsp
+{
     void cftfsub(int n, double *a, int *ip, int nw, double *w)
     {
         void bitrv2(int n, int *ip, double *a);
