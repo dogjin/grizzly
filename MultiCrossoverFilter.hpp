@@ -125,6 +125,15 @@ namespace dsp
             filters.clear();
         }
         
+        //! Change the cut-off for a given filter
+        void setCutOff(unit::hertz<float> cutOff, std::size_t position)
+        {
+            if (position >= filters.size())
+                throw std::out_of_range("position for setCutOff out of range");
+            
+            return filters[position]->setCutOff(cutOff);
+        }
+        
         //! Set the order for all the filters
         void setOrder(MultiCrossoverFilterOrder order)
         {
