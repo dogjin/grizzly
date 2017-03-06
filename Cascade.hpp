@@ -92,9 +92,9 @@ namespace dsp
         
         //! Add a stage at the back of the cascade
         /*! @param method The address of a class member function with a T(T) signature
-         @param ptr The addres of your class instance containing the method */
+            @param ptr The addres of your class instance containing the method */
         template <typename Method, typename This>
-        void emplaceBack(Method method, This ptr, std::size_t position)
+        void emplaceBack(Method method, This ptr)
         {
             emplaceBack([method, ptr](const T& x){ return (ptr->*method)(x); });
             clear();

@@ -54,6 +54,13 @@ namespace dsp
         //! Insert a new sample in the Biquad
         T read() const { return y; }
         
+        //! Write a new sample and read the output (in that order)
+        T writeAndRead(const T& x)
+        {
+            write(x);
+            return read();
+        }
+        
         //! Set the filter state
         void setState(const T& state)
         {
