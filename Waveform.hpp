@@ -31,6 +31,8 @@
 #include <cmath>
 #include <dsperados/math/utility.hpp>
 
+#include "Square.hpp"
+
 namespace dsp
 {
     //! Generate a bipolar sine wave given a normalized phase
@@ -59,20 +61,6 @@ namespace dsp
     constexpr T generateUnipolarSaw(Phase phase)
     {
         return math::wrap<std::common_type_t<Phase, T>>(phase, 0, 1);
-    }
-    
-    //! Generate a bipolar square wave given a normalized phase
-    template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth)
-    {
-        return math::wrap<Phase>(phase, 0, 1) < pulseWidth ? 1 : -1;
-    }
-    
-    //! Generate a unipolar square wave given a normalized phase
-    template <typename T1, typename T2>
-    constexpr T1 generateUnipolarSquare(T1 phase, T2 pulseWidth)
-    {
-        return math::wrap<T1>(phase, 0, 1) < pulseWidth ? 1 : 0;
     }
     
     //! Generate a bipolar triangle wave given a normalized phase

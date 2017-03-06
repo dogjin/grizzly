@@ -9,15 +9,31 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
+#include <dsperados/math/utility.hpp>
+
 #include "Waveform.hpp"
 
 namespace dsp
 {
-    //! Generates a bipolar square wave
+    //! Generate a square wave given a normalized phase
+    template <typename T, typename Phase, typename PulseWidth>
+    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth, T low = 0, T high = 1)
+    {
+        return math::wrap<Phase>(phase, 0, 1) < pulseWidth ? high : low;
+    }
+    
+    //! Generates a square wave
     template <typename T>
     class Square
     {
     public:
+        Square(const T& min = -1, const T& max = 1) :
+            min(min),
+            max(max)
+        {
+            
+        }
+        
         //! Increment the phase of the square
         void increment(long double increment)
         {
@@ -64,6 +80,12 @@ namespace dsp
     private:
         //! The to be returned value from read
         T y;
+        
+        //! The minimum value
+        T min = -1;
+        
+        //! The maximum value;
+        T max = 1;
         
         //! The current phase of the sine (range 0-1)
         long double phase = 0;
