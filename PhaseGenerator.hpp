@@ -28,6 +28,8 @@
 #ifndef GRIZZLY_PHASE_GENERATOR_HPP
 #define GRIZZLY_PHASE_GENERATOR_HPP
 
+#include <functional>
+
 #include <dsperados/math/utility.hpp>
 #include <unit/hertz.hpp>
 
@@ -41,7 +43,11 @@ namespace dsp
         //! Increment the generator
         void increment(long double increment)
         {
-            setPhase(phase + increment);
+            phase += increment;
+            if (end && phase >= 1)
+                end();
+            
+            phase = math::wrap<long double>(phase, 0, 1);
             recomputeY();
         }
         
@@ -69,6 +75,10 @@ namespace dsp
         {
             return phase;
         }
+        
+    public:
+        //! End function when ramp gets wrapped
+        std::function<void(void)> end;
         
     protected:
         //! Recompute the y to be returned

@@ -36,7 +36,6 @@ set(HEADERS
 	MultiTapResonator.hpp
     PhaseGenerator.hpp
     PinkNoise.hpp
-    Ramp.hpp
     Saw.hpp
     SegmentEnvelope.hpp
     ShortTimeFourierTransform.hpp
