@@ -40,6 +40,7 @@ set(HEADERS
     ShortTimeFourierTransform.hpp
     SpectralCentroid.hpp
     Spectrum.hpp
+    Square.hpp
 	UpSample.hpp
     Waveform.hpp
 	Window.hpp
