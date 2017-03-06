@@ -130,7 +130,7 @@ namespace dsp
         const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
-        coefficients.a0 = (1.0 + s) / 2;
+        coefficients.a0 = (1.0 + s) / 2; // or z / (1 + z)
         coefficients.a1 = coefficients.a0;
     }
     

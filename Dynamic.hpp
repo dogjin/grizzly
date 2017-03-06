@@ -29,6 +29,7 @@
 #define GRIZZLY_DYNAMIC_HPP
 
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 
 #include <unit/amplitude.hpp>
@@ -69,6 +70,49 @@ namespace dsp
         return slope * (x.value - threshold.value + halfKnee) * (x.value - threshold.value + halfKnee) / (2.0f * knee.value);
     }
     
+    inline static unit::decibel<float> gainAbove(unit::decibel<float> x, unit::decibel<float> threshold, float ratio, unit::decibel<float> knee = 0.f)
+    {
+        if (ratio <= 0)
+            throw std::invalid_argument("ratio <= zero");
+        
+        const auto slope = 1.0f / ratio - 1.0f;
+        const auto halfKnee = knee.value * 0.5f;
+        
+        //! Apply compression
+        if (x.value > threshold.value + halfKnee)
+            return (threshold.value + (x.value - threshold.value) / ratio) - x.value;
+        
+        //! Throughput
+        if (x.value <= threshold.value - halfKnee)
+            return 0;
+        
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
+        
+        //! Apply compression within knee range
+        return (x.value + (1.f / ratio - 1.f) * (x.value - threshold.value + halfKnee) * (x.value - threshold.value + halfKnee) / (2.f * knee.value)) - x.value;
+    }
+    
+    inline static unit::decibel<float> limit(unit::decibel<float> x, unit::decibel<float> threshold, unit::decibel<float> knee = 0.f)
+    {
+        const auto slope = 1.0f;
+        const auto halfKnee = knee.value * 0.5f;
+        
+        //! Apply compression
+        if (x.value > threshold.value + halfKnee)
+            return (threshold.value - x.value);
+        
+        //! Throughput
+        if (x.value <= threshold.value - halfKnee)
+            return 0;
+        
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
+        
+        //! Apply compression within knee range
+        return slope * (threshold.value - x.value - halfKnee) * (x.value - threshold.value + halfKnee) / (2.0f * knee.value);
+    }
+    
     //! Downward expansion for signals below a threshold
     /*! Upward expansion is possible with a ratio lower than 1 (> 0) */
     inline static unit::decibel<float> expandDownFactor(unit::decibel<float> x, unit::decibel<float> threshold, float ratio, unit::decibel<float> knee = 0.f)
@@ -77,6 +121,49 @@ namespace dsp
             throw std::invalid_argument("ratio <= zero");
         
         const auto slope = 1.f - (1.0f / ratio);
+        const auto halfKnee = knee.value * 0.5f;
+        
+        //! Throughput
+        if (x.value >= threshold.value + halfKnee)
+            return 0;
+        
+        //! Apply expansion
+        if (x.value < threshold.value - halfKnee)
+            return -slope * (x.value - threshold.value);
+        
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
+        
+        //! Apply compression within knee range
+        return slope * (threshold.value + halfKnee - x.value) * (threshold.value + halfKnee - x.value) / (2.0f * knee.value);
+    }
+    
+    inline static unit::decibel<float> gainUnder(unit::decibel<float> x, unit::decibel<float> threshold, float ratio, unit::decibel<float> knee = 0.f)
+    {
+        if (ratio <= 0)
+            ;//throw std::invalid_argument("ratio <= zero");
+        
+        const auto slope = 1.f - (1.0f / ratio);
+        const auto halfKnee = knee.value * 0.5f;
+        
+        //! Throughput
+        if (x.value >= threshold.value + halfKnee)
+            return 0;
+        
+        //! Apply expansion
+        if (x.value < threshold.value - halfKnee)
+            return (threshold.value + (x.value - threshold.value) / ratio) - x.value;
+        
+        // One of the two above if statements should fire if the knee is 0, so we should never reach this
+        assert(knee.value != 0);
+        
+        //! Apply compression within knee range
+        return (x.value + (1.f / ratio - 1.f) * (threshold.value - x.value + halfKnee) * (x.value - threshold.value - halfKnee) / (2.f * knee.value)) - x.value;
+    }
+    
+    inline static unit::decibel<float> gate(unit::decibel<float> x, unit::decibel<float> threshold, unit::decibel<float> knee = 0.f)
+    {
+        const auto slope = std::numeric_limits<float>::lowest();
         const auto halfKnee = knee.value * 0.5f;
         
         //! Throughput
