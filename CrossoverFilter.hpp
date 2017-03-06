@@ -25,8 +25,8 @@
  
  */
 
-#ifndef GRIZZLY_CROSS_OVER_FILTER_HPP
-#define GRIZZLY_CROSS_OVER_FILTER_HPP
+#ifndef GRIZZLY_CROSSOVER_FILTER_HPP
+#define GRIZZLY_CROSSOVER_FILTER_HPP
 
 #include <cstddef>
 #include <functional>
@@ -39,24 +39,23 @@
 
 namespace dsp
 {
+    //! Order type
+    enum class CrossoverFilterOrder
+    {
+        FIRST,
+        SECOND,
+        FOURTH,
+        EIGHTH
+    };
+    
     //! Crossover Filter
     /*! Seperates low and high frequency bands, which added together result in the original signal (in magnitudes, not phases) */
     template <typename T, typename CoeffType = double>
-    class CrossOverFilter
+    class CrossoverFilter
     {
     public:
-        //! Order type
-        enum class Order
-        {
-            FIRST,
-            SECOND,
-            FOURTH,
-            EIGHTH
-        };
-        
-    public:
         //! Construct a crossover filter given a order, cut-off and sample-rate
-        CrossOverFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate, Order order = Order::SECOND) :
+        CrossoverFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate = 44100, CrossoverFilterOrder order = CrossoverFilterOrder::SECOND) :
             order(order),
             cutOff(cutOff),
             sampleRate(sampleRate)
@@ -64,8 +63,41 @@ namespace dsp
             setOrder(order);
         }
         
+        //! Write the input to the filters
+        void write(const T& input)
+        {
+            if (order == CrossoverFilterOrder::FIRST)
+            {
+                lowPass.firstOrderFilter.write(input);
+                highPass.firstOrderFilter.write(input);
+            } else {
+                lowPass.cascade.write(input);
+                highPass.cascade.write(input);
+            }
+        }
+        
+        //! Read the low band of the filter
+        T readLow() const
+        {
+            return (order == CrossoverFilterOrder::FIRST) ? lowPass.firstOrderFilter.read() : lowPass.cascade.readOutput();
+        }
+        
+        //! read the high band of the filter
+        T readHigh() const
+        {
+            switch (order)
+            {
+                case CrossoverFilterOrder::FIRST:
+                    return highPass.firstOrderFilter.read();
+                case CrossoverFilterOrder::SECOND:
+                    return -highPass.cascade.readOutput(); // invert high-pass band to keep the low and high in phase
+                default:
+                    return highPass.cascade.readOutput();
+            }
+        }
+        
         //! Set the order
-        void setOrder(Order order)
+        void setOrder(CrossoverFilterOrder order)
         {
             this->order = order;
             
@@ -75,10 +107,10 @@ namespace dsp
             std::size_t numberOfStagesInCascade = 0;
             switch (order)
             {
-                case Order::FIRST: return setCoefficients();
-                case Order::SECOND: numberOfStagesInCascade = 1; break;
-                case Order::FOURTH: numberOfStagesInCascade = 2; break;
-                case Order::EIGHTH: numberOfStagesInCascade = 4; break;
+                case CrossoverFilterOrder::FIRST: return setCoefficients();
+                case CrossoverFilterOrder::SECOND: numberOfStagesInCascade = 1; break;
+                case CrossoverFilterOrder::FOURTH: numberOfStagesInCascade = 2; break;
+                case CrossoverFilterOrder::EIGHTH: numberOfStagesInCascade = 4; break;
             }
             
             lowPass.biquads.resize(numberOfStagesInCascade);
@@ -107,56 +139,23 @@ namespace dsp
             setCoefficients();
         }
         
-        //! Write the input to the filters
-        void write(const T& input)
-        {
-            if (order == Order::FIRST)
-            {
-                lowPass.firstOrderFilter.write(input);
-                highPass.firstOrderFilter.write(input);
-            } else {
-                lowPass.cascade.write(input);
-                highPass.cascade.write(input);
-            }
-        }
-        
-        //! Read the low band of the filter
-        T readLow() const
-        {
-            return (order == Order::FIRST) ? lowPass.firstOrderFilter.read() : lowPass.cascade.readOutput();
-        }
-        
-        //! read the high band of the filter
-        T readHigh() const
-        {
-            switch (order)
-            {
-                case Order::FIRST:
-                    return highPass.firstOrderFilter.read();
-                case Order::SECOND:
-                    return -highPass.cascade.readOutput(); // invert high-pass band to keep the low and high in phase
-                default:
-                    return highPass.cascade.readOutput();
-            }
-        }
-        
     private:
         //! Set the filter coefficients
         void setCoefficients()
         {
             switch (order)
             {
-                case Order::FIRST:
+                case CrossoverFilterOrder::FIRST:
                     dsp::lowPassOnePoleZero(lowPass.firstOrderFilter.coefficients, sampleRate, cutOff);
                     dsp::highPassOnePoleZero(highPass.firstOrderFilter.coefficients, sampleRate, cutOff);
                     break;
                     
-                case Order::SECOND:
+                case CrossoverFilterOrder::SECOND:
                     dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
                     dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
                     break;
                     
-                case Order::FOURTH:
+                case CrossoverFilterOrder::FOURTH:
                     // low-pass coefficients
                     dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, std::sqrt(0.5));
                     dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, std::sqrt(0.5));
@@ -166,7 +165,7 @@ namespace dsp
                     dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, std::sqrt(0.5));
                     break;
                     
-                case Order::EIGHTH:
+                case CrossoverFilterOrder::EIGHTH:
                     // low-pass coefficients according to Butterworth filters
                     dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541);
                     dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307);
@@ -206,7 +205,7 @@ namespace dsp
         
     private:
         //! The filter order
-        Order order = Order::SECOND;
+        CrossoverFilterOrder order = CrossoverFilterOrder::SECOND;
         
         //! The cut-off
         unit::hertz<float> cutOff = 22050;

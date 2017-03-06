@@ -25,39 +25,37 @@
  
  */
 
-#ifndef GRIZZLY_MULTI_CROSS_OVER_FILTER_HPP
-#define GRIZZLY_MULTI_CROSS_OVER_FILTER_HPP
+#ifndef GRIZZLY_MULTI_CROSSOVER_FILTER_HPP
+#define GRIZZLY_MULTI_CROSSOVER_FILTER_HPP
 
+#include <cstddef>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <unit/hertz.hpp>
 #include <vector>
 
 #include "Cascade.hpp"
-#include "CrossOverFilter.hpp"
+#include "CrossoverFilter.hpp"
 
 namespace dsp
 {
+    using MultiCrossoverFilterOrder = CrossoverFilterOrder;
+    
     //! A Multi-Crossover Filter to separate bands with multiple crossover filters
-    /*! The Multi-Crossover filter holds crossover filters which can be accessed individually.
-        The input cascades through all the filters, using the high-passed output as the next input for each stage.
-        Therefore, the cut-off frequencies of the filters should be set in an ascending way for proper use. */
+    /*! The Multi-Crossover filter holds crossover filters which can be accessed individually. The input cascades
+        through all the filters, using the high-passed output as the next input for each stage. Therefore, the cut-off
+        frequencies of the filters should be set in an ascending way for proper use. */
     template <class T, class CoeffType = double>
-    class MultiCrossOverFilter
+    class MultiCrossoverFilter
     {
     public:
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
+        //! Construct the filter
+        MultiCrossoverFilter(unit::hertz<float> sampleRate = 44100, MultiCrossoverFilterOrder order = MultiCrossoverFilterOrder::SECOND) :
+            order(order),
+            sampleRate(sampleRate)
         {
-            for (auto& filter : filters)
-                filter->setSampleRate(sampleRate);
-        }
-        
-        //! Set the order for all the filters
-        void setOrder(typename dsp::CrossOverFilter<T, CoeffType>::Order order)
-        {
-            for (auto& filter : filters)
-                filter->setOrder(order);
+            
         }
         
         //! Write a value to the filters
@@ -66,30 +64,12 @@ namespace dsp
             cascade.write(input);
         }
         
-        //! Read al the bands
-        std::vector<T> readBands()
-        {
-            std::vector<T> bands;
-            
-            if (filters.empty())
-                return bands;
-            
-            // There is one band more than the number of filters
-            auto numberOfBands = filters.size() + 1;
-            bands.resize(numberOfBands);
-            
-            for (auto band = 0; band < numberOfBands; ++band)
-                bands[band] = readBand(band);
-            
-            return bands;
-        }
-        
         //! Read the output of a single band
-        T readBand(size_t index)
+        T readBand(std::size_t index)
         {
             // There is one band more than the number of filters
             if (index > filters.size())
-                throw std::invalid_argument("index > filters.size()");
+                throw std::out_of_range("MultiCrossoverFilter::readBand out of range");
             
             // Do a readHigh() on the last crossover for the highest band
             if (index == filters.size())
@@ -98,24 +78,41 @@ namespace dsp
             return filters[index]->readLow();
         }
         
-        //! Emplace back a crossover filter
-        void emplaceBack(typename dsp::CrossOverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate)
+        //! Read al the bands
+        std::vector<T> readBands()
         {
-            auto filter = std::make_unique<dsp::CrossOverFilter<T, CoeffType>>(order, cutOff, sampleRate);
+            // Return nothing if there are not bands
+            std::vector<T> bands;
+            if (filters.empty())
+                return bands;
+            
+            // There is one band more than the number of filters
+            bands.resize(filters.size() + 1);
+            
+            for (auto i = 0; i < bands.size(); ++i)
+                bands[i] = readBand(i);
+            
+            return bands;
+        }
+        
+        //! Emplace back a crossover filter
+        void emplaceBack(unit::hertz<float> cutOff)
+        {
+            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
             cascade.emplaceBack([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); });
             filters.emplace_back(std::move(filter));
         }
         
         //! Emplace a crossover filter at a given position
-        void emplace(typename dsp::CrossOverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate, size_t position)
+        void emplace(unit::hertz<float> cutOff, std::size_t position)
         {
-            auto filter = std::make_unique<dsp::CrossOverFilter<T, CoeffType>>(order, cutOff, sampleRate);
+            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
             cascade.emplace([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); }, position);
             filters.emplace(filters.begin() + position, std::move(filter));
         }
         
         //! Erase a crossover filter at a given position
-        void erase(size_t position)
+        void erase(std::size_t position)
         {
             cascade.erase(position);
             filters.erase(filters.begin() + position);
@@ -126,6 +123,22 @@ namespace dsp
         {
             cascade.eraseAll();
             filters.clear();
+        }
+        
+        //! Set the order for all the filters
+        void setOrder(MultiCrossoverFilterOrder order)
+        {
+            this->order = order;
+            for (auto& filter : filters)
+                filter->setOrder(order);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            for (auto& filter : filters)
+                filter->setSampleRate(sampleRate);
         }
         
         //! Return begin iterator for ranged for-loops
@@ -140,18 +153,21 @@ namespace dsp
         //! Return const end iterator for ranged for-loops
         auto end() const { return filters.end(); }
         
-        //! Return a crossover filter
-        dsp::CrossOverFilter<T, CoeffType>& operator[](size_t index){ return *filters[index]; };
-        
         //! Return a const crossover filter
-        const dsp::CrossOverFilter<T, CoeffType>& operator[](size_t index) const { return *filters[index]; };
+        const dsp::CrossoverFilter<T, CoeffType>& operator[](size_t index) const { return *filters[index]; }
         
     public:
+        //! The order of the filter
+        MultiCrossoverFilterOrder order = MultiCrossoverFilterOrder::SECOND;
+        
+        //! The sample rate used for all filters
+        unit::hertz<float> sampleRate = 44100;
+        
         //! The cascade
         dsp::Cascade<T> cascade;
         
         //! The crossover filters
-        std::vector<std::unique_ptr<dsp::CrossOverFilter<T, CoeffType>>> filters;
+        std::vector<std::unique_ptr<dsp::CrossoverFilter<T, CoeffType>>> filters;
     };
 }
 
