@@ -55,7 +55,7 @@ namespace dsp
     {
     public:
         //! Construct a crossover filter given a order, cut-off and sample-rate
-        CrossoverFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate = 44100, CrossoverFilterOrder order = CrossoverFilterOrder::SECOND) :
+        CrossoverFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate, CrossoverFilterOrder order = CrossoverFilterOrder::SECOND) :
             order(order),
             cutOff(cutOff),
             sampleRate(sampleRate)

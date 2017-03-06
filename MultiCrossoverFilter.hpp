@@ -51,7 +51,7 @@ namespace dsp
     {
     public:
         //! Construct the filter
-        MultiCrossoverFilter(unit::hertz<float> sampleRate = 44100, MultiCrossoverFilterOrder order = MultiCrossoverFilterOrder::SECOND) :
+        MultiCrossoverFilter(unit::hertz<float> sampleRate, MultiCrossoverFilterOrder order = MultiCrossoverFilterOrder::SECOND) :
             order(order),
             sampleRate(sampleRate)
         {
