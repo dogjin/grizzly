@@ -150,20 +150,14 @@ namespace dsp
                 filter->setSampleRate(sampleRate);
         }
         
-        //! Return begin iterator for ranged for-loops
-        auto begin() { return filters.begin(); }
-        
-        //! Return const begin iterator for ranged for-loops
-        auto begin() const { return filters.begin(); }
-        
-        //! Return end iterator for ranged for-loops
-        auto end() { return filters.end(); }
-        
-        //! Return const end iterator for ranged for-loops
-        auto end() const { return filters.end(); }
-        
         //! Return a const crossover filter
-        const dsp::CrossoverFilter<T, CoeffType>& operator[](size_t index) const { return *filters[index]; }
+        const dsp::CrossoverFilter<T, CoeffType>& operator[](std::size_t index) const { return *filters[index]; }
+        
+        // Begin and end for ranged for-loops
+        auto begin() { return filters.begin(); }
+        auto begin() const { return filters.begin(); }
+        auto end() { return filters.end(); }
+        auto end() const { return filters.end(); }
         
     public:
         //! The order of the filter
