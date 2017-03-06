@@ -25,37 +25,38 @@
  
  */
 
-#ifndef MULTI_CROSSOVER_FILTER_HPP
-#define MULTI_CROSSOVER_FILTER_HPP
+#ifndef GRIZZLY_MULTI_CROSS_OVER_FILTER_HPP
+#define GRIZZLY_MULTI_CROSS_OVER_FILTER_HPP
 
 #include <functional>
+#include <memory>
 #include <unit/hertz.hpp>
 #include <vector>
 
 #include "Cascade.hpp"
-#include "CrossoverFilter.hpp"
+#include "CrossOverFilter.hpp"
 
 namespace dsp
 {
     //! A Multi-Crossover Filter to separate bands with multiple crossover filters
     /*! The Multi-Crossover filter holds crossover filters which can be accessed individually.
-     The input cascades through all the filters, using the high-passed output as the next input for each stage.
-     Therefor, the cut-off frequencies of the filters should be set in an ascending way for proper use. */
+        The input cascades through all the filters, using the high-passed output as the next input for each stage.
+        Therefore, the cut-off frequencies of the filters should be set in an ascending way for proper use. */
     template <class T, class CoeffType = double>
-    class MultiCrossoverFilter
+    class MultiCrossOverFilter
     {
     public:
         //! Set the sample rate
         void setSampleRate(unit::hertz<float> sampleRate)
         {
-            for (auto& filter: filters)
+            for (auto& filter : filters)
                 filter->setSampleRate(sampleRate);
         }
         
         //! Set the order for all the filters
-        void setOrder(typename dsp::CrossoverFilter<T, CoeffType>::Order order)
+        void setOrder(typename dsp::CrossOverFilter<T, CoeffType>::Order order)
         {
-            for (auto& filter: filters)
+            for (auto& filter : filters)
                 filter->setOrder(order);
         }
         
@@ -98,17 +99,17 @@ namespace dsp
         }
         
         //! Emplace back a crossover filter
-        void emplaceBack(typename dsp::CrossoverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate)
+        void emplaceBack(typename dsp::CrossOverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate)
         {
-            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(order, cutOff, sampleRate);
+            auto filter = std::make_unique<dsp::CrossOverFilter<T, CoeffType>>(order, cutOff, sampleRate);
             cascade.emplaceBack([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); });
             filters.emplace_back(std::move(filter));
         }
         
         //! Emplace a crossover filter at a given position
-        void emplace(typename dsp::CrossoverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate, size_t position)
+        void emplace(typename dsp::CrossOverFilter<T, CoeffType>::Order order, unit::hertz<float> cutOff, unit::hertz<float> sampleRate, size_t position)
         {
-            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(order, cutOff, sampleRate);
+            auto filter = std::make_unique<dsp::CrossOverFilter<T, CoeffType>>(order, cutOff, sampleRate);
             cascade.emplace([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); }, position);
             filters.emplace(filters.begin() + position, std::move(filter));
         }
@@ -140,18 +141,18 @@ namespace dsp
         auto end() const { return filters.end(); }
         
         //! Return a crossover filter
-        dsp::CrossoverFilter<T, CoeffType>& operator[](size_t index){ return *filters[index]; };
+        dsp::CrossOverFilter<T, CoeffType>& operator[](size_t index){ return *filters[index]; };
         
         //! Return a const crossover filter
-        const dsp::CrossoverFilter<T, CoeffType>& operator[](size_t index) const { return *filters[index]; };
+        const dsp::CrossOverFilter<T, CoeffType>& operator[](size_t index) const { return *filters[index]; };
         
     public:
         //! The cascade
         dsp::Cascade<T> cascade;
         
         //! The crossover filters
-        std::vector<std::unique_ptr<dsp::CrossoverFilter<T, CoeffType>>> filters;
+        std::vector<std::unique_ptr<dsp::CrossOverFilter<T, CoeffType>>> filters;
     };
 }
 
-#endif /* MULTI_CROSSOVER_FILTER_HPP */
+#endif /* GRIZZLY_MULTI_CROSSOVER_FILTER_HPP */
