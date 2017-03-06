@@ -36,11 +36,14 @@ set(HEADERS
 	MultiTapResonator.hpp
     PinkNoise.hpp
     Ramp.hpp
+    Saw.hpp
     SegmentEnvelope.hpp
     ShortTimeFourierTransform.hpp
+    Sine.hpp
     SpectralCentroid.hpp
     Spectrum.hpp
     Square.hpp
+    Triangle.hpp
 	UpSample.hpp
     Waveform.hpp
 	Window.hpp

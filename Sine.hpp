@@ -25,34 +25,36 @@
  
  */
 
-#ifndef GRIZZLY_SQUARE_HPP
-#define GRIZZLY_SQUARE_HPP
+#ifndef GRIZZLY_SINE_HPP
+#define GRIZZLY_SINE_HPP
 
+#include <cmath>
 #include <dsperados/math/utility.hpp>
 #include <unit/hertz.hpp>
 
 namespace dsp
 {
-    //! Generate a square wave given a normalized phase
-    template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth, T low = 0, T high = 1)
+    //! Generate a bipolar sine wave given a normalized phase
+    template <typename T, typename Phase>
+    constexpr T generateBipolarSine(Phase phase)
     {
-        return math::wrap<Phase>(phase, 0, 1) < pulseWidth ? high : low;
+        return std::sin(math::TWO_PI<T> * phase);
     }
     
-    //! Generates a square wave
+    //! Generate a unipolar sine wave given a normalized phase
+    template <typename T, typename Phase>
+    constexpr T generateUnipolarSine(Phase phase)
+    {
+        return generateBipolarSine<T>(phase - 0.25f) * 0.5 + 0.5;
+    }
+    
+    //! Generates a bipolar sine wave
+    /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class Square
+    class BipolarSine
     {
     public:
-        Square(const T& min = -1, const T& max = 1) :
-            min(min),
-            max(max)
-        {
-            
-        }
-        
-        //! Increment the phase of the square
+        //! Increment the phase of the sine
         void increment(long double increment)
         {
             setPhase(phase + increment);
@@ -78,39 +80,67 @@ namespace dsp
             recomputeY();
         }
         
-        //! Change the pulse width
-        /*! @param recompute: Recompute the y to return from read() */
-        void setPulseWidth(float pulseWidth, bool recompute)
-        {
-            this->pulseWidth = pulseWidth;
-            
-            if (recompute)
-                recomputeY();
-        }
-        
     private:
         //! Recompute the most recently computed value
         void recomputeY()
         {
-            y = dsp::generateSquare<T>(phase, pulseWidth);
+            y = dsp::generateBipolarSine<T>(phase);
         }
         
     private:
         //! The to be returned value from read
         T y;
         
-        //! The minimum value
-        T min = -1;
-        
-        //! The maximum value;
-        T max = 1;
-        
-        //! The current phase of the square (range 0-1)
+        //! The current phase of the sine (range 0-1)
         long double phase = 0;
+    };
+    
+    //! Generates a unipolar sine wave
+    /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
+    template <typename T>
+    class UnipolarSine
+    {
+    public:
+        //! Increment the phase of the sine
+        void increment(long double increment)
+        {
+            setPhase(phase + increment);
+            recomputeY();
+        }
         
-        //! The pulse width used to generate the square
-        float pulseWidth = 0.5f;
+        //! Increment the phase, given a frequency
+        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
+        {
+            increment(frequency.value / sampleRate.value);
+        }
+        
+        //! Read the most recently computed output
+        T read() const
+        {
+            return y;
+        }
+        
+        //! Change the phase manually
+        void setPhase(long double phase)
+        {
+            this->phase = math::wrap<long double>(phase, 0, 1);
+            recomputeY();
+        }
+        
+    private:
+        //! Recompute the most recently computed value
+        void recomputeY()
+        {
+            y = dsp::generateUnipolarSine<T>(phase);
+        }
+        
+    private:
+        //! The to be returned value from read
+        T y;
+        
+        //! The current phase of the sine (range 0-1)
+        long double phase = 0;
     };
 }
 
-#endif /* GRIZZLY_SQUARE_HPP */
+#endif /* GRIZZLY_SINE_HPP */
