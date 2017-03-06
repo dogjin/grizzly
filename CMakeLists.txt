@@ -34,6 +34,7 @@ set(HEADERS
 	MidSide.hpp
     MultiCrossoverFilter.hpp
 	MultiTapResonator.hpp
+    PhaseGenerator.hpp
     PinkNoise.hpp
     Ramp.hpp
     Saw.hpp

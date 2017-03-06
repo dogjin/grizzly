@@ -28,8 +28,7 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
-#include <dsperados/math/utility.hpp>
-#include <unit/hertz.hpp>
+#include "PhaseGenerator.hpp"
 
 namespace dsp
 {
@@ -47,96 +46,22 @@ namespace dsp
         return math::wrap<std::common_type_t<Phase, T>>(phase, 0, 1);
     }
     
-    //! Generates a saw wave
+    //! Generates a bipolar saw wave
     template <typename T>
-    class BipolarSaw
+    class BipolarSaw : public PhaseGenerator<T>
     {
-    public:
-        //! Increment the phase of the saw
-        void increment(long double increment)
-        {
-            setPhase(phase + increment);
-            recomputeY();
-        }
-        
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
-        {
-            increment(frequency.value / sampleRate.value);
-        }
-        
-        //! Read the most recently computed output
-        T read() const
-        {
-            return y;
-        }
-        
-        //! Change the phase manually
-        void setPhase(long double phase)
-        {
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
     private:
         //! Recompute the most recently computed value
-        void recomputeY()
-        {
-            y = dsp::generateBipolarSaw<T>(phase);
-        }
-        
-    private:
-        //! The to be returned value from read
-        T y;
-        
-        //! The current phase of the saw (range 0-1)
-        long double phase = 0;
+        T convertPhaseToY(long double phase) const final override { return dsp::generateBipolarSaw<T>(phase); }
     };
     
-    //! Generates a saw wave
+    //! Generates a unipolar saw wave
     template <typename T>
-    class UnipolarSaw
+    class UnipolarSaw : public PhaseGenerator<T>
     {
-    public:
-        //! Increment the phase of the saw
-        void increment(long double increment)
-        {
-            setPhase(phase + increment);
-            recomputeY();
-        }
-        
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
-        {
-            increment(frequency.value / sampleRate.value);
-        }
-        
-        //! Read the most recently computed output
-        T read() const
-        {
-            return y;
-        }
-        
-        //! Change the phase manually
-        void setPhase(long double phase)
-        {
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
     private:
         //! Recompute the most recently computed value
-        void recomputeY()
-        {
-            y = dsp::generateUnipolarSaw<T>(phase);
-        }
-        
-    private:
-        //! The to be returned value from read
-        T y;
-        
-        //! The current phase of the saw (range 0-1)
-        long double phase = 0;
+        T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarSaw<T>(phase); }
     };
 }
 

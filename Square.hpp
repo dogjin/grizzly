@@ -28,8 +28,7 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
-#include <dsperados/math/utility.hpp>
-#include <unit/hertz.hpp>
+#include "PhaseGenerator.hpp"
 
 namespace dsp
 {
@@ -42,71 +41,39 @@ namespace dsp
     
     //! Generates a square wave
     template <typename T>
-    class Square
+    class Square : public PhaseGenerator<T>
     {
     public:
-        Square(const T& min = -1, const T& max = 1) :
-            min(min),
-            max(max)
+        Square(const T& low = -1, const T& high = 1) :
+            low(low),
+            high(high)
         {
             
-        }
-        
-        //! Increment the phase of the square
-        void increment(long double increment)
-        {
-            setPhase(phase + increment);
-            recomputeY();
-        }
-        
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
-        {
-            increment(frequency.value / sampleRate.value);
-        }
-        
-        //! Read the most recently computed output
-        T read() const
-        {
-            return y;
-        }
-        
-        //! Change the phase manually
-        void setPhase(long double phase)
-        {
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
         }
         
         //! Change the pulse width
-        /*! @param recompute: Recompute the y to return from read() */
+        /*! @param recompute Recompute the y to return from read() */
         void setPulseWidth(float pulseWidth, bool recompute)
         {
+            if (pulseWidth == this->pulseWidth)
+                return;
+            
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                recomputeY();
+                this->recomputeY();
         }
         
     private:
         //! Recompute the most recently computed value
-        void recomputeY()
-        {
-            y = dsp::generateSquare<T>(phase, pulseWidth);
-        }
+        T convertPhaseToY(long double phase) const final override { return dsp::generateSquare<T>(phase, pulseWidth, low, high); }
         
     private:
-        //! The to be returned value from read
-        T y;
-        
         //! The minimum value
-        T min = -1;
+        T low = -1;
         
         //! The maximum value;
-        T max = 1;
-        
-        //! The current phase of the square (range 0-1)
-        long double phase = 0;
+        T high = 1;
         
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;

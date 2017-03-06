@@ -29,8 +29,8 @@
 #define GRIZZLY_SINE_HPP
 
 #include <cmath>
-#include <dsperados/math/utility.hpp>
-#include <unit/hertz.hpp>
+
+#include "PhaseGenerator.hpp"
 
 namespace dsp
 {
@@ -51,95 +51,20 @@ namespace dsp
     //! Generates a bipolar sine wave
     /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class BipolarSine
+    class BipolarSine : public PhaseGenerator<T>
     {
-    public:
-        //! Increment the phase of the sine
-        void increment(long double increment)
-        {
-            setPhase(phase + increment);
-            recomputeY();
-        }
-        
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
-        {
-            increment(frequency.value / sampleRate.value);
-        }
-        
-        //! Read the most recently computed output
-        T read() const
-        {
-            return y;
-        }
-        
-        //! Change the phase manually
-        void setPhase(long double phase)
-        {
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
     private:
         //! Recompute the most recently computed value
-        void recomputeY()
-        {
-            y = dsp::generateBipolarSine<T>(phase);
-        }
-        
-    private:
-        //! The to be returned value from read
-        T y;
-        
-        //! The current phase of the sine (range 0-1)
-        long double phase = 0;
+        T convertPhaseToY(long double phase) const final override { return dsp::generateBipolarSine<T>(phase); }
     };
     
     //! Generates a unipolar sine wave
-    /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class UnipolarSine
+    class UnipolarSine : public PhaseGenerator<T>
     {
-    public:
-        //! Increment the phase of the sine
-        void increment(long double increment)
-        {
-            setPhase(phase + increment);
-            recomputeY();
-        }
-        
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
-        {
-            increment(frequency.value / sampleRate.value);
-        }
-        
-        //! Read the most recently computed output
-        T read() const
-        {
-            return y;
-        }
-        
-        //! Change the phase manually
-        void setPhase(long double phase)
-        {
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
     private:
         //! Recompute the most recently computed value
-        void recomputeY()
-        {
-            y = dsp::generateUnipolarSine<T>(phase);
-        }
-        
-    private:
-        //! The to be returned value from read
-        T y;
-        
-        //! The current phase of the sine (range 0-1)
-        long double phase = 0;
+        T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarSine<T>(phase); }
     };
 }
 
