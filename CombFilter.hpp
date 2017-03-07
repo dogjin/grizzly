@@ -35,7 +35,7 @@
 namespace dsp
 {
     //! Feed-back Comb Filter
-    template <class T>
+    template <typename T>
     class FeedBackCombFilter
     {
     public:
@@ -45,20 +45,26 @@ namespace dsp
             
         }
         
-        //! Process function, take an input
-        T process(const T& x, float delayTime, float feedBack)
+        //! Write a new sample to the filter
+        void write(const T& x, float delayTime, float feedBack)
         {
             const auto d = delayTime > 0 ? delay.read(delayTime - 1) : 0;
-            const auto y = x + feedBack * (postDelay ? postDelay(d) : d);
+            y = x + feedBack * (postDelay ? postDelay(d) : d);
             
             delay.write(y);
-            
+        }
+        
+        //! Return the last computed sample
+        T read() const
+        {
             return y;
         }
         
-        T operator()(const T& x, float delayTime, float feedBack)
+        //! Write a new sample to the filter and return the result
+        T writeAndRead(const T& x, float delayTime, float feedBack)
         {
-            return process(x, delayTime, feedBack);
+            write(x, delayTime, feedBack);
+            return read();
         }
 
         void setMaxDelayTime(float maxDelayTime)
@@ -77,6 +83,9 @@ namespace dsp
         
     private:
         Delay<T> delay;
+        
+        //! The computed y output value
+        T y;
     };
     
     //! Feed-forward Comb Filter
@@ -90,20 +99,26 @@ namespace dsp
             
         }
         
-        //! Process function, take an input
-        T process(const T& x, float delayTime, float feedForward)
+        //! Write a new sample to the filter
+        void write(const T& x, float delayTime, float feedForward)
         {
             delay.write(x);
             
             const auto d = delay.read(delayTime);
-            const auto y = x + feedForward * (postDelay ? postDelay(d) : d);
-            
+            y = x + feedForward * (postDelay ? postDelay(d) : d);
+        }
+        
+        //! Return the last computed sample
+        T read() const
+        {
             return y;
         }
         
-        T operator()(const T& x, float delayTime, float feedForward)
+        //! Write a new sample to the filter and return the result
+        T writeAndRead(const T& x, float delayTime, float feedBack)
         {
-            return process(x, delayTime, feedForward);
+            write(x, delayTime, feedBack);
+            return read();
         }
         
         void setMaxDelayTime(float maxDelayTime)
@@ -116,13 +131,15 @@ namespace dsp
             return delay.getMaximumDelayTime ();
         }
         
-        
     public:
         //! PostDelay function
         std::function<T(const T&)> postDelay;
         
     private:
         Delay<T> delay;
+        
+        //! The computed y output value
+        T y = 0;
     };
 }
 #endif /* GRIZZLY_COMB_FILTER_HPP */
