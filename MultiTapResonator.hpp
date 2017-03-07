@@ -52,7 +52,7 @@ namespace dsp
             //! Process a single tap in the resonator
             T processStage (const dsp::Delay<T>& delay) const
             {
-                const auto d = delay.read(delayTime);
+                const auto d = delay.read(delayTime, math::linearInterpolation);
                 return feedback * (postDelay ? postDelay(d) : d);
             }
             

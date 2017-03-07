@@ -48,7 +48,7 @@ namespace dsp
         //! Write a new sample to the filter
         void write(const T& x, float delayTime, float feedBack)
         {
-            const auto d = delayTime > 0 ? delay.read(delayTime - 1) : 0;
+            const auto d = delay.read(delayTime, math::linearInterpolation);
             y = x + feedBack * (postDelay ? postDelay(d) : d);
             
             delay.write(y);
@@ -74,7 +74,7 @@ namespace dsp
         
         float getMaxDelayTime()
         {
-            return delay.getMaximumDelayTime ();
+            return delay.getMaximumDelayTime();
         }
         
     public:
@@ -104,7 +104,7 @@ namespace dsp
         {
             delay.write(x);
             
-            const auto d = delay.read(delayTime);
+            const auto d = delay.read(delayTime, math::linearInterpolation);
             y = x + feedForward * (postDelay ? postDelay(d) : d);
         }
         

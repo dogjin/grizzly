@@ -49,8 +49,9 @@ namespace dsp
 
         T process(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
         {
-            const auto w = gain * delay.read(delayTime) + x;
-            const auto y = gain * w - delay.read(delayTime);
+            const auto d = delay.read(delayTime, math::linearInterpolation);
+            const auto w = gain * d + x;
+            const auto y = gain * w - d;
 
             delay.write(w);
 
