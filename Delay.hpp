@@ -55,8 +55,15 @@ namespace dsp
         }
         
         //! Read from the delay line
+        template <typename Index>
+        std::enable_if_t<std::is_integral<Index>::value, T> read(Index index) const
+        {
+            return access(data.rbegin(), data.rend(), index, math::clampAccess);
+        }
+        
+        //! Read from the delay line with a fractional index
         template <typename Index, typename Interpolator>
-        T read(Index index, Interpolator interpolator = math::linearInterpolation) const
+        T read(Index index, Interpolator interpolator) const
         {
             return interpolate(data.rbegin(), data.rend(), index, interpolator, math::clampAccess);
         }
