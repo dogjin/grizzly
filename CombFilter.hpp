@@ -28,6 +28,7 @@
 #ifndef GRIZZLY_COMB_FILTER_HPP
 #define GRIZZLY_COMB_FILTER_HPP
 
+#include <cstddef>
 #include <functional>
 
 #include "Delay.hpp"

@@ -32,6 +32,7 @@ set(HEADERS
 	HighFrequencyContent.hpp
     ImpulseResponse.hpp
 	MidSide.hpp
+	ModulatedDelay.hpp
     MultiCrossoverFilter.hpp
 	MultiTapResonator.hpp
     PhaseGenerator.hpp
