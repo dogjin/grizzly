@@ -68,12 +68,12 @@ namespace dsp
             return read();
         }
 
-        void setMaxDelayTime(float maxDelayTime)
+        void setMaximumDelayTime(float maxDelayTime)
         {
             delay.resize(maxDelayTime);
         }
         
-        float getMaxDelayTime()
+        float getMaximumDelayTime()
         {
             return delay.getMaximumDelayTime();
         }
@@ -122,12 +122,12 @@ namespace dsp
             return read();
         }
         
-        void setMaxDelayTime(float maxDelayTime)
+        void setMaximumDelayTime(float maxDelayTime)
         {
             delay.resize(maxDelayTime);
         }
         
-        float getMaxDelayTime()
+        float getMaximumDelayTime()
         {
             return delay.getMaximumDelayTime ();
         }
