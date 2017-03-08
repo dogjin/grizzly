@@ -76,7 +76,7 @@ namespace dsp
         }
 
         //! Return the maximal delay time that can be used
-        std::size_t getMaximalDelayTime()
+        std::size_t getMaximalDelayTime() const
         {
             return delay.getMaximalDelayTime();
         }
