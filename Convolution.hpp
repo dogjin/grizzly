@@ -83,7 +83,7 @@ namespace dsp
         void setKernel(Iterator begin, Iterator end)
         {
             kernel.assign(begin, end);
-            delay.resize(kernel.size());
+            delay.setMaximalDelayTime(kernel.size());
         }
         
         //! Return the kernel

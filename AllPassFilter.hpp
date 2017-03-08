@@ -37,39 +37,56 @@ using namespace std;
 
 namespace dsp
 {
+    //! An all pass filter
     template <class T>
     class AllPassFilter
     {
     public:
-        AllPassFilter(std::size_t maxDelayTime) :
-            delay(maxDelayTime)
+        //! Construct the all-pass filter
+        AllPassFilter(std::size_t maximalDelayTime) :
+            delay(maximalDelayTime)
         {
 
         }
 
-        T process(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
+        //! Write a new sample to the filter
+        void write(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
         {
             const auto d = delay.read(delayTime, math::linearInterpolation);
             const auto w = gain * d + x;
-            const auto y = gain * w - d;
+            y = gain * w - d;
 
             delay.write(w);
-
-            return y;
         }
         
-        T operator()(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
+        //! Return the most recently computed output
+        T read() const { return y; }
+        
+        //! Write a new sample and read the result
+        T writeAndRead(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
         {
-            return process(x, delayTime, gain);
+            write(x, delayTime, gain);
+            return read();
+        }
+        
+        //! Change the maximal delay time
+        void setMaximalDelayTime(std::size_t maximalDelayTime)
+        {
+            delay.setMaximalDelayTime(maximalDelayTime);
         }
 
-        T getMaximumDelayTime()
+        //! Return the maximal delay time that can be used
+        std::size_t getMaximalDelayTime()
         {
-            return delay.getMaximumDelayTime();
+            return delay.getMaximalDelayTime();
         }
 
     private:
+        //! The delay line
         Delay<T> delay;
+        
+        //! The output value
+        T y;
     };
 }
 

@@ -40,9 +40,9 @@ namespace dsp
     class Delay
     {
     public:
-        //! Construct by feeding the maximum delay size
-        Delay(std::size_t maximumDelayTime) :
-            data(maximumDelayTime + 1)
+        //! Construct by feeding the maximal delay size
+        Delay(std::size_t maximalDelayTime) :
+            data(maximalDelayTime + 1)
         {
             
         }
@@ -68,14 +68,14 @@ namespace dsp
             return interpolate(data.rbegin(), data.rend(), index, interpolator, math::clampAccess);
         }
         
-        //! Set the maximum delay
-        void resize(std::size_t maximumDelayTime)
+        //! Set the maximal delay
+        void setMaximalDelayTime(std::size_t maximalDelayTime)
         {
-            data.resize_front(maximumDelayTime + 1);
+            data.resize_front(maximalDelayTime + 1);
         }
         
-        //! Return the maximum number of delay samples
-        std::size_t getMaximumDelayTime() const { return data.size() - 1; }
+        //! Return the maximal number of delay samples
+        std::size_t getMaximalDelayTime() const { return data.size() - 1; }
         
     private:
         //! The data in the delay line

@@ -69,10 +69,10 @@ namespace dsp
         T convertPhaseToY(long double phase) const final override { return dsp::generateSquare<T>(phase, pulseWidth, low, high); }
         
     private:
-        //! The minimum value
+        //! The minimal value
         T low = -1;
         
-        //! The maximum value;
+        //! The maximal value;
         T high = 1;
         
         //! The pulse width used to generate the square

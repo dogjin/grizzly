@@ -70,11 +70,11 @@ namespace dsp
         
     public:
         //! Create a multi tap resonator
-        /*! Initialize the delay buffer with an initial maximum length and create a number of delay lines,
+        /*! Initialize the delay buffer with an initial maximal length and create a number of delay lines,
             it is posible to initialize the gain compensation*/
-        MultiTapResonator(std::size_t maxDelay, std::size_t numberOfStages) :
+        MultiTapResonator(std::size_t maximalDelay, std::size_t numberOfStages) :
             stages(numberOfStages),
-            delay(maxDelay)
+            delay(maximalDelay)
         {
             
         }
@@ -85,7 +85,7 @@ namespace dsp
         {
             auto it = std::max_element(stages.begin(), stages.end(), [](const auto& lhs, const auto& rhs){ return lhs.delayTime < rhs.delayTime; });
             if (it != stages.end())
-                delay.resize(std::ceil(it->delayTime));
+                delay.setMaximalDelayTime(std::ceil(it->delayTime));
         }
         
         //! Take an input, execute all delay taps and write the output in the delay line.
@@ -105,15 +105,15 @@ namespace dsp
         T read() const { return delay.read(0); }
         
         //! Resize the delay buffer
-        void resize(std::size_t maxDelay)
+        void resize(std::size_t maximalDelay)
         {
-            delay.resize(maxDelay);
+            delay.setMaximalDelayTime(maximalDelay);
         }
         
-        //! Get the maximum size of the delay buffer
-        std::size_t getMaximumDelayTime() const
+        //! Get the maximal size of the delay buffer
+        std::size_t getMaximalDelayTime() const
         {
-            return delay.getMaximumDelayTime();
+            return delay.getMaximalDelayTime();
         }
         
         //! Overide operator[] to allow easy acces to the delay lines
