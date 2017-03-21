@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
-#include "PhaseGenerator.hpp"
+#include "phase_generator.hpp"
 
 namespace dsp
 {

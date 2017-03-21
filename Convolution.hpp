@@ -33,7 +33,7 @@
 #include <gsl/gsl>
 #include <vector>
 
-#include "Delay.hpp"
+#include "delay.hpp"
 
 namespace dsp
 {

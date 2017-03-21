@@ -25,33 +25,32 @@
  
  */
 
-#ifndef GRIZZLY_ANALYTIC_TRANSFORM_HPP
-#define GRIZZLY_ANALYTIC_TRANSFORM_HPP
+#include <cassert>
 
-#include <complex>
-#include <vector>
+#include "fast_fourier_transform_base.hpp"
 
-#include "HilbertTransform.hpp"
+using namespace math;
+using namespace std;
 
 namespace dsp
 {
-    //! The analytic transform of a real signal
-    template <typename InputIterator, typename OutputIterator>
-    void analyticTransform(InputIterator begin, InputIterator end, OutputIterator outBegin)
+    FastFourierTransformBase::FastFourierTransformBase(size_t size) :
+        size(size)
     {
-        // Take the hilbert transform
-        const auto size = std::distance(begin, end);
-        std::vector<typename InputIterator::value_type> hilbert(size);
-        hilbertTransform(begin, end, hilbert.begin(), HilbertTransformDirection::FORWARD);
         
-        // Emplace the original signal and its hilbert transform in a complex signal
-        for (auto& x : hilbert)
-        {
-            outBegin->real(*begin++);
-            outBegin->imag(x);
-            ++outBegin;
-        }
+    }
+    
+    vector<complex<float>> FastFourierTransformBase::forward(const float* input)
+    {
+        vector<complex<float>> output(size / 2 + 1);
+        forward(input, output.begin());
+        return output;
+    }
+    
+    vector<complex<double>> FastFourierTransformBase::forward(const double* input)
+    {
+        vector<complex<double>> output(size / 2 + 1);
+        forward(input, output.begin());
+        return output;
     }
 }
-
-#endif /* GRIZZLY_ANALYTIC_TRANSFORM_HPP */

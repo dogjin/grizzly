@@ -31,9 +31,9 @@
 #include <cmath>
 #include <dsperados/math/utility.hpp>
 
-#include "Saw.hpp"
-#include "Sine.hpp"
-#include "Square.hpp"
-#include "Triangle.hpp"
+#include "saw.hpp"
+#include "sine.hpp"
+#include "square.hpp"
+#include "triangle.hpp"
 
 #endif

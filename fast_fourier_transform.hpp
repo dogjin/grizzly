@@ -28,10 +28,10 @@
 #ifndef GRIZZLY_FAST_FOURIER_TRANSFORM_HPP
 #define GRIZZLY_FAST_FOURIER_TRANSFORM_HPP
 
-#include "Ooura/FastFourierTransformOoura.hpp"
+#include "ooura/fast_fourier_transform_ooura.hpp"
 
 #ifdef __APPLE__
-    #include "Apple/FastFourierTransformAccelerate.hpp"
+    #include "apple/fast_fourier_transform_accelerate.hpp"
 
     namespace dsp { using FastFourierTransform = FastFourierTransformAccelerate; }
 #else

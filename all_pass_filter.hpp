@@ -31,7 +31,7 @@
 #include <dsperados/math/constants.hpp>
 #include <vector>
 
-#include "Delay.hpp"
+#include "delay.hpp"
 
 using namespace std;
 

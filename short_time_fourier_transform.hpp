@@ -35,7 +35,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "Spectrum.hpp"
+#include "spectrum.hpp"
 
 namespace dsp
 {

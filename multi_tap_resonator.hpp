@@ -35,7 +35,7 @@
 #include <numeric>
 #include <vector> 
 
-#include "Delay.hpp"
+#include "delay.hpp"
 
 namespace dsp
 {

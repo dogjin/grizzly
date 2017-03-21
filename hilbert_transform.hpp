@@ -35,8 +35,8 @@
 #include <iterator>
 #include <vector>
 
-#include "FastFourierTransform.hpp"
-#include "Spectrum.hpp"
+#include "fast_fourier_transform.hpp"
+#include "spectrum.hpp"
 
 namespace dsp
 {

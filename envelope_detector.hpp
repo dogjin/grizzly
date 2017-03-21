@@ -31,8 +31,8 @@
 #include <cmath>
 #include <dsperados/math/utility.hpp>
 
-#include "FirstOrderCoefficients.hpp"
-#include "FirstOrderFilter.hpp"
+#include "first_order_filter_coefficients.hpp"
+#include "first_order_filter.hpp"
 
 namespace dsp
 {

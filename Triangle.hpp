@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_TRIANGLE_HPP
 #define GRIZZLY_TRIANGLE_HPP
 
-#include "PhaseGenerator.hpp"
+#include "phase_generator.hpp"
 
 namespace dsp
 {

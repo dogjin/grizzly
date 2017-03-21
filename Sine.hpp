@@ -30,7 +30,7 @@
 
 #include <cmath>
 
-#include "PhaseGenerator.hpp"
+#include "phase_generator.hpp"
 
 namespace dsp
 {

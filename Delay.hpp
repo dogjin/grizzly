@@ -30,7 +30,7 @@
 
 #include <dsperados/math/interpolation.hpp>
 
-#include "CircularBuffer.hpp"
+#include "circular_buffer.hpp"
 
 namespace dsp
 {

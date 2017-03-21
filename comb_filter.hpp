@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <functional>
 
-#include "Delay.hpp"
+#include "delay.hpp"
 
 namespace dsp
 {

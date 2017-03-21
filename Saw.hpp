@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
-#include "PhaseGenerator.hpp"
+#include "phase_generator.hpp"
 
 namespace dsp
 {

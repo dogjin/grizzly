@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <dsperados/math/interleave.hpp>
 
-#include "FastFourierTransformOoura.hpp"
+#include "fast_fourier_transform_ooura.hpp"
 #include "fftsg.hpp"
 
 using namespace std;
