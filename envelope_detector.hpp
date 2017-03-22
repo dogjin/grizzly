@@ -31,14 +31,14 @@
 #include <cmath>
 #include <dsperados/math/utility.hpp>
 
-#include "FirstOrderCoefficients.hpp"
-#include "FirstOrderFilter.hpp"
+#include "first_order_filter_coefficients.hpp"
+#include "first_order_filter.hpp"
 
 namespace dsp
 {
     //! Envelope detector based on an analog circuit with two resistors, a capacitor and a diode
     /*! The capacitor continuously discharges via the release resistor. Due to this design, the peak will not
-        reach its maximum value. choosing a bigger release time makes this less noticeably. See "Investigation
+        reach its maximal value. choosing a bigger release time makes this less noticeably. See "Investigation
         in Dynamic Range Compression" by Massberg. */
     template <class T, class CoeffType = double>
     class EnvelopeDetectorRCR
@@ -98,7 +98,7 @@ namespace dsp
 
     //! Envelope detector based on an analog circuit with two resistor, two capacitors and a diode
     /*! The first set of resistor/capacitor is decoupled from the second set. In contrast to the EnvelopeDetectorRCR,
-        the envelope will reach the maximum value regardless of different release settings. See "Investigation in Dynamic
+        the envelope will reach the maximal value regardless of different release settings. See "Investigation in Dynamic
         Range Compression" by Massberg. */
     template <class T, class CoeffType = double>
     class EnvelopeDetectorDecoupled

@@ -1,82 +1,50 @@
 cmake_minimum_required(VERSION 3.5.1)
 
-project(grizzly CXX)
+# Create the project
+project(Grizzly CXX)
 
+# Add global definitions and include directories
 add_definitions(-std=c++1z -Wall)
 include_directories(/usr/local/include)
 
-add_library(grizzly STATIC "")
-install(TARGETS grizzly DESTINATION lib)
-
-set(HEADERS
-    AllPassFilter.hpp
-	AnalogOnePoleFilter.hpp
-	AnalyticTransform.hpp
-	Biquad.hpp
-	BiquadCoefficients.hpp
-    Cascade.hpp
-    CircularBuffer.hpp
-    CombFilter.hpp
-	Convolution.hpp
-    CrossOverFilter.hpp
-	Delay.hpp
-	DownSample.hpp
-    Dynamic.hpp
-	EnvelopeDetector.hpp
-    FastFourierTransform.hpp
-	FastFourierTransformBase.hpp
-	FirstOrderCoefficients.hpp
-	FirstOrderFilter.hpp
-	GordonSmithOscillator.hpp
-	HilbertTransform.hpp
-	HighFrequencyContent.hpp
-    ImpulseResponse.hpp
-	MidSide.hpp
-    MultiCrossoverFilter.hpp
-	MultiTapResonator.hpp
-    PinkNoise.hpp
-    Ramp.hpp
-    SegmentEnvelope.hpp
-    ShortTimeFourierTransform.hpp
-    SpectralCentroid.hpp
-    Spectrum.hpp
-	UpSample.hpp
-    Waveform.hpp
-	Window.hpp
-    ZTransform.hpp)
-
-set(SOURCES
-	FastFourierTransformBase.cpp)
-
-target_sources(grizzly PRIVATE ${HEADERS} ${SOURCES})
+# Setup the common headers and sources
+set(HEADERS all_pass_filter.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp circular_buffer.hpp comb_filter.hpp convolution.hpp crossover_filter.hpp delay.hpp down_sample.hpp dynamic.hpp envelope_detector.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp mid_Side.hpp multi_crossover_filter.hpp multi_tap_Resonator.hpp phase_generator.hpp pink_noise.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp spectral_centroid.hpp spectrum.hpp square.hpp triangle.hpp up_sample.hpp waveform.hpp window.hpp z_transform.hpp)
+set(SOURCES fast_fourier_transform_base.cpp)
 source_group(\\ FILES ${HEADERS} ${SOURCES})
 install (FILES ${HEADERS} DESTINATION include/grizzly)
 
 # Ooura
-set(OOURA_HEADERS
-    Ooura/FastFourierTransformOoura.hpp
-	Ooura/fftsg.hpp)
-
-set(OOURA_SOURCES
-	Ooura/FastFourierTransformOoura.cpp
-	Ooura/fftsg.cpp)
-
-target_sources(grizzly PRIVATE ${OOURA_HEADERS} ${OOURA_SOURCES})
+set(OOURA_HEADERS ooura/fast_fourier_transform_ooura.hpp ooura/fftsg.hpp)
+set(OOURA_SOURCES ooura/fast_fourier_transform_ooura.cpp ooura/fftsg.cpp)
 source_group(\\Ooura FILES ${OOURA_HEADERS} ${OOURA_SOURCES})
-install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/Ooura)
+install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/ooura)
+
+list(APPEND HEADERS ${OOURA_HEADERS})
+list(APPEND SOURCES ${OOURA_SOURCES})
 
 # Apple
 if (APPLE)
-    set(APPLE_HEADERS
-        Apple/FastFourierTransformAccelerate.hpp)
-
-	set(APPLE_SOURCES
-		Apple/FastFourierTransformAccelerate.cpp)
-
-    target_sources(grizzly PRIVATE ${APPLE_HEADERS} ${APPLE_SOURCES})
+    set(APPLE_HEADERS apple/fast_fourier_transform_accelerate.hpp)
+	set(APPLE_SOURCES apple/fast_fourier_transform_accelerate.cpp)
     source_group(\\Apple FILES ${APPLE_HEADERS} ${APPLE_SOURCES})
-    install (FILES ${APPLE_HEADERS} DESTINATION include/grizzly/Apple)
+    install (FILES ${APPLE_HEADERS} DESTINATION include/grizzly/apple)
 
-	find_library(Accelerate Accelerate REQUIRED)
-	target_link_libraries(grizzly ${Accelerate})
+    list(APPEND HEADERS ${APPLE_HEADERS})
+        list(APPEND SOURCES ${APPLE_SOURCES})
 endif()
+
+# Create the target
+add_library(Grizzly ${HEADERS} ${SOURCES})
+install(TARGETS Grizzly DESTINATION lib)
+
+# Handle different cases if this will be a static or shared lib
+if (BUILD_SHARED_LIBS)
+    set_target_properties(Grizzly PROPERTIES OUTPUT_NAME grizzly)
+
+    if (APPLE)
+        find_library(Accelerate Accelerate REQUIRED)
+        target_link_libraries(Grizzly ${Accelerate})
+    endif(APPLE)
+else (BUILD_SHARED_LIBS)
+    set_target_properties(Grizzly PROPERTIES OUTPUT_NAME grizzly_static)
+endif (BUILD_SHARED_LIBS)

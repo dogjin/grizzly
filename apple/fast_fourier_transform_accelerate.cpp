@@ -28,7 +28,7 @@
 #include <dsperados/math/interleave.hpp>
 #include <stdexcept>
 
-#include "FastFourierTransformAccelerate.hpp"
+#include "fast_fourier_transform_accelerate.hpp"
 
 using namespace math;
 using namespace std;

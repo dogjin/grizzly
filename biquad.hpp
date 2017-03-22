@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_BIQUAD_HPP
 #define GRIZZLY_BIQUAD_HPP
 
-#include "BiquadCoefficients.hpp"
+#include "biquad_coefficients.hpp"
 
 namespace dsp
 {

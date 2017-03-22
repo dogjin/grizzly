@@ -25,18 +25,15 @@
  
  */
 
-#ifndef GRIZZLY_FAST_FOURIER_TRANSFORM_HPP
-#define GRIZZLY_FAST_FOURIER_TRANSFORM_HPP
+#ifndef GRIZZLY_WAVEFORM_HPP
+#define GRIZZLY_WAVEFORM_HPP
 
-#include "Ooura/FastFourierTransformOoura.hpp"
+#include <cmath>
+#include <dsperados/math/utility.hpp>
 
-#ifdef __APPLE__
-    #include "Apple/FastFourierTransformAccelerate.hpp"
+#include "saw.hpp"
+#include "sine.hpp"
+#include "square.hpp"
+#include "triangle.hpp"
 
-    namespace dsp { using FastFourierTransform = FastFourierTransformAccelerate; }
-#else
-    namespace dsp { using FastFourierTransform = FastFourierTransformOoura; }
 #endif
-
-
-#endif /* GRIZZLY_FAST_FOURIER_TRANSFORM_HPP */

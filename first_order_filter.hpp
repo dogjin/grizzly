@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_FIRST_ORDER_FILTER_HPP
 #define GRIZZLY_FIRST_ORDER_FILTER_HPP
 
-#include "FirstOrderCoefficients.hpp"
+#include "first_order_filter_coefficients.hpp"
 
 namespace dsp
 {

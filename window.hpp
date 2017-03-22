@@ -34,7 +34,7 @@
 #include <unit/radian.hpp>
 #include <vector>
 
-#include "Waveform.hpp"
+#include "waveform.hpp"
 
 namespace dsp
 {

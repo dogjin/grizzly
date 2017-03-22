@@ -35,8 +35,8 @@
 #include <unit/hertz.hpp>
 #include <vector>
 
-#include "Cascade.hpp"
-#include "CrossoverFilter.hpp"
+#include "cascade.hpp"
+#include "crossover_filter.hpp"
 
 namespace dsp
 {

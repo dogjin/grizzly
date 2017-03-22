@@ -32,7 +32,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "../FastFourierTransformBase.hpp"
+#include "../fast_fourier_transform_base.hpp"
 
 namespace dsp
 {

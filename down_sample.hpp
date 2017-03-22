@@ -25,8 +25,8 @@
  
  */
 
-#ifndef GRIZZLY_UP_SAMPLE_HPP
-#define GRIZZLY_UP_SAMPLE_HPP
+#ifndef GRIZZLY_DOWN_SAMPLE_HPP
+#define GRIZZLY_DOWN_SAMPLE_HPP
 
 #include <cstddef>
 #include <dsperados/math/linear.hpp>
@@ -34,29 +34,31 @@
 #include <stdexcept>
 #include <vector>
 
-#include "CircularBuffer.hpp"
-#include "Window.hpp"
+#include "circular_buffer.hpp"
+#include "window.hpp"
 
 namespace dsp
 {
-    //! Upsample a single scalar by a factor
+    //! Downsample a container to a single scalar
     template <class T>
-    class UpSample
+    class DownSample
     {
     public:
-        //! Construct the upsampling object
+        //! Construct the downsample
         /*! @param factor The amount of oversampling that takes place (1 is none, 2 is twice as big)
             @param size The size of the filter kernel */
-        UpSample(std::size_t factor, std::size_t size);
+        DownSample(std::size_t factor, std::size_t size);
         
-        //! Upsample a single scalar to a vector of size factor
-        std::vector<T> process(const T& x);
+        //! Downsample a container (size factor) to a single scalar
+        template <typename Iterator>
+        T process(Iterator begin);
         
-        //! Upsample a single scalar to a vector of size factor
-        std::vector<T> operator()(const T& x) { return process(x); }
+        //! Downsample a container (size factor) to a single scalar
+        template <typename Iterator>
+        T operator()(Iterator begin) { return process(begin); }
         
-        //! Set the up-sampling factor and recompute the filter
-        void setFactor(std::size_t factor);
+        //! Set the down-sampling factor and recompute the filter
+        void setFactor(size_t factor);
         
         //! Retrieve the up-sampling factor
         auto getFactor() const { return factor; }
@@ -65,35 +67,38 @@ namespace dsp
         auto getFilterSize() const { return filterSize; }
         
         //! Set the beta factor for shaping the Kaiser window
-        /*! See createKaiserWindow() for more information */
         void setBetaFactor(float beta);
         
     private:
-        //! Recompute the matrix
+        //! Recompute the kernel matrix (polyphase)
         void recomputeFilter();
         
     private:
-        //! The up-sampling factor
+        //! The down-sampling factor
         std::size_t factor = 4;
         
-        //! The size of the kernel
+        //! The filter size
         const std::size_t filterSize = 64;
         
+        //! The number of steps to hop through the filter (filterSize / factor)
+        std::size_t numberOfSteps = 16;
+
         //! The filter kernel
         std::vector<T> filterKernel;
         
         //! Delay line for storing the input samples
         CircularBuffer<T> delayLine;
-        
+       
         //! The beta factor for shaping the Kaiser window
         float betaFactor = 8.6;
     };
     
     template <class T>
-    UpSample<T>::UpSample(std::size_t factor, std::size_t filterSize) :
+    DownSample<T>::DownSample(std::size_t factor, std::size_t filterSize) :
         factor(factor),
         filterSize(filterSize),
-        delayLine(filterSize / factor)
+        numberOfSteps(filterSize / factor),
+        delayLine(filterSize)
     {
         if (filterSize % factor != 0)
             throw std::invalid_argument("Filter size must be a multiple of the factor");
@@ -101,40 +106,43 @@ namespace dsp
         recomputeFilter();
     }
     
-    template <class T>
-    std::vector<T> UpSample<T>::process(const T& x)
+    template <typename T>
+    template <typename Iterator>
+    T DownSample<T>::process(Iterator begin)
     {
         // Write the input to the delay
-        delayLine.emplace_back(x);
+        for (auto i = 0; i < numberOfSteps; ++i)
+            delayLine.emplace_back(*begin++);
         
         // Initialize the output
-        std::vector<T> output(factor);
+        T output = 0;
         
-        for (auto sample = 0; sample < output.size(); ++sample)
-            output[sample] = math::dot(delayLine.rbegin(), 1, filterKernel.begin() + sample, factor, delayLine.size()) * factor;
+        for (auto sample = 0; sample < factor; ++sample)
+            output += math::dot(delayLine.rbegin(), factor, filterKernel.begin() + sample, factor, numberOfSteps);
         
-        return output;
+        return output * factor;
     }
     
     template <class T>
-    void UpSample<T>::setFactor(std::size_t factor)
+    void DownSample<T>::setFactor(std::size_t factor)
     {
         this->factor = factor;
+        numberOfSteps = filterSize / factor;
         recomputeFilter();
     }
     
     template <class T>
-    void UpSample<T>::setBetaFactor(float beta)
+    void DownSample<T>::setBetaFactor(float beta)
     {
         betaFactor = beta;
         recomputeFilter();
     }
     
     template <class T>
-    void UpSample<T>::recomputeFilter()
+    void DownSample<T>::recomputeFilter()
     {
         // Construct the kernel
-        filterKernel = createSincWindow<T>(filterSize, 0.5 / factor, filterSize / 2 - 0.5);
+        filterKernel = createSincWindow<T>(filterSize, 0.5 / factor, filterSize / 2 - 0.5); // symmetric in window
         
         // Construct the window
         auto window = createSymmetricKaiserWindow<T>(filterSize, betaFactor);

@@ -33,9 +33,9 @@
 #include <unit/hertz.hpp>
 #include <vector>
 
-#include "Biquad.hpp"
-#include "Cascade.hpp"
-#include "FirstOrderFilter.hpp"
+#include "biquad.hpp"
+#include "cascade.hpp"
+#include "first_order_filter.hpp"
 
 namespace dsp
 {

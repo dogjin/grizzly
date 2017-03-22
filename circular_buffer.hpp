@@ -108,6 +108,8 @@ namespace dsp
         
         using iterator = Iterator<CircularBuffer, T*, T&>;
         using const_iterator = Iterator<const CircularBuffer, const T*, const T&>;
+        using reverse_iterator = std::reverse_iterator<iterator>;
+        using reverse_const_iterator = std::reverse_iterator<const_iterator>;
         
     public:
         //! Construct the circular buffer with a given size
@@ -187,13 +189,13 @@ namespace dsp
         const_iterator end() const { return {*this, static_cast<std::ptrdiff_t>(data.size())}; }
         const_iterator cend() const { return {*this, static_cast<std::ptrdiff_t>(data.size())}; }
         
-        std::reverse_iterator<iterator> rbegin() { return std::reverse_iterator<iterator>(end()); }
-        std::reverse_iterator<const_iterator> rbegin() const { return std::reverse_iterator<const_iterator>(cend()); }
-        std::reverse_iterator<const_iterator> crbegin() const { return std::reverse_iterator<const_iterator>(cend()); }
+        reverse_iterator rbegin() { return std::reverse_iterator<iterator>(end()); }
+        reverse_const_iterator rbegin() const { return std::reverse_iterator<const_iterator>(cend()); }
+        reverse_const_iterator crbegin() const { return std::reverse_iterator<const_iterator>(cend()); }
         
-        std::reverse_iterator<iterator> rend() { return std::reverse_iterator<iterator>(begin()); }
-        std::reverse_iterator<const_iterator> rend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
-        std::reverse_iterator<const_iterator> crend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
+        reverse_iterator rend() { return std::reverse_iterator<iterator>(begin()); }
+        reverse_const_iterator rend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
+        reverse_const_iterator crend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
         
     private:
         //! The actual buffer

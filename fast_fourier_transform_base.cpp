@@ -25,53 +25,32 @@
  
  */
 
-#ifndef GRIZZLY_ALL_PASS_FILTER_HPP
-#define GRIZZLY_ALL_PASS_FILTER_HPP
+#include <cassert>
 
-#include <dsperados/math/constants.hpp>
-#include <vector>
+#include "fast_fourier_transform_base.hpp"
 
-#include "Delay.hpp"
-
+using namespace math;
 using namespace std;
 
 namespace dsp
 {
-    template <class T>
-    class AllPassFilter
+    FastFourierTransformBase::FastFourierTransformBase(size_t size) :
+        size(size)
     {
-    public:
-        AllPassFilter(std::size_t maxDelayTime) :
-            delay(maxDelayTime)
-        {
-
-        }
-
-        T process(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
-        {
-            const auto d = delay.read(delayTime, math::linearInterpolation);
-            const auto w = gain * d + x;
-            const auto y = gain * w - d;
-
-            delay.write(w);
-
-            return y;
-        }
         
-        T operator()(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
-        {
-            return process(x, delayTime, gain);
-        }
-
-        T getMaximumDelayTime()
-        {
-            return delay.getMaximumDelayTime();
-        }
-
-    private:
-        Delay<T> delay;
-    };
+    }
+    
+    vector<complex<float>> FastFourierTransformBase::forward(const float* input)
+    {
+        vector<complex<float>> output(size / 2 + 1);
+        forward(input, output.begin());
+        return output;
+    }
+    
+    vector<complex<double>> FastFourierTransformBase::forward(const double* input)
+    {
+        vector<complex<double>> output(size / 2 + 1);
+        forward(input, output.begin());
+        return output;
+    }
 }
-
-
-#endif
