@@ -28,7 +28,10 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
+#include <dsperados/math/interpolation.hpp>
+
 #include "phase_generator.hpp"
+#include "poly_blep.hpp"
 
 namespace dsp
 {
@@ -62,6 +65,20 @@ namespace dsp
     private:
         //! Recompute the most recently computed value
         T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarSaw<T>(phase); }
+    };
+    
+    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
+    template <typename T>
+    class BipolarSawBlep : public PhaseGenerator<T>
+    {
+    private:
+        //! Recompute the most recently computed value
+        T convertPhaseToY(long double phase) const final override
+        {
+            auto y = dsp::generateBipolarSaw<T>(phase);
+            y -= polyBlep(math::wrap<T>(this->getPhase() + 0.5, 0.0, 1.0), this->getIncrement());
+            return y;
+        }
     };
 }
 

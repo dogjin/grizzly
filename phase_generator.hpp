@@ -40,9 +40,14 @@ namespace dsp
     class PhaseGenerator
     {
     public:
+        //! Virtual destructor
+        virtual ~PhaseGenerator() = default;
+        
         //! Increment the generator
         void increment(long double increment)
         {
+            increment_ = increment;
+            
             phase += increment;
             if (end && phase >= 1)
                 end();
@@ -76,6 +81,9 @@ namespace dsp
             return phase;
         }
         
+        //! Return the increment
+        long double getIncrement() const { return increment_; }
+        
     public:
         //! End function when ramp gets wrapped
         std::function<void(void)> end;
@@ -94,6 +102,9 @@ namespace dsp
         
         //! The current phase of the saw (ranged from 0 to 1)
         long double phase = 0;
+        
+        //! The increment, rate of change
+        long double increment_ = 0;
     };
 }
 
