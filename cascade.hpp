@@ -143,9 +143,9 @@ namespace dsp
         //! Clear all the input and output states
         void clear()
         {
-            input = T{};
+            input = T();
             for (auto& stage : stages)
-                stage.output = T{};
+                stage.output = T();
         }
         
         //! Get the number of stages
