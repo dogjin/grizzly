@@ -75,6 +75,24 @@ namespace dsp
             recomputeY();
         }
         
+        //! Change the increment and phase manually
+        void setIncrementAndPhase(long double increment, long double phase)
+        {
+            increment_ = increment;
+            
+            this->phase = math::wrap<long double>(phase, 0, 1);
+            recomputeY();
+        }
+        
+        //! Change the increment and phase manually, given a frequency
+        void setIncrementAndPhase(unit::hertz<float> frequency, unit::hertz<float> sampleRate, long double phase)
+        {
+            increment_ = frequency.value / sampleRate.value;
+            
+            this->phase = math::wrap<long double>(phase, 0, 1);
+            recomputeY();
+        }
+        
         //! Return the current phase between 0 and 1
         long double getPhase() const
         {
