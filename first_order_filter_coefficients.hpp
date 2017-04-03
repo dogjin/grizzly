@@ -54,7 +54,7 @@ namespace dsp
     
     //! Set filter to through pass
     template <typename T>
-    constexpr void throughPass(FirstOrderCoefficients<T>& coefficients)
+    void throughPass(FirstOrderCoefficients<T>& coefficients)
     {
         coefficients.a0 = 1;
         coefficients.a1 = 0;
@@ -62,7 +62,7 @@ namespace dsp
     }
     
     template <typename T>
-    constexpr void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, float a0 = 0.5f)
+    void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, float a0 = 0.5f)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -74,7 +74,7 @@ namespace dsp
     
     //! Set filter to low pass filtering using one pole, given a samplerate and a cutoff
     template <typename T>
-    constexpr void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -95,7 +95,7 @@ namespace dsp
     //! Set filter to low pass filtering using one pole, given a samplerate, time and and a time constant factor.
     /*! @param timeConstantFactor: Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    constexpr void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -115,7 +115,7 @@ namespace dsp
     
     //! Set filter to low pass filtering using one pole and one zero, given a samplerate and a cutoff
     template <typename T>
-    constexpr void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -137,7 +137,7 @@ namespace dsp
     //! Set filter to low pass filtering using one pole and one zero, given a samplerate, time and and a time constant factor.
     /*! @param timeConstantFactor: Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    constexpr void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -164,7 +164,7 @@ namespace dsp
     
     //! Set filter to high pass filtering using one pole, given a samplerate and a cutoff
     template <typename T>
-    constexpr void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -191,7 +191,7 @@ namespace dsp
     
     //! Set filter to high pass filtering using one pole and one zero, given a samplerate and a cutoff
     template <typename T>
-    constexpr void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         if (sampleRate.value < 0)
             throw std::invalid_argument("negative sample rate");
@@ -219,7 +219,7 @@ namespace dsp
     
     //! Set filter to high all-pass filtering using one pole and one zero, given a coefficient value for a0 and b1
     template <typename T>
-    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
+    void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
     {
         coefficients.b1 = coefficient;
         coefficients.a0 = -coefficient;
@@ -228,7 +228,7 @@ namespace dsp
     
     //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
     template <typename T>
-    constexpr void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
+    void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
     {
         auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
         auto s = (z - 1) / (z + 1);
