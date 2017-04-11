@@ -84,9 +84,10 @@ namespace dsp
         while (minIndex + 1 < halfSize && slides[minIndex + 1] < slides[minIndex])
             minIndex++;
         
+        const auto& minValue = slides[minIndex];
+        
         // No pitch found
-        const auto& minSlide = slides[minIndex];
-        if (minIndex == halfSize || minSlide >= threshold)
+        if (minIndex == halfSize || minValue >= threshold)
             return {0, 0};
         
         // Apply parabolic interpolation
@@ -94,16 +95,16 @@ namespace dsp
         const auto rightBound = math::clamp<std::size_t>(minIndex + 1, 0, halfSize - 1);
         
         // Compute the probability
-        const auto probability = 1 - minSlide;
+        const auto probability = 1 - minValue;
         
         // Return the pitch and its probability
         if (leftBound == minIndex)
-            return {sampleRate / (minSlide <= slides[rightBound] ? minIndex : rightBound), probability};
+            return {sampleRate / (minValue <= slides[rightBound] ? minIndex : rightBound), probability};
         else if (rightBound == minIndex)
-            return {sampleRate / (minSlide <= slides[leftBound] ? minIndex : leftBound), probability};
+            return {sampleRate / (minValue <= slides[leftBound] ? minIndex : leftBound), probability};
         else
             // Parabolically interpolate to get a better local minimum, use the offset of the peak as correction on the index
-            return {sampleRate / (minIndex + math::interpolateParabolic(slides[leftBound], minSlide, slides[rightBound]).first), probability};
+            return {sampleRate / (minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
     }
 }
 
