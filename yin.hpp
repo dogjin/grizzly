@@ -25,84 +25,86 @@
  
  */
 
-#ifndef YinPitchDetection_hpp
-#define YinPitchDetection_hpp
+#ifndef GRIZZLY_YIN_HPP
+#define GRIZZLY_YIN_HPP
 
+#include <cstddef>
 #include <cmath>
+#include <iterator>
+#include <utility>
 #include <vector>
+
 #include <dsperados/math/interpolation.hpp>
 
 namespace dsp
 {
-    //! Yin pitch tracking algoritm
+    //! Yin pitch tracking algorithm
     /*! Compute the pitch over a range of samples give a sampling rate and a threshold.
-     Returns the pitch and probability in a std::pair.
-     See "YIN, a fundamental frequency estimator for speech and music" by Alain de Cheveigne and Hideki Kawahara.
-     http://audition.ens.fr/adc/pdf/2002_JASA_YIN.pdf
-     */
+        Returns the pitch and probability in a std::pair.
+        See "YIN, a fundamental frequency estimator for speech and music" by Alain de Cheveigne and Hideki Kawahara.
+        http://audition.ens.fr/adc/pdf/2002_JASA_YIN.pdf */
     template <typename Iterator>
     std::pair<float, float> computeYin(Iterator begin, Iterator end, float sampleRate, float threshold = 0.15)
     {
-        size_t size = std::distance(begin, end);
-        size_t halfSize = size / 2;
-        std::vector<float> differences(halfSize);
-        float probability = 0;
+        const std::size_t size = std::distance(begin, end);
+        const std::size_t halfSize = size / 2;
         
-        // Compute power difference of the frame, shifted to half of the size
-        for (auto tau = 0 ; tau < halfSize; tau++)
-            for (auto i = 0; i < halfSize; i++)
-                differences[tau] += std::pow(begin[i] - begin[i + tau], 2);
-        
-        // Compute cumulative mean with first diffenrece set to one
-        float sum = 0;
-        differences.front() = 1;
-        for (int tau = 1; tau < halfSize; tau++)
+        // 1. Subtract the slided version of the input from the input itself
+        // 2. Raise these differences to the 2nd power
+        // 3. Accumulate these powers and store them in the buffer
+        std::vector<float> slides(halfSize);
+        for (auto slide = 0 ; slide < halfSize; ++slide)
         {
-            sum += differences[tau];
-            differences[tau] *= tau / sum;
-        }
-        
-        // Search local minima
-        int tau;
-        for (tau = 2; tau < halfSize; tau++)
-        {
-            // threshold reached
-            if (differences[tau] < threshold)
+            // Loop over each sample in the buffer, and subtract the slide from it
+            for (auto i = 0; i < halfSize; ++i)
             {
-                // descend to local minimum and break, use this tau
-                while (tau + 1 < halfSize && differences[tau + 1] < differences[tau])
-                    tau++;
-                
-                probability = 1 - differences[tau];
-                break;
+                const auto x = begin[i] - begin[i + slide];
+                slides[slide] += x * x;
             }
         }
         
+        // Normalize the slides, by computing the cumulative mean with the first slide set to one
+        slides[0] = 1;
+        float sum = 0;
+        for (int slide = 1; slide < halfSize; ++slide)
+        {
+            sum += slides[slide];
+            slides[slide] *= slide / sum;
+        }
+        
+        // Search for the first slide below the threshold
+        std::size_t minIndex = 2;
+        for (minIndex = 2; minIndex < halfSize; ++minIndex)
+        {
+            if (slides[minIndex] < threshold)
+                break;
+        }
+        
+        // Descend to local minimum
+        while (minIndex + 1 < halfSize && slides[minIndex + 1] < slides[minIndex])
+            minIndex++;
+        
         // No pitch found
-        if (tau == halfSize || differences[tau] >= threshold)
+        const auto& minSlide = slides[minIndex];
+        if (minIndex == halfSize || minSlide >= threshold)
             return {0, 0};
         
         // Apply parabolic interpolation
-        size_t leftBound = math::clamp<size_t>(tau - 1, 0, halfSize - 1);
-        size_t rightBound = math::clamp<size_t>(tau + 1, 0, halfSize - 1);
+        const auto leftBound = math::clamp<std::size_t>(minIndex - 1, 0, halfSize - 1);
+        const auto rightBound = math::clamp<std::size_t>(minIndex + 1, 0, halfSize - 1);
         
-        if (leftBound == tau)
-        {
-            if (differences[tau] <= differences[rightBound])
-                return {sampleRate / tau, probability};
-            else
-                return {sampleRate / rightBound, probability};
-        }
-        else if (rightBound == tau)
-        {
-            if (differences[tau] <= differences[leftBound])
-                return {sampleRate / tau, probability};
-            else
-                return {sampleRate / leftBound, probability};
-        }
-        else // interpolate parabolic to get better local minimum, use the offset of the peak as correction on tau
-            return {sampleRate / (tau + math::interpolateParabolic(differences[leftBound], differences[tau], differences[rightBound]).first), probability};
+        // Compute the probability
+        const auto probability = 1 - minSlide;
+        
+        // Return the pitch and its probability
+        if (leftBound == minIndex)
+            return {sampleRate / (minSlide <= slides[rightBound] ? minIndex : rightBound), probability};
+        else if (rightBound == minIndex)
+            return {sampleRate / (minSlide <= slides[leftBound] ? minIndex : leftBound), probability};
+        else
+            // Parabolically interpolate to get a better local minimum, use the offset of the peak as correction on the index
+            return {sampleRate / (minIndex + math::interpolateParabolic(slides[leftBound], minSlide, slides[rightBound]).first), probability};
     }
 }
 
-#endif /* YinPitchDetection_hpp */
+#endif /* GRIZZLY_YIN_HPP */
