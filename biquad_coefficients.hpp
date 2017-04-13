@@ -36,8 +36,9 @@
 
 namespace dsp
 {
-    //! Coefficients to a biquad
-    /*! Credits to Robert Bristow-Johnson for providing the cooking formulas (see "Audio-EQ-cookbook") . Notice we use "a" for feed-forward and "b" for feed-back. */
+    //! Biquad Coefficients
+    /*! Credits to Robert Bristow-Johnson for providing the cooking formulas (see "Audio-EQ-cookbook"). 
+        Notice we use "a" for feed-forward and "b" for feed-back. */
     template <class T>
     struct BiquadCoefficients
     {
@@ -55,6 +56,23 @@ namespace dsp
         
         //! The b2 feed-back coefficient
         T b2 = 0;
+        
+        //! Check filter arguments
+        static void check(unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+        {
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sampling rate <= 0");
+            
+            // check cut-off
+            const auto nyquist = sampleRate.value / 2;
+            if (cutOff.value <= 0 || cutOff.value >= nyquist)
+                throw std::invalid_argument("cut-off <= 0 or >= nyquist");
+            
+            // check q
+            if (q <= 0)
+                throw std::invalid_argument("q <= 0");
+        }
     };
     
     //! Set biquad to through pass
@@ -68,10 +86,24 @@ namespace dsp
         coefficients.b2 = 0;
     }
     
+    //! Set biquad to no pass
+    template <typename T>
+    void noPass(BiquadCoefficients<T>& coefficients)
+    {
+        coefficients.a0 = 0;
+        coefficients.a1 = 0;
+        coefficients.a2 = 0;
+        coefficients.b1 = 0;
+        coefficients.b2 = 0;
+    }
+    
     //! Set biquad to low pass filtering
     template <class T>
     void lowPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -91,6 +123,9 @@ namespace dsp
     template <class T>
     void highPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -110,6 +145,9 @@ namespace dsp
     template <class T>
     void bandPassConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -129,6 +167,9 @@ namespace dsp
     template <class T>
     void bandPassConstantPeak(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -148,6 +189,9 @@ namespace dsp
     template <class T>
     void peakConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -168,6 +212,9 @@ namespace dsp
     template <class T>
     void peakConstantQ(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -202,6 +249,9 @@ namespace dsp
     template <class T>
     void lowShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -222,6 +272,9 @@ namespace dsp
     template <class T>
     void highShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -242,6 +295,9 @@ namespace dsp
     template <class T>
     void notch(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -260,6 +316,9 @@ namespace dsp
     template <class T>
     void allPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
+        // safety check
+        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
+        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);

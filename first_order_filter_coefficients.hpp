@@ -59,7 +59,7 @@ namespace dsp
         }
         
         //! Check arguments for frequency filters
-        static void checkFrequencyFilter(unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+        static void check(unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
         {
             // check sample rate
             checkSampleRate(sampleRate);
@@ -71,7 +71,7 @@ namespace dsp
         }
         
         //! Check arguments for timed filters
-        static void checkTimedFilter(unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor)
+        static void check(unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor)
         {
             // check sample rate
             checkSampleRate(sampleRate);
@@ -118,7 +118,7 @@ namespace dsp
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
+        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
         
@@ -133,7 +133,7 @@ namespace dsp
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkTimedFilter(sampleRate, time, timeConstantFactor);
+        FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
         
         const auto b1 = exp(-timeConstantFactor / (time.value * sampleRate.value));
         
@@ -147,7 +147,7 @@ namespace dsp
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
+        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const auto s = (z - 1) / (z + 1);
@@ -163,7 +163,7 @@ namespace dsp
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkTimedFilter(sampleRate, time, timeConstantFactor);
+        FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
         
         const auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
         
@@ -184,7 +184,7 @@ namespace dsp
     void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
+        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
         
@@ -198,7 +198,7 @@ namespace dsp
     void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
+        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const auto s = (1 - z) / (z + 1);
@@ -222,7 +222,7 @@ namespace dsp
     void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
     {
         // safety check
-        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, centerFrequency);
+        FirstOrderCoefficients<T>::check(sampleRate, centerFrequency);
         
         auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
         auto s = (z - 1) / (z + 1);
