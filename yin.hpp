@@ -32,6 +32,7 @@
 #include <cmath>
 #include <experimental/optional>
 #include <iterator>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -48,6 +49,9 @@ namespace dsp
     std::pair<float, float> computeYin(Iterator begin, Iterator end, float sampleRate, float threshold = 0.15)
     {
         const std::size_t size = std::distance(begin, end);
+        if (size < 2)
+            return {0, 0};
+        
         const std::size_t halfSize = size / 2;
         
         // 1. Subtract the slided version of the input from the input itself
