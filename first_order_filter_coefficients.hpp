@@ -65,7 +65,7 @@ namespace dsp
             checkSampleRate(sampleRate);
             
             // check cut-off
-            auto nyquist = sampleRate.value / 2;
+            const auto nyquist = sampleRate.value / 2;
             if (cutOff.value <= 0 || cutOff.value >= nyquist)
                 throw std::invalid_argument("cut-off <= 0 or >= nyquist");
         }
@@ -165,7 +165,7 @@ namespace dsp
         // safety check
         FirstOrderCoefficients<T>::checkTimedFilter(sampleRate, time, timeConstantFactor);
         
-        auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
+        const auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
         
         // return through-pass when normalizedAngularFrequency is higher than pi (nyquist)
         if (normalizedAngularFrequency > math::PI<float>)
