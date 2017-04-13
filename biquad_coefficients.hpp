@@ -29,6 +29,7 @@
 #define GRIZZLY_BIQUAD_COEFFICIENTS_HPP
 
 #include <cmath>
+#include <stdexcept>
 #include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
 

@@ -29,7 +29,8 @@
 #define GRIZZLY_ANALOG_ONE_POLE_FILTER_HPP
 
 #include <cmath>
-#include <experimental/optional>
+#include <functional>
+#include <stdexcept>
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
 
@@ -43,19 +44,23 @@ namespace dsp
     class AnalogOnePoleFilter
     {
     public:
-        //! Process with optional distortion for non-linear processing
-        void write(const T& x, std::experimental::optional<float> distortionFactor = std::experimental::nullopt)
+        //! Write a sample to the filter
+        void write(const T& x)
         {
-            auto integratorInput = (x - integratorState) * cutOffGain;
+            const auto integratorInput = (x - integratorState) * cutOffGain;
             
+            // write low-pass state
             lowPassOutputState = integratorInput + integratorState;
             
+            // write high-pass state
             highPassOutputState = x - lowPassOutputState;
             
+            // write integrator state for next call
             integratorState = lowPassOutputState + integratorInput;
             
-            if (distortionFactor)
-                integratorState = tanh(integratorState * *distortionFactor);
+            // Optional non-linear processing
+            if (nonLinear)
+                integratorState = nonLinear(integratorState);
         }
         
         //! Read the low-pass output
@@ -70,27 +75,63 @@ namespace dsp
             return highPassOutputState;
         }
         
+        //! Write and read low-pass output (in that order)
+        T writeAndReadLowPass(const T& x)
+        {
+            write(x);
+            readLowPass();
+        }
+        
+        //! Write and read high-pass output (in that order)
+        T writeAndReadHighPass(const T& x)
+        {
+            write(x);
+            readHighPass();
+        }
+        
         //! Set cut-off
         void setCutOff(unit::hertz<float> cutOff, unit::hertz<float> sampleRate)
         {
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sampling rate <= 0");
+            
+            // check cut-off
+            const auto nyquist = sampleRate.value / 2;
+            if (cutOff.value <= 0 || cutOff.value >= nyquist)
+                throw std::invalid_argument("cut-off <= 0 or >= nyquist");
+            
             auto unresolvedCutOffGain = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
             cutOffGain = unresolvedCutOffGain / (1.0 + unresolvedCutOffGain);
         }
         
-        //! Set time
+        //! Set time with a default time-constant-factor
+        /*! @param timeConstantFactor: Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
         void setTime(unit::second<float> time, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f)
         {
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sampling rate <= 0");
+            
+            // check time
+            if (time.value <= 0)
+                throw std::invalid_argument("time <= 0");
+            
+            // check time-constant-filter
+            if (timeConstantFactor < 0)
+                throw std::invalid_argument("time constant factor < 0");
+            
             auto unresolvedCutOffGain = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
             cutOffGain = unresolvedCutOffGain / (1.0 + unresolvedCutOffGain);
         }
         
-        //! Set cutoff gain directly, useful when creating more complex filter structures
+        //! Set cut-off gain directly, useful when creating more complex filter structures (use with caution)
         void setCutOffGain(T cutOffGain)
         {
             this->cutOffGain = cutOffGain;
         }
         
-        //! Set filter state
+        //! Set the filter state to a value directly
         void setState(T state)
         {
             integratorState = state;
@@ -98,17 +139,18 @@ namespace dsp
             highPassOutputState = 0;
         }
         
-        //! Reset the filter
+        //! Reset the filter to zero
         void reset()
         {
             setState(0);
         }
         
         //! Get the integrator state, useful when creating more complex filter structures
-        T getIntegratorState() const
-        {
-            return integratorState;
-        }
+        T getIntegratorState() const { return integratorState; }
+        
+    public:
+        //! Function for non-linear processing
+        std::function<T(T)> nonLinear;
         
     private:
         //! Filter gain factor with resolved zero delay feedback
