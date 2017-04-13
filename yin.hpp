@@ -82,13 +82,12 @@ namespace dsp
                 minIndex = slideIndex;
         }
         
-        const auto& minValue = slides[*minIndex];
-        
         // No pitch found
-        if (*minIndex == halfSize || minValue >= threshold)
+        if (!minIndex)
             return {0, 0};
         
         // We found the minimum, now compute the actual minimum using parabolic interpolation
+        const auto& minValue = slides[*minIndex];
         
         // Apply parabolic interpolation
         const auto leftBound = math::clamp<std::size_t>(*minIndex - 1, 0, halfSize - 1);
