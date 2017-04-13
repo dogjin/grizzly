@@ -30,6 +30,7 @@
 
 #include <cstddef>
 #include <cmath>
+#include <experimental/optional>
 #include <iterator>
 #include <utility>
 #include <vector>
@@ -51,60 +52,59 @@ namespace dsp
         
         // 1. Subtract the slided version of the input from the input itself
         // 2. Raise these differences to the 2nd power
-        // 3. Accumulate these powers and store them in the buffer
+        // 3. Accumulate these powers and store them in the buffer for each slide delay
         std::vector<float> slides(halfSize);
-        for (auto slide = 0 ; slide < halfSize; ++slide)
+        slides[0] = 1;
+        float sum = 0;
+        std::experimental::optional<unsigned int> minIndex;
+        for (auto slideIndex = 1; slideIndex < halfSize; ++slideIndex)
         {
+            auto& slide = slides[slideIndex];
+            
             // Loop over each sample in the buffer, and subtract the slide from it
             for (auto i = 0; i < halfSize; ++i)
             {
-                const auto x = begin[i] - begin[i + slide];
-                slides[slide] += x * x;
+                const auto x = begin[i] - begin[i + slideIndex];
+                slide += x * x;
             }
-        }
-        
-        // Normalize the slides, by computing the cumulative mean with the first slide set to one
-        slides[0] = 1;
-        float sum = 0;
-        for (int slide = 1; slide < halfSize; ++slide)
-        {
-            sum += slides[slide];
-            slides[slide] *= slide / sum;
-        }
-        
-        // Search for the first slide below the threshold
-        std::size_t minIndex = 2;
-        for (minIndex = 2; minIndex < halfSize; ++minIndex)
-        {
-            if (slides[minIndex] < threshold)
+            
+            // Normalize the slide by computing the cumulative mean with the first slide set to one
+            sum += slide;
+            slide *= slideIndex / sum;
+            
+            // If we've reached a minimum, we can stop computing new slides
+            if (minIndex && slides[*minIndex] < slide)
                 break;
+            
+            // If we've dropped below the threshold, and not reached a minimum yet, store this slide
+            // as the current minimum
+            if (slide < threshold)
+                minIndex = slideIndex;
         }
         
-        // Descend to local minimum
-        while (minIndex + 1 < halfSize && slides[minIndex + 1] < slides[minIndex])
-            minIndex++;
-        
-        const auto& minValue = slides[minIndex];
+        const auto& minValue = slides[*minIndex];
         
         // No pitch found
-        if (minIndex == halfSize || minValue >= threshold)
+        if (*minIndex == halfSize || minValue >= threshold)
             return {0, 0};
         
+        // We found the minimum, now compute the actual minimum using parabolic interpolation
+        
         // Apply parabolic interpolation
-        const auto leftBound = math::clamp<std::size_t>(minIndex - 1, 0, halfSize - 1);
-        const auto rightBound = math::clamp<std::size_t>(minIndex + 1, 0, halfSize - 1);
+        const auto leftBound = math::clamp<std::size_t>(*minIndex - 1, 0, halfSize - 1);
+        const auto rightBound = math::clamp<std::size_t>(*minIndex + 1, 0, halfSize - 1);
         
         // Compute the probability
         const auto probability = 1 - minValue;
         
         // Return the pitch and its probability
-        if (leftBound == minIndex)
-            return {sampleRate / (minValue <= slides[rightBound] ? minIndex : rightBound), probability};
-        else if (rightBound == minIndex)
-            return {sampleRate / (minValue <= slides[leftBound] ? minIndex : leftBound), probability};
+        if (leftBound == *minIndex)
+            return {sampleRate / (minValue <= slides[rightBound] ? *minIndex : rightBound), probability};
+        else if (rightBound == *minIndex)
+            return {sampleRate / (minValue <= slides[leftBound] ? *minIndex : leftBound), probability};
         else
             // Parabolically interpolate to get a better local minimum, use the offset of the peak as correction on the index
-            return {sampleRate / (minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
+            return {sampleRate / (*minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
     }
 }
 
