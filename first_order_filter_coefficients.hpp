@@ -50,6 +50,40 @@ namespace dsp
         
         //! The b1 feed-back coefficient
         T b1 = 0;
+        
+        //! Check if sample rate is valid
+        static void checkSampleRate(unit::hertz<float> sampleRate)
+        {
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sampling rate <= 0");
+        }
+        
+        //! Check arguments for frequency filters
+        static void checkFrequencyFilter(unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+        {
+            // check sample rate
+            checkSampleRate(sampleRate);
+            
+            // check cut-off
+            auto nyquist = sampleRate.value / 2;
+            if (cutOff.value <= 0 || cutOff.value >= nyquist)
+                throw std::invalid_argument("cut-off <= 0 or >= nyquist");
+        }
+        
+        //! Check arguments for timed filters
+        static void checkTimedFilter(unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor)
+        {
+            // check sample rate
+            checkSampleRate(sampleRate);
+            
+            // check time
+            if (time.value <= 0)
+                throw std::invalid_argument("time <= 0");
+            
+            // check time-constant-filter
+            if (timeConstantFactor < 0)
+                throw std::invalid_argument("time constant factor < 0");
+        }
     };
     
     //! Set filter to through pass
@@ -61,12 +95,19 @@ namespace dsp
         coefficients.b1 = 0;
     }
     
+    //! Set filter to no pass
+    template <typename T>
+    void noPass(FirstOrderCoefficients<T>& coefficients)
+    {
+        coefficients.a0 = 0;
+        coefficients.a1 = 0;
+        coefficients.b1 = 0;
+    }
+    
+    //! Set filter to low pass using one zero, given a default gain coefficient of 0.5 (coefficient is clamped in range 0 to 1)
     template <typename T>
     void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, float a0 = 0.5f)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        
         coefficients.b1 = 0;
         coefficients.a0 = math::clamp<float>(a0, 0, 1);
         coefficients.a1 = 1 - coefficients.a0;
@@ -76,14 +117,8 @@ namespace dsp
     template <typename T>
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (cutOff.value < 0)
-            throw std::invalid_argument("negative cut-off");
-        
-        // return through-pass when cut-off is above sample rate
-        if (cutOff > sampleRate)
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
         
         const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
         
@@ -97,14 +132,8 @@ namespace dsp
     template <typename T>
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (timeConstantFactor < 0)
-            throw std::invalid_argument("negative timeConstantFactor");
-        
-        // return through-pass when time <= than zero
-        if (time.value <= 0)
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkTimedFilter(sampleRate, time, timeConstantFactor);
         
         const auto b1 = exp(-timeConstantFactor / (time.value * sampleRate.value));
         
@@ -117,14 +146,8 @@ namespace dsp
     template <typename T>
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (cutOff.value < 0)
-            throw std::invalid_argument("negative cut-off");
-        
-        // return through-pass when cut-off is above nyquist
-        if (cutOff.value > (sampleRate.value / 2))
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const auto s = (z - 1) / (z + 1);
@@ -139,14 +162,8 @@ namespace dsp
     template <typename T>
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (timeConstantFactor < 0)
-            throw std::invalid_argument("negative timeConstantFactor");
-        
-        // return through-pass when time <= than zero
-        if (time.value <= 0)
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkTimedFilter(sampleRate, time, timeConstantFactor);
         
         auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
         
@@ -166,21 +183,8 @@ namespace dsp
     template <typename T>
     void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (cutOff.value < 0)
-            throw std::invalid_argument("negative cut-off");
-        
-        // return 0 for all coefficients when cut-off is above sample rate
-        if (cutOff > sampleRate)
-        {
-            coefficients = FirstOrderCoefficients<T>();
-            return;
-        }
-        
-        // return through-pass if cut-off is zero
-        if (cutOff.value == 0)
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
         
         const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
         
@@ -193,21 +197,8 @@ namespace dsp
     template <typename T>
     void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        if (sampleRate.value < 0)
-            throw std::invalid_argument("negative sample rate");
-        if (cutOff.value < 0)
-            throw std::invalid_argument("negative cut-off");
-        
-        // return 0 for all coefficients when cut-off is above nyquist
-        if (cutOff.value > (sampleRate.value / 2))
-        {
-            coefficients = FirstOrderCoefficients<T>();
-            return;
-        }
-        
-        // return through-pass if cut-off is zero
-        if (cutOff.value == 0)
-            return throughPass(coefficients);
+        // safety check
+        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const auto s = (1 - z) / (z + 1);
@@ -217,7 +208,7 @@ namespace dsp
         coefficients.a1 = -coefficients.a0;
     }
     
-    //! Set filter to high all-pass filtering using one pole and one zero, given a coefficient value for a0 and b1
+    //! Set filter to high all-pass filtering using one pole and one zero, given a coefficient value for b1
     template <typename T>
     void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
     {
@@ -230,6 +221,9 @@ namespace dsp
     template <typename T>
     void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
     {
+        // safety check
+        FirstOrderCoefficients<T>::checkFrequencyFilter(sampleRate, centerFrequency);
+        
         auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
         auto s = (z - 1) / (z + 1);
         
