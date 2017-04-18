@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016 Dsperados <info@dsperados.com>
+ Copyright (C) 2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #define GRIZZLY_ALL_PASS_FILTER_HPP
 
 #include <dsperados/math/constants.hpp>
+#include <stdexcept>
 #include <vector>
 
 #include "delay.hpp"
@@ -37,35 +38,46 @@ using namespace std;
 
 namespace dsp
 {
-    //! An all pass filter
+    //! An n-th order all pass filter
+    /*! Alter the phase response of a signal leaving the magnitudes unaltered.
+     The delay (order) can be fractional and different interpolators can be chosen.
+     One delay-line is used in a transposed direct form II fashion. */
     template <class T>
     class AllPassFilter
     {
     public:
         //! Construct the all-pass filter
         AllPassFilter(std::size_t maximalDelayTime) :
-            delay(maximalDelayTime)
+        delay(maximalDelayTime)
         {
-
+            
         }
-
-        //! Write a new sample to the filter
-        void write(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
+        
+        //! Write a new sample to the filter given a default a0 coefficient of the inverse golden ratio and default linear interpolation
+        template <typename Interpolation = decltype(math::linearInterpolation)>
+        void write(const T& x, float delayTime, float a0 = math::INVERSE_PHI<float>, Interpolation interpolation = math::linearInterpolation)
         {
-            const auto d = delay.read(delayTime, math::linearInterpolation);
-            const auto w = gain * d + x;
-            y = gain * w - d;
-
-            delay.write(w);
+            if (delayTime < 1)
+                throw std::invalid_argument("delay time < 1");
+            
+            // read delay with time minus 1 because the previous call did the write, which already introduced a delay
+            auto z1 = delay.read(delayTime - 1, interpolation);
+            
+            // write output
+            y = x * a0 + z1;
+            
+            // Update the delay-line
+            delay.write(x + y * -a0);
         }
         
         //! Return the most recently computed output
         T read() const { return y; }
         
-        //! Write a new sample and read the result
-        T writeAndRead(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>)
+        //! Write a new sample and read the result (in that order)
+        template <typename Interpolation = decltype(math::linearInterpolation)>
+        T writeAndRead(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>, Interpolation interpolation = math::linearInterpolation)
         {
-            write(x, delayTime, gain);
+            write(x, delayTime, gain, interpolation);
             return read();
         }
         
@@ -74,13 +86,13 @@ namespace dsp
         {
             delay.setMaximalDelayTime(maximalDelayTime);
         }
-
+        
         //! Return the maximal delay time that can be used
         std::size_t getMaximalDelayTime() const
         {
             return delay.getMaximalDelayTime();
         }
-
+        
     private:
         //! The delay line
         Delay<T> delay;
