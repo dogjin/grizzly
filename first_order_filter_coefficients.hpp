@@ -213,7 +213,7 @@ namespace dsp
     void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
     {
         coefficients.b1 = coefficient;
-        coefficients.a0 = -coefficient;
+        coefficients.a0 = coefficient;
         coefficients.a1 = 1;
     }
     
@@ -227,8 +227,8 @@ namespace dsp
         auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
         auto s = (z - 1) / (z + 1);
         
-        coefficients.b1 = s;//coefficient;
-        coefficients.a0 = -s;//-coefficient;
+        coefficients.b1 = s;
+        coefficients.a0 = s;
         coefficients.a1 = 1;
     }
     

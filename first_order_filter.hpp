@@ -51,6 +51,13 @@ namespace dsp
         //! Read the last computed value
         T read() const { return y; }
         
+        //! Write a new sample and read the output (in that order)
+        T writeAndRead(const T& x)
+        {
+            write(x);
+            return read();
+        }
+        
         //! Set the filter state
         void setState(const T& state)
         {
