@@ -58,14 +58,14 @@ namespace dsp
         template <typename Index>
         std::enable_if_t<std::is_integral<Index>::value, T> read(Index index) const
         {
-            return math::clampAccess(data.rbegin(), data.rend(), index);
+            return math::clampAccess(begin(), end(), index);
         }
         
         //! Read from the delay line with a fractional index
         template <typename Index, typename Interpolation>
         auto read(Index index, Interpolation interpolate) const
         {
-            return interpolate(data.rbegin(), data.rend(), index, math::clampAccess);
+            return interpolate(begin(), end(), index, math::clampAccess);
         }
         
         //! Set the maximal delay
@@ -76,6 +76,15 @@ namespace dsp
         
         //! Return the maximal number of delay samples
         std::size_t getMaximalDelayTime() const { return data.size() - 1; }
+        
+        // Begin and end for ranged for-loops
+        auto begin() { return data.rbegin(); }
+        auto begin() const { return data.rbegin(); }
+        auto cbegin() const { return data.crbegin(); }
+        
+        auto end() { return data.rend(); }
+        auto end() const { return data.rend(); }
+        auto cend() const { return data.crend(); }
         
     private:
         //! The data in the delay line
