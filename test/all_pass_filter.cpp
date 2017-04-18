@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../all_pass_filter.hpp"
 
@@ -9,7 +9,7 @@ using namespace std;
 
 TEST_CASE("test AllPassFilter.hpp")
 {
-    SUBCASE("output")
+    SECTION("output")
     {
         AllPassFilter<float> allPass(7);
 
@@ -19,14 +19,14 @@ TEST_CASE("test AllPassFilter.hpp")
         //     std::cout << i << ": " << allPass.process(0, 7, 0.167772) << std::endl;
     }
 
-    SUBCASE("delaytime 0")
+    SECTION("delaytime 0")
     {
         AllPassFilter<float> allPass(0);
 
         CHECK(allPass.getMaximalDelayTime() == 0);
     }
 
-    SUBCASE("all 0's")
+    SECTION("all 0's")
     {
         AllPassFilter<float> allPass(10);
         auto bufferSize = 100;

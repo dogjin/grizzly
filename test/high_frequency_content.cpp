@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 #include "../high_frequency_content.hpp"
 
 using namespace dsp;
@@ -10,7 +10,7 @@ TEST_CASE("HighFrequencyContent")
 {
     vector<float> in = { 1, 3, 0.5, 2, 0.5 };
     
-    CHECK(highFrequencyContentBrossier(in.begin(), in.end()) == doctest::Approx(2.4));
-    CHECK(highFrequencyContentMasri(in.begin(), in.end()) == doctest::Approx(4.5));
-    CHECK(highFrequencyContentJensen(in.begin(), in.end()) == doctest::Approx(6.2));
+    CHECK(highFrequencyContentBrossier(in.begin(), in.end()) == Approx(2.4));
+    CHECK(highFrequencyContentMasri(in.begin(), in.end()) == Approx(4.5));
+    CHECK(highFrequencyContentJensen(in.begin(), in.end()) == Approx(6.2));
 }

@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../circular_buffer.hpp"
 
@@ -9,7 +9,7 @@ using namespace std;
 
 TEST_CASE("CircularBuffer")
 {
-	SUBCASE("Construct empty initialization")
+	SECTION("Construct empty initialization")
 	{
 		CircularBuffer<int> buffer(5);
 
@@ -17,14 +17,14 @@ TEST_CASE("CircularBuffer")
 		for (auto i = 0; i < 5; ++i)
 			CHECK(buffer[i] == 0);
 
-		SUBCASE("size 0")
+		SECTION("size 0")
 		{
 			CircularBuffer<int> buffer(0);
 			CHECK(buffer.size() == 0);
 		}
 	}
 
-	SUBCASE("Construct with initializer list")
+	SECTION("Construct with initializer list")
 	{
 		CircularBuffer<int> buffer = { 4, 4, 4, 4 };
 
@@ -33,7 +33,7 @@ TEST_CASE("CircularBuffer")
 			CHECK(buffer[i] == 4);
 	}
 
-	SUBCASE("Construct with iterators")
+	SECTION("Construct with iterators")
 	{
 		vector<int> vec = { 1, 1, 1, 1, 1, 1 };
 		CircularBuffer<int> buffer(vec.begin(), vec.end());
@@ -43,18 +43,18 @@ TEST_CASE("CircularBuffer")
 			CHECK(buffer[i] == 1);
 	}
 
-	SUBCASE("Resizing")
+	SECTION("Resizing")
 	{
 		CircularBuffer<int> buffer = { 1, 2, 3, 4 };
 
-		SUBCASE("resize_front")
+		SECTION("resize_front")
 		{
 			buffer.resize_front(5);
 			CHECK(buffer[0] == 0);
 			CHECK(buffer[4] == 4);
 		}
 
-		SUBCASE("resize_back")
+		SECTION("resize_back")
 		{
 			buffer.resize_back(5);
 			CHECK(buffer[0] == 1);
@@ -62,7 +62,7 @@ TEST_CASE("CircularBuffer")
 		}
 	}
 
-	SUBCASE("emplace_back")
+	SECTION("emplace_back")
 	{
 		CircularBuffer<int> buffer(3);	
 		buffer.emplace_back(8);
@@ -81,7 +81,7 @@ TEST_CASE("CircularBuffer")
 		CHECK(buffer[buffer.size() - 1] == -8);
 	}
 
-	SUBCASE("Subscript")
+	SECTION("Subscript")
 	{
 		CircularBuffer<int> buffer(4);
 
@@ -92,7 +92,7 @@ TEST_CASE("CircularBuffer")
 			CHECK(buffer[0] == i + i);
 		}
 
-		SUBCASE("Out of Range")
+		SECTION("Out of Range")
 		{
 			CHECK_THROWS_AS(buffer[4], std::out_of_range);
 			CHECK_THROWS_AS(buffer[15], std::out_of_range);
@@ -100,39 +100,39 @@ TEST_CASE("CircularBuffer")
 		}
 	}
 
-	SUBCASE("Iterators")
+	SECTION("Iterators")
 	{
 		CircularBuffer<int> buffer = { 0, 1, 2, 3, 4 };
 
-		SUBCASE("regular")
+		SECTION("regular")
 		{
 			int i = 0;
 			for (auto it = buffer.begin(); it != buffer.end(); ++it)
 				CHECK(*it == i++);
 		}
 
-		SUBCASE("regular const")
+		SECTION("regular const")
 		{
 			int i = 0;
 			for (auto it = buffer.cbegin(); it != buffer.cend(); ++it)
 				CHECK(*it == i++);
 		}
 
-		SUBCASE("reverse")
+		SECTION("reverse")
 		{
 			int i = 4;
 			for (auto it = buffer.rbegin(); it != buffer.rend(); ++it)
 				CHECK(*it == i--);
 		}
 
-		SUBCASE("reverse const")
+		SECTION("reverse const")
 		{
 			int i = 4;
 			for (auto it = buffer.crbegin(); it != buffer.crend(); ++it)
 				CHECK(*it == i--);
 		}
 
-		SUBCASE("size 0")
+		SECTION("size 0")
 		{
 			CircularBuffer<int> buffer(0);
 			CHECK(buffer.begin() == buffer.end());

@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../ooura/fast_fourier_transform_ooura.hpp"
 
@@ -11,16 +11,16 @@ TEST_CASE("FastFourierTransformOoura")
 {
     FastFourierTransformOoura fft(8);
     
-    SUBCASE("Float")
+    SECTION("Float")
     {
         vector<float> inputReal = {0, 0.707106781186548, 1, 0.707106781186548, 0, -0.707106781186548, -1, -0.707106781186548};
         
-        SUBCASE("Real")
+        SECTION("Real")
         {
             vector<float> outputReal = {0, 0, 0, 0, 0};
             vector<float> outputImaginary = {0, -4, 0, 0, 0};
             
-            SUBCASE("Forward")
+            SECTION("Forward")
             {
                 vector<float> real(5, 0);
                 vector<float> imaginary(5, 0);
@@ -29,29 +29,29 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 5; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(outputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(outputImaginary[i]));
+                    CHECK(real[i] == Approx(outputReal[i]));
+                    CHECK(imaginary[i] == Approx(outputImaginary[i]));
                 }
             }
             
-            SUBCASE("Inverse")
+            SECTION("Inverse")
             {
                 vector<float> output(8, 0);
                 
                 fft.inverse(outputReal.data(), outputImaginary.data(), output.data());
                 
                 for (auto i = 0; i < 8; ++i)
-                    CHECK(output[i] == doctest::Approx(inputReal[i]));
+                    CHECK(output[i] == Approx(inputReal[i]));
             }
         }
         
-        SUBCASE("Complex")
+        SECTION("Complex")
         {
             vector<float> inputImaginary = {0, 0, 0, 0, 0, 0, 0, 0};
             vector<float> outputReal = {0, 0, 0, 0, 0, 0, 0, 0};
             vector<float> outputImaginary = {0, -4, 0, 0, 0, 0, 0, 4};
             
-            SUBCASE("Forward")
+            SECTION("Forward")
             {
                 vector<float> real(8);
                 vector<float> imaginary(8);
@@ -60,12 +60,12 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 8; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(outputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(outputImaginary[i]));
+                    CHECK(real[i] == Approx(outputReal[i]));
+                    CHECK(imaginary[i] == Approx(outputImaginary[i]));
                 }
             }
             
-            SUBCASE("Inverse")
+            SECTION("Inverse")
             {
                 vector<float> real(8);
                 vector<float> imaginary(8);
@@ -74,23 +74,23 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 8; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(inputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(inputImaginary[i]));
+                    CHECK(real[i] == Approx(inputReal[i]));
+                    CHECK(imaginary[i] == Approx(inputImaginary[i]));
                 }
             }
         }
     }
     
-    SUBCASE("Double")
+    SECTION("Double")
     {
         vector<double> inputReal = {0, 0.707106781186548, 1, 0.707106781186548, 0, -0.707106781186548, -1, -0.707106781186548};
         
-        SUBCASE("Real")
+        SECTION("Real")
         {
             vector<double> outputReal = {0, 0, 0, 0, 0};
             vector<double> outputImaginary = {0, -4, 0, 0, 0};
             
-            SUBCASE("Forward")
+            SECTION("Forward")
             {
                 vector<double> real(5, 0);
                 vector<double> imaginary(5, 0);
@@ -99,29 +99,29 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 5; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(outputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(outputImaginary[i]));
+                    CHECK(real[i] == Approx(outputReal[i]));
+                    CHECK(imaginary[i] == Approx(outputImaginary[i]));
                 }
             }
             
-            SUBCASE("Inverse")
+            SECTION("Inverse")
             {
                 vector<double> output(8, 0);
                 
                 fft.inverse(outputReal.data(), outputImaginary.data(), output.data());
                 
                 for (auto i = 0; i < 8; ++i)
-                    CHECK(output[i] == doctest::Approx(inputReal[i]));
+                    CHECK(output[i] == Approx(inputReal[i]));
             }
         }
         
-        SUBCASE("Complex")
+        SECTION("Complex")
         {
             vector<double> inputImaginary = {0, 0, 0, 0, 0, 0, 0, 0};
             vector<double> outputReal = {0, 0, 0, 0, 0, 0, 0, 0};
             vector<double> outputImaginary = {0, -4, 0, 0, 0, 0, 0, 4};
             
-            SUBCASE("Forward")
+            SECTION("Forward")
             {
                 vector<double> real(8);
                 vector<double> imaginary(8);
@@ -130,12 +130,12 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 8; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(outputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(outputImaginary[i]));
+                    CHECK(real[i] == Approx(outputReal[i]));
+                    CHECK(imaginary[i] == Approx(outputImaginary[i]));
                 }
             }
             
-            SUBCASE("Inverse")
+            SECTION("Inverse")
             {
                 vector<double> real(8);
                 vector<double> imaginary(8);
@@ -144,8 +144,8 @@ TEST_CASE("FastFourierTransformOoura")
                 
                 for (auto i = 0; i < 8; ++i)
                 {
-                    CHECK(real[i] == doctest::Approx(inputReal[i]));
-                    CHECK(imaginary[i] == doctest::Approx(inputImaginary[i]));
+                    CHECK(real[i] == Approx(inputReal[i]));
+                    CHECK(imaginary[i] == Approx(inputImaginary[i]));
                 }
             }
         }

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../comb_filter.hpp"
 
@@ -10,11 +10,11 @@ using namespace std;
 
 TEST_CASE("CombFilter")
 {
-    SUBCASE("FeedBackCombFilter")
+    SECTION("FeedBackCombFilter")
     {
-        SUBCASE("constructor")
+        SECTION("constructor")
         {
-            SUBCASE("is initialized to 0")
+            SECTION("is initialized to 0")
             {
                 FeedBackCombFilter<int> filter (4);
                 
@@ -25,20 +25,20 @@ TEST_CASE("CombFilter")
             }
         }
         
-        SUBCASE("process()")
+        SECTION("process()")
         {
-            SUBCASE("Impulse")
+            SECTION("Impulse")
             {
                 FeedBackCombFilter<double> filter (2);
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.5));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.125));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.0625));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.5));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.125));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.0625));
             }
             
-            SUBCASE("postDelay")
+            SECTION("postDelay")
             {
                 FeedBackCombFilter<double> filter (2);
                 filter.postDelay = [&](const double& x)
@@ -49,17 +49,17 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.0));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.3125));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.0));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.3125));
             }
         }
     }
-    SUBCASE("FeedForwardCombFilter")
+    SECTION("FeedForwardCombFilter")
     {
-        SUBCASE("constructor")
+        SECTION("constructor")
         {
-            SUBCASE("is initialized to 0")
+            SECTION("is initialized to 0")
             {
                 FeedForwardCombFilter<int> filter (4);
                 
@@ -70,18 +70,18 @@ TEST_CASE("CombFilter")
             }
         }
         
-        SUBCASE("process()")
+        SECTION("process()")
         {
-            SUBCASE("Impulse")
+            SECTION("Impulse")
             {
                 FeedForwardCombFilter<double> filter (2);
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.5));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.5));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.));
             }
             
-            SUBCASE("postDelay")
+            SECTION("postDelay")
             {
                 FeedForwardCombFilter<double> filter (2);
                 filter.postDelay = [&](const double& x)
@@ -92,10 +92,10 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.0));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.0));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.));
             }
         }
     }

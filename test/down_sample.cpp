@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 #include "../down_sample.hpp"
 
 using namespace dsp;
@@ -14,24 +14,24 @@ TEST_CASE("DownSample")
     REQUIRE(down.getFilterSize() == 64);
     REQUIRE(down.getFactor() == 4);
     
-    SUBCASE("process()")
+    SECTION("process()")
     {
         const vector<float> in = { 1, 1, 1, 1 };
         
-        CHECK(down(in.begin()) == doctest::Approx(0).epsilon(0.1));
+        CHECK(down(in.begin()) == Approx(0).epsilon(0.1));
         down(in.begin());
         down(in.begin());
-        CHECK(down(in.begin()) == doctest::Approx(1).epsilon(0.0002));
+        CHECK(down(in.begin()) == Approx(1).epsilon(0.0002));
     }
     
-    SUBCASE("setFactor()")
+    SECTION("setFactor()")
     {
         down.setFactor(8);
         REQUIRE(down.getFactor() == 8);
         REQUIRE(down.getFilterSize() == 64);
     }
     
-    SUBCASE("setBetaFactor()")
+    SECTION("setBetaFactor()")
     {
         REQUIRE_NOTHROW(down.setBetaFactor(8));
     }

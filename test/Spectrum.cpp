@@ -1,7 +1,7 @@
 #include <complex>
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../spectrum.hpp"
 
@@ -12,49 +12,49 @@ TEST_CASE("Spectrum")
 {
     Spectrum<float> spectrum = vector<complex<float>>{{3, 4}, {-3, 4}, {3, -4}, {-3, -4}};
     
-    SUBCASE("real")
+    SECTION("real")
     {
         auto real = spectrum.real();
-        CHECK(real[0] == doctest::Approx(3));
-        CHECK(real[1] == doctest::Approx(-3));
-        CHECK(real[2] == doctest::Approx(3));
-        CHECK(real[3] == doctest::Approx(-3));
+        CHECK(real[0] == Approx(3));
+        CHECK(real[1] == Approx(-3));
+        CHECK(real[2] == Approx(3));
+        CHECK(real[3] == Approx(-3));
     }
     
-    SUBCASE("imaginary")
+    SECTION("imaginary")
     {
         auto imaginary = spectrum.imaginary();
-        CHECK(imaginary[0] == doctest::Approx(4));
-        CHECK(imaginary[1] == doctest::Approx(4));
-        CHECK(imaginary[2] == doctest::Approx(-4));
-        CHECK(imaginary[3] == doctest::Approx(-4));
+        CHECK(imaginary[0] == Approx(4));
+        CHECK(imaginary[1] == Approx(4));
+        CHECK(imaginary[2] == Approx(-4));
+        CHECK(imaginary[3] == Approx(-4));
     }
     
-    SUBCASE("magnitudes")
+    SECTION("magnitudes")
     {
         auto magnitudes = spectrum.magnitudes();
         for (auto& value: magnitudes)
-            CHECK(value == doctest::Approx(5));
+            CHECK(value == Approx(5));
     }
     
-    SUBCASE("phases")
+    SECTION("phases")
     {
         auto phases = spectrum.phases();
-        CHECK(phases[0].value == doctest::Approx(0.9273));
-        CHECK(phases[1].value == doctest::Approx(2.2143));
-        CHECK(phases[2].value == doctest::Approx(-0.9273));
-        CHECK(phases[3].value == doctest::Approx(-2.2143));
+        CHECK(phases[0].value == Approx(0.9273));
+        CHECK(phases[1].value == Approx(2.2143));
+        CHECK(phases[2].value == Approx(-0.9273));
+        CHECK(phases[3].value == Approx(-2.2143));
     }
     
-    SUBCASE("unwrapped phases")
+    SECTION("unwrapped phases")
     {
         Spectrum<float> spectrum = vector<complex<float>>{ {-1, 0}, {-4, -5} };
         auto unwrapped = spectrum.unwrappedPhases();
         
-        CHECK(unwrapped[1].value == doctest::Approx(4.0377));
+        CHECK(unwrapped[1].value == Approx(4.0377));
     }
     
-    SUBCASE("replace magnitudes")
+    SECTION("replace magnitudes")
     {
         Spectrum<float> a = vector<complex<float>>{{0, 0}, {0, 0}};
         Spectrum<float> b = vector<complex<float>>{{3, 4}, {3, 4}};
@@ -62,14 +62,14 @@ TEST_CASE("Spectrum")
         a.replaceMagnitudes(b.magnitudes());
         auto real = a.real();
         for (auto& value: real)
-            CHECK(value == doctest::Approx(5));
+            CHECK(value == Approx(5));
         
         auto imaginary = a.imaginary();
         for (auto& value: imaginary)
-            CHECK(value == doctest::Approx(0));
+            CHECK(value == Approx(0));
     }
     
-    SUBCASE("replace phases")
+    SECTION("replace phases")
     {
         Spectrum<float> a = vector<complex<float>>{{0, 0}, {0, 0}};
         Spectrum<float> b = vector<complex<float>>{{3, 4}, {3, 4}};
@@ -77,14 +77,14 @@ TEST_CASE("Spectrum")
         a.replacePhases(b.phases());
         auto real = a.real();
         for (auto& value: real)
-            CHECK(value == doctest::Approx(0));
+            CHECK(value == Approx(0));
         
         auto imaginary = a.imaginary();
         for (auto& value: imaginary)
-            CHECK(value == doctest::Approx(0));
+            CHECK(value == Approx(0));
     }
     
-    SUBCASE("replace real data")
+    SECTION("replace real data")
     {
         spectrum.replaceRealData(std::vector<float>{0, 0, 0, 0});
         
@@ -92,7 +92,7 @@ TEST_CASE("Spectrum")
             CHECK(value.real() == 0);
     }
     
-    SUBCASE("replace imaginary data")
+    SECTION("replace imaginary data")
     {
         spectrum.replaceImaginaryData(std::vector<float>{0, 0, 0, 0});
         

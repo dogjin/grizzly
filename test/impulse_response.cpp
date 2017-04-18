@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 #include "../impulse_response.hpp"
 
 using namespace dsp;
@@ -19,12 +19,12 @@ TEST_CASE("createImpulseResponse()")
     vector<float> response(8);
     createImpulseResponse(response.begin(), response.end(), filter);
     
-    CHECK(response[0] == doctest::Approx(0.5));
-    CHECK(response[1] == doctest::Approx(0.5));
-    CHECK(response[2] == doctest::Approx(0));
-    CHECK(response[3] == doctest::Approx(0));
-    CHECK(response[4] == doctest::Approx(0));
-    CHECK(response[5] == doctest::Approx(0));
-    CHECK(response[6] == doctest::Approx(0));
-    CHECK(response[7] == doctest::Approx(0));
+    CHECK(response[0] == Approx(0.5));
+    CHECK(response[1] == Approx(0.5));
+    CHECK(response[2] == Approx(0));
+    CHECK(response[3] == Approx(0));
+    CHECK(response[4] == Approx(0));
+    CHECK(response[5] == Approx(0));
+    CHECK(response[6] == Approx(0));
+    CHECK(response[7] == Approx(0));
 }

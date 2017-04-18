@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../spectral_centroid.hpp"
 
@@ -9,28 +9,28 @@ using namespace std;
 
 TEST_CASE("Spectral Centroid Bin")
 {
-    SUBCASE("inequal values")
+    SECTION("inequal values")
     {
         vector<int> x{1, 1, 1, 1, 2};
         auto centroid = spectralCentroid(x.begin(), x.end());
         
-        CHECK(centroid == doctest::Approx(2.33333));
+        CHECK(centroid == Approx(2.33333));
     }
     
-    SUBCASE("value at middle bin")
+    SECTION("value at middle bin")
     {
         vector<int> x{0, 0, 1, 0, 0};
         auto centroid = spectralCentroid(x.begin(), x.end());
         
-        CHECK(centroid == doctest::Approx(2));
+        CHECK(centroid == Approx(2));
     }
     
-    SUBCASE("value at last bin")
+    SECTION("value at last bin")
     {
         vector<int> x{0, 0, 0, 0, 1};
         auto centroid = spectralCentroid(x.begin(), x.end());
         
-        CHECK(centroid == doctest::Approx(4));
+        CHECK(centroid == Approx(4));
     }
     
     

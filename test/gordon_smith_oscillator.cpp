@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include "../gordon_smith_oscillator.hpp"
 
@@ -15,5 +15,5 @@ TEST_CASE("GordonSmithOscillator")
     
     GordonSmithOscillator<float> osc(increment);
     for (double angle = 0; angle <= 6.28318530717959; angle += increment)
-        CHECK(osc() == doctest::Approx(sin(angle)).epsilon(0.00125));
+        CHECK(osc() == Approx(sin(angle)).epsilon(0.00125));
 }

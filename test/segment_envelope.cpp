@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
 #include <iostream>
 
@@ -30,6 +30,6 @@ TEST_CASE("Segment Envelope")
     
     out.emplace_back(env.read());
     
-    CHECK(out[50] == doctest::Approx(2.2));
-    CHECK(out.back() == doctest::Approx(0.1f));
+    CHECK(out[50] == Approx(2.2));
+    CHECK(out.back() == Approx(0.1f));
 }

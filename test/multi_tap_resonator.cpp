@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 #include "../multi_tap_resonator.hpp"
 
 using namespace dsp;
@@ -8,7 +8,7 @@ using namespace std;
 
 TEST_CASE("MultiTapResonator")
 {
-    SUBCASE("MultiTapResonator()")
+    SECTION("MultiTapResonator()")
     {
         MultiTapResonator<float> resonator(20, 2);
         
@@ -17,7 +17,7 @@ TEST_CASE("MultiTapResonator")
         REQUIRE(resonator.getMaximalDelayTime() == 20);
     }
     
-    SUBCASE("MultiTapResonator() with initializer_list")
+    SECTION("MultiTapResonator() with initializer_list")
     {
         MultiTapResonator<float> resonator = {{10, 0.5}, {20, 0.7}};
         

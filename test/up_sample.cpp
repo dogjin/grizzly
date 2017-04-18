@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 #include "../up_sample.hpp"
 
 using namespace dsp;
@@ -13,25 +13,25 @@ TEST_CASE("UpSample")
     REQUIRE(up.getFilterSize() == 64);
     REQUIRE(up.getFactor() == 4);
     
-    SUBCASE("process()")
+    SECTION("process()")
     {
         auto y = up(1);
         REQUIRE(y.size() == 4);
-        CHECK(y.front() == doctest::Approx(0).epsilon(0.00005));
+        CHECK(y.front() == Approx(0).epsilon(0.00005));
         
         for (auto i = 0; i < 15; ++i)
             y = up(1);
-        CHECK(y.back() == doctest::Approx(1));
+        CHECK(y.back() == Approx(1));
     }
     
-    SUBCASE("setFactor()")
+    SECTION("setFactor()")
     {
         up.setFactor(8);
         REQUIRE(up.getFactor() == 8);
         REQUIRE(up.getFilterSize() == 64);
     }
     
-    SUBCASE("setBetaFactor()")
+    SECTION("setBetaFactor()")
     {
         REQUIRE_NOTHROW(up.setBetaFactor(8));
     }
