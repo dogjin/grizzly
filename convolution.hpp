@@ -97,34 +97,22 @@ namespace dsp
         std::vector<T> kernel;
     };
     
-    //! Convolve two buffers, return a buffer with size input + kernel - 1
+    //! Convolve two buffers, return a buffer with size input + kernel - 1 (output-side algorithm)
     template <typename InputIterator, typename KernelIterator>
-    static std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>>
-    convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
+    static std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
     {
-        const auto inputSize = std::distance(inBegin, inEnd);
-        const auto kernelSize = std::distance(kernelBegin, kernelEnd);
+        auto inputSize = std::distance(inBegin, inEnd);
+        auto kernelSize = std::distance(kernelBegin, kernelEnd);
+        auto outputSize = inputSize + kernelSize - 1;
         
-        std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> output(inputSize + kernelSize - 1);
-        
-        InputIterator input = inBegin;
-        for (int sample = 0; sample < output.size(); ++sample)
-        {
-            InputIterator input2 = input++;
-            KernelIterator kernel = kernelBegin;
-            
-            for (int h = 0; h < kernelSize; ++h)
+        std::vector<float> output(outputSize);
+        for (auto i = 0 ; i < outputSize; i++)
+            for (auto h = 0; h < kernelSize; h++)
             {
-                auto input3 = input2--;
-                if (sample - h < 0)
-                    continue;
-                
-                if (sample - h >= inputSize)
-                    continue;
-                
-                output[sample] += (*kernel++) * (*input3);
+                if (i - h < 0) continue;
+                else if (i - h >= inputSize) continue;
+                output[i] += kernelBegin[h] * inBegin[i - h];
             }
-        }
         
         return output;
     }
