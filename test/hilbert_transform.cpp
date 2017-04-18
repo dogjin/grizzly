@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../HilbertTransform.hpp"
+#include "../hilbert_transform.hpp"
 
 using namespace dsp;
 

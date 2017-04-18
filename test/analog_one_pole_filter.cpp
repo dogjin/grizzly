@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../AnalogOnePoleFilter.hpp"
+#include "../analog_one_pole_filter.hpp"
 
 using namespace dsp;
 using namespace std;

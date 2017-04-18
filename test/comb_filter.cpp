@@ -3,7 +3,7 @@
 
 #include "doctest.h"
 
-#include "../CombFilter.hpp"
+#include "../comb_filter.hpp"
 
 using namespace dsp;
 using namespace std;
@@ -18,10 +18,10 @@ TEST_CASE("CombFilter")
             {
                 FeedBackCombFilter<int> filter (4);
                 
-                REQUIRE (filter.getMaxDelayTime() == 4);
+                REQUIRE (filter.getMaximalDelayTime() == 4);
                 
                 for (int i = 0; i < 4; i++)
-                    CHECK(filter(0., 0., 0.) == 0);
+                    CHECK(filter.writeAndRead(0., 0., 0.) == 0);
             }
         }
         
@@ -31,11 +31,11 @@ TEST_CASE("CombFilter")
             {
                 FeedBackCombFilter<double> filter (2);
                 
-                CHECK(filter(1., 1., 0.5) == doctest::Approx(1.));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.5));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.125));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.0625));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.5));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.125));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.0625));
             }
             
             SUBCASE("postDelay")
@@ -49,9 +49,9 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter(1., 1., 0.5) == doctest::Approx(1.0));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.3125));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.0));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.3125));
             }
         }
     }
@@ -63,10 +63,10 @@ TEST_CASE("CombFilter")
             {
                 FeedForwardCombFilter<int> filter (4);
                 
-                REQUIRE (filter.getMaxDelayTime() == 4);
+                REQUIRE (filter.getMaximalDelayTime() == 4);
                 
                 for (int i = 0; i < 4; i++)
-                    CHECK(filter(0., 0., 0.) == 0);
+                    CHECK(filter.writeAndRead(0., 0., 0.) == 0);
             }
         }
         
@@ -76,9 +76,9 @@ TEST_CASE("CombFilter")
             {
                 FeedForwardCombFilter<double> filter (2);
                 
-                CHECK(filter(1., 1., 0.5) == doctest::Approx(1.));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.5));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.5));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.));
             }
             
             SUBCASE("postDelay")
@@ -92,10 +92,10 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter(1., 1., 0.5) == doctest::Approx(1.0));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.25));
-                CHECK(filter(0., 1., 0.5) == doctest::Approx(0.));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == doctest::Approx(1.0));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.25));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == doctest::Approx(0.));
             }
         }
     }

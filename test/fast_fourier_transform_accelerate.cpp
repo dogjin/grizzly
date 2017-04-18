@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../Apple/FastFourierTransformAccelerate.hpp"
+#include "../apple/fast_fourier_transform_accelerate.hpp"
 
 using namespace dsp;
 using namespace std;

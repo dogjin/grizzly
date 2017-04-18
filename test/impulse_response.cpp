@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../ImpulseResponse.hpp"
+#include "../impulse_response.hpp"
 
 using namespace dsp;
 using namespace std;

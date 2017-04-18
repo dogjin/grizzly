@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../MultiTapResonator.hpp"
+#include "../multi_tap_resonator.hpp"
 
 using namespace dsp;
 using namespace std;
@@ -14,7 +14,7 @@ TEST_CASE("MultiTapResonator")
         
         REQUIRE(!resonator.empty());
         REQUIRE(resonator.size() == 2);
-        REQUIRE(resonator.getMaximumDelayTime() == 20);
+        REQUIRE(resonator.getMaximalDelayTime() == 20);
     }
     
     SUBCASE("MultiTapResonator() with initializer_list")
@@ -23,7 +23,7 @@ TEST_CASE("MultiTapResonator")
         
         REQUIRE(!resonator.empty());
         REQUIRE(resonator.size() == 2);
-        REQUIRE(resonator.getMaximumDelayTime() == 20);
+        REQUIRE(resonator.getMaximalDelayTime() == 20);
         
         REQUIRE(resonator[0].delayTime == 10);
         REQUIRE(resonator[0].feedback == 0.5);

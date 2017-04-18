@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../Ooura/FastFourierTransformOoura.hpp"
+#include "../ooura/fast_fourier_transform_ooura.hpp"
 
 using namespace dsp;
 using namespace std;

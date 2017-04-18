@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../FirstOrderFilter.hpp"
+#include "../first_order_filter.hpp"
 
 using namespace dsp;
 using namespace std;

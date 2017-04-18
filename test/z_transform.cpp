@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../ZTransform.hpp"
+#include "../z_transform.hpp"
 
 using namespace dsp;
 using namespace std;

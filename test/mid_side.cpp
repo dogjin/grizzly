@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../MidSide.hpp"
+#include "../mid_side.hpp"
 
 using namespace dsp;
 

@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "../SegmentEnvelope.hpp"
+#include "../segment_envelope.hpp"
 
 using namespace dsp;
 using namespace std;
@@ -12,10 +12,10 @@ using namespace std;
 TEST_CASE("Segment Envelope")
 {
     SegmentEnvelope<float> env;
-    env.addSegment(1, 0.5);
-    env.addSegment(0.1, 0.5);
+    env.emplace(1, 0.5);
+    env.emplace(0.1, 0.5);
     
-    env[0].destination = 2.2;
+    env[0].amplitude = 2.2;
     
     auto sampleRate = 100;
     

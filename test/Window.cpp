@@ -3,7 +3,7 @@
 
 #include "doctest.h"
 
-#include "../Window.hpp"
+#include "../window.hpp"
 
 using namespace dsp;
 using namespace std;

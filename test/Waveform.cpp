@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../Waveform.hpp"
+#include "../waveform.hpp"
 
 using namespace dsp;
 using namespace std;

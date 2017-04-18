@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../UpSample.hpp"
+#include "../up_sample.hpp"
 
 using namespace dsp;
 using namespace std;

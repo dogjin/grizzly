@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../Biquad.hpp"
+#include "../biquad.hpp"
 
 using namespace dsp;
 using namespace std;

@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "../Dynamic.hpp"
+#include "../dynamic.hpp"
 
 using namespace dsp;
 using namespace std;

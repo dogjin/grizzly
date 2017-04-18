@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../AnalyticTransform.hpp"
+#include "../analytic_transform.hpp"
 
 using namespace dsp;
 

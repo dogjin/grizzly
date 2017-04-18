@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../DownSample.hpp"
+#include "../down_sample.hpp"
 
 using namespace dsp;
 using namespace std;

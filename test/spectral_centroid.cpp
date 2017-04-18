@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../SpectralCentroid.hpp"
+#include "../spectral_centroid.hpp"
 
 using namespace dsp;
 using namespace std;

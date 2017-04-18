@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../Convolution.hpp"
+#include "../convolution.hpp"
 
 using namespace dsp;
 using namespace std;

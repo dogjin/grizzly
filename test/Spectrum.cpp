@@ -3,7 +3,7 @@
 
 #include "doctest.h"
 
-#include "../Spectrum.hpp"
+#include "../spectrum.hpp"
 
 using namespace dsp;
 using namespace std;

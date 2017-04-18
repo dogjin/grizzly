@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../GordonSmithOscillator.hpp"
+#include "../gordon_smith_oscillator.hpp"
 
 using namespace dsp;
 using namespace std;

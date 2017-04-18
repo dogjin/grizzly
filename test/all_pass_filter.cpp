@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../AllPassFilter.hpp"
+#include "../all_pass_filter.hpp"
 
 using namespace dsp;
 using namespace std;
@@ -23,7 +23,7 @@ TEST_CASE("test AllPassFilter.hpp")
     {
         AllPassFilter<float> allPass(0);
 
-        CHECK(allPass.getMaximumDelayTime() == 0);
+        CHECK(allPass.getMaximalDelayTime() == 0);
     }
 
     SUBCASE("all 0's")
@@ -34,7 +34,7 @@ TEST_CASE("test AllPassFilter.hpp")
 
         // fill
         for (auto i = 0; i < bufferSize; i++)
-            buffer[i] = allPass.process(0, 10, 1);
+            buffer[i] = allPass.writeAndRead(0, 10, 1);
 
         // check
         for (auto i = 0; i < bufferSize; i++)

@@ -2,7 +2,7 @@
 
 #include "doctest.h"
 
-#include "../CircularBuffer.hpp"
+#include "../circular_buffer.hpp"
 
 using namespace dsp;
 using namespace std;

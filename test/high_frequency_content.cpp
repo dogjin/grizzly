@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "doctest.h"
-#include "../HighFrequencyContent.hpp"
+#include "../high_frequency_content.hpp"
 
 using namespace dsp;
 using namespace std;
