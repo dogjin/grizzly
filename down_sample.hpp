@@ -112,7 +112,7 @@ namespace dsp
     {
         // Write the input to the delay
         for (auto i = 0; i < numberOfSteps; ++i)
-            delayLine.emplace_back(*begin++);
+            delayLine.write(*begin++);
         
         // Initialize the output
         T output = 0;

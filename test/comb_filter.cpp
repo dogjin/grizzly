@@ -18,7 +18,7 @@ TEST_CASE("CombFilter")
             {
                 FeedBackCombFilter<int> filter (4);
                 
-                REQUIRE (filter.getMaximalDelayTime() == 4);
+                REQUIRE(filter.getMaximalDelayTime() == 4);
                 
                 for (int i = 0; i < 4; i++)
                     CHECK(filter.writeAndRead(0., 0., 0.) == 0);
@@ -31,11 +31,11 @@ TEST_CASE("CombFilter")
             {
                 FeedBackCombFilter<double> filter (2);
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.5));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.125));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.0625));
+                CHECK(filter.writeAndRead(1.0, 1.0, 0.5) == Approx(1.));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.5));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.125));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.0625));
             }
             
             SECTION("postDelay")
@@ -49,9 +49,9 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.0));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.3125));
+                CHECK(filter.writeAndRead(1.0, 1.0, 0.5) == Approx(1.0));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.3125));
             }
         }
     }

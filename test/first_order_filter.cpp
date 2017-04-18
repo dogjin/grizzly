@@ -13,25 +13,14 @@ TEST_CASE("FirstOrderFilter")
         
         filter.coefficients.a0 = 0.5;
         filter.coefficients.a1 = 0.5;
-        filter.coefficients.b1 = 0.5;
+        filter.coefficients.b1 = -0.5;
         
-        filter.write(1);
-        CHECK(filter.read() == Approx(0.5));
-        
-        filter.write(0);
-        CHECK(filter.read() == Approx(0.75));
-        
-        filter.write(0);
-        CHECK(filter.read() == Approx(0.375));
-        
-        filter.write(0);
-        CHECK(filter.read() == Approx(0.1875));
-        
-        filter.write(0);
-        CHECK(filter.read() == Approx(0.09375));
-        
-        filter.write(0);
-        CHECK(filter.read() == Approx(0.046875));
+        CHECK(filter.writeAndRead(1) == Approx(0.5));
+        CHECK(filter.writeAndRead(0) == Approx(0.75));
+        CHECK(filter.writeAndRead(0) == Approx(0.375));
+        CHECK(filter.writeAndRead(0) == Approx(0.1875));
+        CHECK(filter.writeAndRead(0) == Approx(0.09375));
+        CHECK(filter.writeAndRead(0) == Approx(0.046875));
     }
     
     SECTION("Coefficients setup")
@@ -51,11 +40,11 @@ TEST_CASE("FirstOrderFilter")
         {
             SECTION("with cutoff")
             {
-                lowPassOnePole(coefficients, 44100, unit::hertz<float>(10000));
+                lowPassOnePole(coefficients, unit::hertz<float>(44100), unit::hertz<float>(10000));
                 
                 CHECK(coefficients.a0 == Approx(0.759433464558704));
                 CHECK(coefficients.a1 == Approx(0));
-                CHECK(coefficients.b1 == Approx(0.240566535441296));
+                CHECK(coefficients.b1 == Approx(-0.24057f));
             }
             
             SECTION("with time and constant")
@@ -64,7 +53,7 @@ TEST_CASE("FirstOrderFilter")
                 
                 CHECK(coefficients.a0 == Approx(0.0001133723));
                 CHECK(coefficients.a1 == Approx(0));
-                CHECK(coefficients.b1 == Approx(0.9998866277));
+                CHECK(coefficients.b1 == Approx(-0.99989f));
             }
         }
         
@@ -72,18 +61,18 @@ TEST_CASE("FirstOrderFilter")
         {
             lowPassOnePoleZero(coefficients, 44100, unit::hertz<float>(10000));
             
-            CHECK(coefficients.a0 == Approx(0.379716732279352));
-            CHECK(coefficients.a1 == Approx(0.379716732279352));
-            CHECK(coefficients.b1 == Approx(0.240566535441296));
+            CHECK(coefficients.a0 == Approx(0.46343f));
+            CHECK(coefficients.a1 == Approx(0.46343f));
+            CHECK(coefficients.b1 == Approx(-0.07315f));
         }
         
         SECTION("highPassOnePoleZero")
         {
             highPassOnePoleZero(coefficients, 44100, 10000);
             
-            CHECK(coefficients.a0 == Approx(0.620283267720648));
-            CHECK(coefficients.a1 == Approx(-0.620283267720648));
-            CHECK(coefficients.b1 == Approx(0.240566535441296));
+            CHECK(coefficients.a0 == Approx(0.53657f));
+            CHECK(coefficients.a1 == Approx(-0.53657f));
+            CHECK(coefficients.b1 == Approx(-0.07315f));
         }
     }
 }

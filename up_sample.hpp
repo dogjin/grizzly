@@ -105,7 +105,7 @@ namespace dsp
     std::vector<T> UpSample<T>::process(const T& x)
     {
         // Write the input to the delay
-        delayLine.emplace_back(x);
+        delayLine.write(x);
         
         // Initialize the output
         std::vector<T> output(factor);

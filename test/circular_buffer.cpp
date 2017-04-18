@@ -62,19 +62,19 @@ TEST_CASE("CircularBuffer")
 		}
 	}
 
-	SECTION("emplace_back")
+	SECTION("write()")
 	{
 		CircularBuffer<int> buffer(3);	
-		buffer.emplace_back(8);
-		buffer.emplace_back(9);
+		buffer.write(8);
+		buffer.write(9);
 
-		REQUIRE(buffer.size() == 3);
+		CHECK(buffer.size() == 3);
 		CHECK(buffer[buffer.size() - 2] == 8);
 		CHECK(buffer[buffer.size() - 1] == 9);
 
-		buffer.emplace_back(1);
-		buffer.emplace_back(13);
-		buffer.emplace_back(-8);
+		buffer.write(1);
+		buffer.write(13);
+		buffer.write(-8);
 
 		CHECK(buffer[buffer.size() - 3] == 1);
 		CHECK(buffer[buffer.size() - 2] == 13);
@@ -87,7 +87,7 @@ TEST_CASE("CircularBuffer")
 
 		for (auto i = 0; i < 4; ++i)
 		{
-			REQUIRE_NOTHROW(buffer[0]);
+			CHECK_NOTHROW(buffer[0]);
 			buffer[0] = i * 2;
 			CHECK(buffer[0] == i + i);
 		}
