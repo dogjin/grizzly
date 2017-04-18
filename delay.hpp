@@ -51,7 +51,7 @@ namespace dsp
         template <typename... Args>
         void write(Args&&... args)
         {
-            data.emplace_back(std::forward<Args&&>(args)...);
+            data.write(std::forward<Args&&>(args)...);
         }
         
         //! Read from the delay line
@@ -62,10 +62,10 @@ namespace dsp
         }
         
         //! Read from the delay line with a fractional index
-        template <typename Index, typename Interpolator>
-        T read(Index index, Interpolator interpolator) const
+        template <typename Index, typename Interpolation>
+        auto read(Index index, Interpolation interpolate) const
         {
-            return interpolator(data.rbegin(), data.rend(), index, math::clampAccess);
+            return interpolate(data.rbegin(), data.rend(), index, math::clampAccess);
         }
         
         //! Set the maximal delay

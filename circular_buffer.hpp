@@ -134,9 +134,9 @@ namespace dsp
             
         }
         
-        //! Put a new value at the back of the buffer
+        //! Write a new value into the buffer, overwriting the oldest one
         template <class... Args>
-        void emplace_back(Args&&... args)
+        void write(Args&&... args)
         {
             data[front] = T(std::forward<Args&&>(args)...);
             front = math::wrap<std::size_t>(front + 1, 0, data.size());
