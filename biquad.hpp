@@ -34,7 +34,7 @@ namespace dsp
 {
     //! A biquad using Direct Form I
     /*! Biquad that computes samples using the Direct Form I topology.
-        This topology gives you less side-effects when chaning coefficients during processing. */
+     This topology gives you less side-effects when chaning coefficients during processing. */
     template <class T, class CoeffType = double>
     class BiquadDirectFormI
     {
@@ -80,7 +80,116 @@ namespace dsp
     public:
         //! The coefficients to the biquad
         BiquadCoefficients<CoeffType> coefficients;
-
+        
+    private:
+        T y = 0; //! output
+        T xz1 = 0; //!< 1-sample input delay
+        T xz2 = 0; //!< 2-sample input delay
+        T yz1 = 0; //!< 1-sample output delay
+        T yz2 = 0; //!< 2-sample output delay
+    };
+    
+    //! A biquad using Direct Form II
+    /*! Biquad that computes samples using the Direct Form II topology.
+     This topology minimizes the use of delays as it is shared between branches.
+     A better floating-point accuracy is achieved in the transposed version. */
+    template <class T, class CoeffType = double>
+    class BiquadDirectFormII
+    {
+    public:
+        //! Insert a new sample in the Biquad
+        void write(const T& x)
+        {
+            auto v = x - coefficients.b1 * z1 - coefficients.b2 * z2;
+            y = coefficients.a0 * v + coefficients.a1 * z1 + coefficients.a2 * z2;
+            
+            z2 = z1;
+            z1 = v;
+        }
+        
+        //! Insert a new sample in the Biquad
+        T read() const { return y; }
+        
+        T writeAndRead(const T& x)
+        {
+            write(x);
+            return read();
+        }
+        
+        //! Set the filter state
+        void setState(const T& state)
+        {
+            z1 = state;
+            z1 = state;
+            y = state;
+        }
+        
+        //! Clear the delay elements
+        void reset()
+        {
+            setState(0);
+        }
+        
+    public:
+        //! The coefficients to the biquad
+        BiquadCoefficients<CoeffType> coefficients;
+        
+    private:
+        T y = 0; //! output
+        T z1 = 0; //!< 1-sample delay
+        T z2 = 0; //!< 2-sample delay
+    };
+    
+    //! A biquad using Transposed Direct Form I
+    /*! Biquad that computes samples using the Transposed Direct Form I topology.
+     Use transposed direct form II for better floating-point accuracy.
+     Use direct form I for less side-effects when chaning coefficients during processing. */
+    template <class T, class CoeffType = double>
+    class BiquadTransposedDirectFormI
+    {
+    public:
+        //! Compute a sample
+        void write(const T& x)
+        {
+            auto v = x + yz1;
+            yz1 = -coefficients.b1 * v + yz2;
+            yz2 = -coefficients.b2 * v;
+            
+            y = coefficients.a0 * v + xz1;
+            xz1 = coefficients.a1 * v + xz2;
+            xz2 = coefficients.a2 * v;
+        }
+        
+        //! Insert a new sample in the Biquad
+        T read() const { return y; }
+        
+        //! Write a new sample and read the output (in that order)
+        T writeAndRead(const T& x)
+        {
+            write(x);
+            return read();
+        }
+        
+        //! Set the filter state
+        void setState(const T& state)
+        {
+            xz1 = state;
+            yz1 = state;
+            xz2 = state;
+            yz2 = state;
+            y = state;
+        }
+        
+        //! Clear the delay elements
+        void reset()
+        {
+            setState(0);
+        }
+        
+    public:
+        //! The coefficients to the biquad
+        BiquadCoefficients<CoeffType> coefficients;
+        
     private:
         T y = 0; //! output
         T xz1 = 0; //!< 1-sample input delay
@@ -91,8 +200,8 @@ namespace dsp
     
     //! A biquad using Transposed Direct Form II
     /*! Biquad that computes samples using the Transposed Direct Form II topology.
-        This is supposedly better for floating-point computation, although it has more
-        side-effects when you change the coefficients during processing. */
+     This structes minimizes the use of delays and has a good floating-point accuracy,
+     although it has more side-effects when you change the coefficients during processing. */
     template <class T, class CoeffType = double>
     class BiquadTransposedDirectFormII
     {
@@ -109,6 +218,12 @@ namespace dsp
         
         //! Insert a new sample in the Biquad
         T read() const { return y; }
+        
+        T writeAndRead(const T& x)
+        {
+            write(x);
+            return read();
+        }
         
         //! Set the filter state
         void setState(const T& state)
