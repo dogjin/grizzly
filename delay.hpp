@@ -40,6 +40,10 @@ namespace dsp
     class Delay
     {
     public:
+        using iterator = typename CircularBuffer<T>::iterator;
+        using const_iterator = typename CircularBuffer<T>::const_iterator;
+
+    public:
         //! Construct by feeding the maximal delay size
         Delay(std::size_t maximalDelayTime) :
             data(maximalDelayTime + 1)
@@ -78,13 +82,13 @@ namespace dsp
         std::size_t getMaximalDelayTime() const { return data.size() - 1; }
         
         // Begin and end for ranged for-loops
-        auto begin() { return data.rbegin(); }
-        auto begin() const { return data.rbegin(); }
-        auto cbegin() const { return data.crbegin(); }
+        iterator begin() { return data.rbegin(); }
+        const_iterator begin() const { return data.rbegin(); }
+        const_iterator cbegin() const { return data.crbegin(); }
         
-        auto end() { return data.rend(); }
-        auto end() const { return data.rend(); }
-        auto cend() const { return data.crend(); }
+        iterator end() { return data.rend(); }
+        const_iterator end() const { return data.rend(); }
+        const_iterator cend() const { return data.crend(); }
         
     private:
         //! The data in the delay line

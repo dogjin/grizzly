@@ -16,7 +16,7 @@ TEST_CASE("CombFilter")
         {
             SECTION("is initialized to 0")
             {
-                FeedBackCombFilter<int> filter (4);
+                FeedBackCombFilter<int> filter(4);
                 
                 REQUIRE(filter.getMaximalDelayTime() == 4);
                 
@@ -29,9 +29,9 @@ TEST_CASE("CombFilter")
         {
             SECTION("Impulse")
             {
-                FeedBackCombFilter<double> filter (2);
+                FeedBackCombFilter<double> filter(2);
                 
-                CHECK(filter.writeAndRead(1.0, 1.0, 0.5) == Approx(1.));
+                CHECK(filter.writeAndRead(1.0, 1.0, 0.5) == Approx(1.0));
                 CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.5));
                 CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.25));
                 CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.125));
@@ -40,7 +40,7 @@ TEST_CASE("CombFilter")
             
             SECTION("postDelay")
             {
-                FeedBackCombFilter<double> filter (2);
+                FeedBackCombFilter<double> filter(2);
                 filter.postDelay = [&](const double& x)
                 {
                     static double xHistory = 0.;
@@ -61,12 +61,12 @@ TEST_CASE("CombFilter")
         {
             SECTION("is initialized to 0")
             {
-                FeedForwardCombFilter<int> filter (4);
+                FeedForwardCombFilter<int> filter(4);
                 
                 REQUIRE (filter.getMaximalDelayTime() == 4);
                 
                 for (int i = 0; i < 4; i++)
-                    CHECK(filter.writeAndRead(0., 0., 0.) == 0);
+                    CHECK(filter.writeAndRead(0.0, 0.0, 0.0) == 0);
             }
         }
         
@@ -74,16 +74,16 @@ TEST_CASE("CombFilter")
         {
             SECTION("Impulse")
             {
-                FeedForwardCombFilter<double> filter (2);
+                FeedForwardCombFilter<double> filter(2);
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.));
+                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.0));
                 CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.5));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.));
+                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.0));
             }
             
             SECTION("postDelay")
             {
-                FeedForwardCombFilter<double> filter (2);
+                FeedForwardCombFilter<double> filter(2);
                 filter.postDelay = [&](const double& x)
                 {
                     static double xHistory = 0.;
@@ -92,10 +92,10 @@ TEST_CASE("CombFilter")
                     return sum / 2.;
                 };
                 
-                CHECK(filter.writeAndRead(1., 1., 0.5) == Approx(1.0));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.25));
-                CHECK(filter.writeAndRead(0., 1., 0.5) == Approx(0.));
+                CHECK(filter.writeAndRead(1.0, 1.0, 0.5) == Approx(1.0));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.25));
+                CHECK(filter.writeAndRead(0.0, 1.0, 0.5) == Approx(0.0));
             }
         }
     }

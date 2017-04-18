@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5.1)
 project(Grizzly CXX)
 
 # Add global definitions and include directories
-add_definitions(-std=c++1z -Wall -Werror)
+add_definitions(-std=c++14 -Wall -Werror)
 include_directories(/usr/local/include)
 
 # Setup the common headers and sources
