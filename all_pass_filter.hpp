@@ -53,9 +53,10 @@ namespace dsp
             
         }
         
-        //! Write a new sample to the filter given a default a0 coefficient of the inverse golden ratio and default linear interpolation
+        //! Write a new sample to the filter given an a0 (gain) coefficient and default linear interpolation
+        /*! For reverberators, see math::INVERSE_PHI as a possible a0 coefficient. */
         template <typename Interpolation = decltype(math::linearInterpolation)>
-        void write(const T& x, float delayTime, float a0 = math::INVERSE_PHI<float>, Interpolation interpolation = math::linearInterpolation)
+        void write(const T& x, float delayTime, float a0, Interpolation interpolation = math::linearInterpolation)
         {
             if (delayTime < 1)
                 throw std::invalid_argument("delay time < 1");
@@ -75,9 +76,9 @@ namespace dsp
         
         //! Write a new sample and read the result (in that order)
         template <typename Interpolation = decltype(math::linearInterpolation)>
-        T writeAndRead(const T& x, float delayTime, float gain = math::INVERSE_PHI<float>, Interpolation interpolation = math::linearInterpolation)
+        T writeAndRead(const T& x, float delayTime, float a0, Interpolation interpolation = math::linearInterpolation)
         {
-            write(x, delayTime, gain, interpolation);
+            write(x, delayTime, a0, interpolation);
             return read();
         }
         
@@ -101,6 +102,5 @@ namespace dsp
         T y;
     };
 }
-
 
 #endif
