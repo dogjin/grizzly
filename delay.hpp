@@ -40,8 +40,8 @@ namespace dsp
     class Delay
     {
     public:
-        using iterator = typename CircularBuffer<T>::iterator;
-        using const_iterator = typename CircularBuffer<T>::const_iterator;
+        using iterator = typename CircularBuffer<T>::reverse_iterator;
+        using const_iterator = typename CircularBuffer<T>::reverse_const_iterator;
 
     public:
         //! Construct by feeding the maximal delay size
