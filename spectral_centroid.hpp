@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016 Dsperados <info@dsperados.com>
+ Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
