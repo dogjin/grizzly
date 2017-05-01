@@ -65,7 +65,7 @@ namespace dsp
         }
         
         //! Read the output of a single band
-        T readBand(std::size_t index)
+        T readBand(std::size_t index) const
         {
             // There is one band more than the number of filters
             if (index > filters.size())
@@ -79,7 +79,7 @@ namespace dsp
         }
         
         //! Read al the bands
-        std::vector<T> readBands()
+        std::vector<T> readBands() const
         {
             // Return nothing if there are not bands
             std::vector<T> bands;

@@ -79,14 +79,14 @@ namespace dsp
         T writeAndReadLowPass(const T& x)
         {
             write(x);
-            readLowPass();
+            return readLowPass();
         }
         
         //! Write and read high-pass output (in that order)
         T writeAndReadHighPass(const T& x)
         {
             write(x);
-            readHighPass();
+            return readHighPass();
         }
         
         //! Set cut-off

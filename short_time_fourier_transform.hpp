@@ -35,17 +35,16 @@
 #include <stdexcept>
 #include <vector>
 
+#include "fast_fourier_transform.hpp"
 #include "spectrum.hpp"
 
 namespace dsp
 {
-    class FastFourierTransformBase;
-    
     //! The short-time Fourier transform
     template <typename InputIterator, typename WindowIterator>
-    std::vector<Spectrum<float>> shortTimeFourierTransform(InputIterator begin, InputIterator end, FastFourierTransformBase& fourier, std::experimental::optional<WindowIterator> windowBegin, size_t hopSize)
+    std::vector<Spectrum<float>> shortTimeFourierTransform(InputIterator begin, InputIterator end, FastFourierTransform& fourier, std::experimental::optional<WindowIterator> windowBegin, size_t hopSize)
     {
-        const auto frameSize = fourier.getSize();
+        const auto frameSize = fourier.size;
         
         // Generate space for all spectra
         const auto size = std::distance(begin, end);
