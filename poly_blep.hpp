@@ -25,25 +25,27 @@
  
  */
 
-#ifndef POLY_BLEP_HPP
-#define POLY_BLEP_HPP
+#ifndef GRIZZLY_POLY_BLEP_HPP
+#define GRIZZLY_POLY_BLEP_HPP
 
 namespace dsp
 {
-    //! Polinomal band limited step function
-    static inline double polyBlep(double phase, double increment)
+    //! Polynomal band limited step function
+    template <typename T>
+    auto polyBlep(const T& phase, const T& increment)
     {
         if (phase < increment)
         {
-            double x = phase / increment;
-            return x + x - x * x - 1.0;
+            auto x = phase / increment;
+            return x + x - x * x - T(1);
         }
         else if (phase > 1.0 - increment)
         {
-            double x = (phase - 1.0) / increment;
-            return x * x + x + x + 1.0; // x*x * (3 - x * x) // x*x*x * (x * (x * 6 - 15) + 10)
+            auto x = (phase - 1.0) / increment;
+            return x * x + x + x + T(1);
         }
-        else return 0;
+        else
+            return T();
     }
 }
 

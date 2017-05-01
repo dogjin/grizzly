@@ -55,7 +55,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateBipolarSaw<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarSaw<T>(phase); }
     };
     
     //! Generates a unipolar saw wave
@@ -64,7 +64,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarSaw<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarSaw<T>(phase); }
     };
     
     //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
@@ -73,12 +73,22 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override
+        T convertPhaseToY(long double phase) final override
         {
+            // Compute the y without any anti aliasing
             auto y = dsp::generateBipolarSaw<T>(phase);
-            y -= polyBlep(math::wrap<T>(this->getPhase() + 0.5, 0.0, 1.0), this->getIncrement());
+            
+            // Compute the increment (phase - previous) and adjust y using polyBLEP
+            y -= polyBlep<long double>(math::wrap<T>(this->getPhase() + 0.5, 0.0, 1.0), phase - previousPhase);
+            
+            // Update the previous phase
+            previousPhase = phase;
+            
             return y;
         }
+        
+    private:
+        long double previousPhase = 0;
     };
 }
 

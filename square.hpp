@@ -65,45 +65,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateSquare<T>(phase, pulseWidth, -1, 1); }
-        
-    private:
-        //! The pulse width used to generate the square
-        float pulseWidth = 0.5f;
-    };
-    
-    //! Generates a bipolar square wave
-    template <typename T>
-    class BipolarSquareBlep : public PhaseGenerator<T>
-    {
-    public:
-        BipolarSquareBlep(float pulseWidth = 0.5f) :
-            pulseWidth(pulseWidth)
-        {
-        }
-        
-        //! Change the pulse width
-        /*! @param recompute Recompute the y to return from read() */
-        void setPulseWidth(float pulseWidth, bool recompute)
-        {
-            if (pulseWidth == this->pulseWidth)
-                return;
-            
-            this->pulseWidth = pulseWidth;
-            
-            if (recompute)
-                this->recomputeY();
-        }
-        
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override
-        {
-            auto y = dsp::generateSquare<T>(phase, pulseWidth, -1, 1);
-            y += polyBlep(phase, this->getIncrement());
-            y -= polyBlep(math::wrap<long double>(this->getPhase() + (1.l - pulseWidth), 0.l, 1.l), this->getIncrement());
-            return y;
-        }
+        T convertPhaseToY(long double phase) final override { return dsp::generateSquare<T>(phase, pulseWidth, -1, 1); }
         
     private:
         //! The pulse width used to generate the square
@@ -135,11 +97,59 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateSquare<T>(phase, pulseWidth, 0, 1); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateSquare<T>(phase, pulseWidth, 0, 1); }
         
     private:
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
+    };
+    
+    //! Generates a bipolar square wave
+    template <typename T>
+    class BipolarSquareBlep : public PhaseGenerator<T>
+    {
+    public:
+        BipolarSquareBlep(float pulseWidth = 0.5f) :
+            pulseWidth(pulseWidth)
+        {
+        }
+        
+        //! Change the pulse width
+        /*! @param recompute Recompute the y to return from read() */
+        void setPulseWidth(float pulseWidth, bool recompute)
+        {
+            if (pulseWidth == this->pulseWidth)
+                return;
+            
+            this->pulseWidth = pulseWidth;
+            
+            if (recompute)
+                this->recomputeY();
+        }
+        
+    private:
+        //! Recompute the most recently computed value
+        T convertPhaseToY(long double phase) final override
+        {
+            // Compute the y without any anti aliasing
+            auto y = dsp::generateSquare<T>(phase, pulseWidth, -1, 1);
+            
+            // Compute the increment (phase - previous) and adjust y using polyBLEP
+            const auto increment = phase - previousPhase;
+            y += polyBlep<long double>(phase, increment);
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + (1 - pulseWidth), 0, 1), increment);
+            
+            // Update the previous phase
+            previousPhase = phase;
+            
+            return y;
+        }
+        
+    private:
+        //! The pulse width used to generate the square
+        float pulseWidth = 0.5f;
+        
+        long double previousPhase = 0;
     };
 }
 

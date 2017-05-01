@@ -53,7 +53,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateBipolarTriangle<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarTriangle<T>(phase); }
     };
     
     //! Generates a unipolar triangle wave
@@ -62,7 +62,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarTriangle<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarTriangle<T>(phase); }
     };
 }
 

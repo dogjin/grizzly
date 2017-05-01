@@ -35,7 +35,7 @@
 
 namespace dsp
 {
-    //! Generates a waveform using incrementable phase
+    //! Generates a waveform using an incrementable phase
     template <typename T>
     class PhaseGenerator
     {
@@ -45,9 +45,7 @@ namespace dsp
         
         //! Increment the generator
         void increment(long double increment)
-        {
-            increment_ = increment;
-            
+        {            
             phase += increment;
             if (end && phase >= 1)
                 end();
@@ -75,32 +73,11 @@ namespace dsp
             recomputeY();
         }
         
-        //! Change the increment and phase manually
-        void setIncrementAndPhase(long double increment, long double phase)
-        {
-            increment_ = increment;
-            
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
-        //! Change the increment and phase manually, given a frequency
-        void setIncrementAndPhase(unit::hertz<float> frequency, unit::hertz<float> sampleRate, long double phase)
-        {
-            increment_ = frequency.value / sampleRate.value;
-            
-            this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
-        }
-        
         //! Return the current phase between 0 and 1
         long double getPhase() const
         {
             return phase;
         }
-        
-        //! Return the increment
-        long double getIncrement() const { return increment_; }
         
     public:
         //! End function when ramp gets wrapped
@@ -112,7 +89,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        virtual T convertPhaseToY(long double phase) const = 0;
+        virtual T convertPhaseToY(long double phase) = 0;
         
     private:
         //! The to be returned value from read
@@ -120,9 +97,6 @@ namespace dsp
         
         //! The current phase of the saw (ranged from 0 to 1)
         long double phase = 0;
-        
-        //! The increment, rate of change
-        long double increment_ = 0;
     };
 }
 

@@ -55,7 +55,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateBipolarSine<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarSine<T>(phase); }
     };
     
     //! Generates a unipolar sine wave
@@ -64,7 +64,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) const final override { return dsp::generateUnipolarSine<T>(phase); }
+        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarSine<T>(phase); }
     };
 }
 
