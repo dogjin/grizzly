@@ -208,12 +208,15 @@ namespace dsp
         coefficients.a1 = -coefficients.a0;
     }
     
-    //! Set filter to high all-pass filtering using one pole and one zero, given a coefficient value for b1
+    //! Set filter to high all-pass filtering using one pole and one zero, given a shape value for the a0 and b1 coefficients
     template <typename T>
-    void allPass(FirstOrderCoefficients<T>& coefficients, float coefficient)
+    void allPass(FirstOrderCoefficients<T>& coefficients, float shape)
     {
-        coefficients.b1 = coefficient;
-        coefficients.a0 = coefficient;
+        if (shape < -1 || shape > 1)
+            throw std::invalid_argument("shape < -1 or > 1");
+        
+        coefficients.b1 = shape;
+        coefficients.a0 = shape;
         coefficients.a1 = 1;
     }
     

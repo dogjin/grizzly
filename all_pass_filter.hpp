@@ -53,22 +53,25 @@ namespace dsp
             
         }
         
-        //! Write a new sample to the filter given an a0 (gain) coefficient and default linear interpolation
-        /*! For reverberators, see math::INVERSE_PHI as a possible a0 coefficient. */
+        //! Write a new sample to the filter given an shape (gain coefficient) and default linear interpolation
+        /*! For reverberators, see math::INVERSE_PHI as a possible shape. */
         template <typename Interpolation = decltype(math::linearInterpolation)>
-        void write(const T& x, float delayTime, float a0, Interpolation interpolation = math::linearInterpolation)
+        void write(const T& x, float delayTime, float shape, Interpolation interpolation = math::linearInterpolation)
         {
             if (delayTime < 1)
                 throw std::invalid_argument("delay time < 1");
+            
+            if (shape < -1 || shape > 1)
+                throw std::invalid_argument("shape < -1 or > 1");
             
             // read delay with time minus 1 because the previous call did the write, which already introduced a delay
             auto z1 = delay.read(delayTime - 1, interpolation);
             
             // write output
-            y = x * a0 + z1;
+            y = x * shape + z1;
             
             // Update the delay-line
-            delay.write(x + y * -a0);
+            delay.write(x + y * -shape);
         }
         
         //! Return the most recently computed output
@@ -76,9 +79,9 @@ namespace dsp
         
         //! Write a new sample and read the result (in that order)
         template <typename Interpolation = decltype(math::linearInterpolation)>
-        T writeAndRead(const T& x, float delayTime, float a0, Interpolation interpolation = math::linearInterpolation)
+        T writeAndRead(const T& x, float delayTime, float shape, Interpolation interpolation = math::linearInterpolation)
         {
-            write(x, delayTime, a0, interpolation);
+            write(x, delayTime, shape, interpolation);
             return read();
         }
         
