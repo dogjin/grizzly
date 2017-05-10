@@ -261,7 +261,7 @@ namespace dsp
         std::vector<float> imaginary(size / 2 + 1);
         
         // Deinterleave
-        deinterleave(input, input + size, real.begin(), imaginary.begin());
+        deinterleave(input, input + size / 2 + 1, real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);
