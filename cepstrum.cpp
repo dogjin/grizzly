@@ -21,7 +21,11 @@ namespace dsp
         
         // Compute the log of the magnitudes
         std::vector<float> real(spectrum.size());
-        std::transform(spectrum.begin(), spectrum.end(), real.begin(), [](const auto& bin){ return std::log(std::abs(bin)); });
+        std::transform(spectrum.begin(), spectrum.end(), real.begin(), [](const auto& bin) -> float
+        {
+            const auto mag = std::abs(bin);
+            return (mag == 0) ? std::numeric_limits<float>::min() : std::log(mag);
+        });
         
         // Take the inverse transform
         const std::vector<float> imaginary(real.size(), 0);
@@ -39,7 +43,11 @@ namespace dsp
         
         // Compute the log squared magnitudes
         std::vector<float> real(spectrum.size());
-        std::transform(spectrum.begin(), spectrum.end(), real.begin(), [](const auto& bin){ return std::log(std::norm(bin)); });
+        std::transform(spectrum.begin(), spectrum.end(), real.begin(), [](const auto& bin)
+        {
+            const auto mag = std::norm(bin);
+            return (mag == 0) ? std::numeric_limits<float>::min() : std::log(mag);
+        });
         
         // Take the inverse transform
         const std::vector<float> imaginary(real.size(), 0);
