@@ -115,8 +115,8 @@ namespace dsp
     {
         // Copy the input reals and imaginaries, so that we can change the format around to
         // the way vDSP accepts it
-        vector<float> real_(real, real + size / 2 + 1);
-        vector<float> imaginary_(imaginary, imaginary + size / 2 + 1);
+        vector<float> real_(real, real + realSpectrumSize);
+        vector<float> imaginary_(imaginary, imaginary + realSpectrumSize);
 
         // Re[Nyquist] is supposed to be stored in Im[0] for vDSP
         imaginary_[0] = real[size / 2];
