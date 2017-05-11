@@ -35,21 +35,22 @@ using namespace std;
 namespace dsp
 {
     FastFourierTransformBase::FastFourierTransformBase(size_t size) :
-        size(size)
+        size(size),
+        realSpectrumSize(size / 2 + 1)
     {
         
     }
     
     Spectrum<float> FastFourierTransformBase::forward(const float* input)
     {
-        Spectrum<float> output(size / 2 + 1);
+        Spectrum<float> output(realSpectrumSize);
         forward(input, output.begin());
         return output;
     }
     
     Spectrum<double> FastFourierTransformBase::forward(const double* input)
     {
-        Spectrum<double> output(size / 2 + 1);
+        Spectrum<double> output(realSpectrumSize);
         forward(input, output.begin());
         return output;
     }

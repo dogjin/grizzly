@@ -51,73 +51,73 @@ namespace dsp
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @return: A spectrum of (size / 2 + 1) complex bins */
+            @return: A spectrum of realSpectrumSize complex bins */
         Spectrum<float> forward(const float* input);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @return: A spectrum of (size / 2 + 1) complex bins */
+            @return: A spectrum of realSpectrumSize complex bins */
         Spectrum<double> forward(const double* input);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @param output Iterator to a std::complex<float> spectrum container, of at least (size / 2 + 1) elements */
+            @param output Iterator to a std::complex<float> spectrum container, of at least realSpectrumSize elements */
         template <class ComplexIterator>
         void forward(const float* input, ComplexIterator output);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @param output Iterator to a std::complex<double> spectrum container, of at least (size / 2 + 1) elements */
+            @param output Iterator to a std::complex<double> spectrum container, of at least realSpectrumSize elements */
         template <class ComplexIterator>
         void forward(const double* input, ComplexIterator output);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @param real Address of the real part of the output spectrum, containing at least (size / 2 + 1) elements
-            @param imaginary Address of the imaginary part of the output spectrum, containing at least (size / 2 + 1) elements */
+            @param real Address of the real part of the output spectrum, containing at least realSpectrumSize elements
+            @param imaginary Address of the imaginary part of the output spectrum, containing at least realSpectrumSize elements */
         virtual void forward(const float* input, float* real, float* imaginary) = 0;
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
-            @param real Address of the real part of the output spectrum, containing at least (size / 2 + 1) elements
-            @param imaginary Address of the imaginary part of the output spectrum, containing at least (size / 2 + 1) elements */
+            @param real Address of the real part of the output spectrum, containing at least realSpectrumSize elements
+            @param imaginary Address of the imaginary part of the output spectrum, containing at least realSpectrumSize elements */
         virtual void forward(const double* input, double* real, double* imaginary) = 0;
         
         //! Do the inverse Fourier transform
-        /* @param input Iterator to a std::complex<float> or std::complex<double> spectrum container, of at least (size / 2 + 1) elements
-            @return: A spectrum signal of (size / 2 + 1) elements */
+        /* @param input Iterator to a std::complex<float> or std::complex<double> spectrum container, of at least realSpectrumSize elements
+            @return: A spectrum signal of realSpectrumSize elements */
         template <class ComplexIterator>
         std::vector<typename ComplexIterator::value_type::value_type> inverse(ComplexIterator input);
 
         //! Do the inverse Fourier transform
-        /* @param input A spectrum of at least (size / 2 + 1) bins */
+        /* @param input A spectrum of at least realSpectrumSize bins */
         std::vector<float> inverse(const Spectrum<float>& input);
 
         //! Do the inverse Fourier transform
-        /* @param input A spectrum of at least (size / 2 + 1) bins */
+        /* @param input A spectrum of at least realSpectrumSize bins */
         std::vector<double> inverse(const Spectrum<double>& input);
         
         //! Do the inverse Fourier transform
-        /*! @param input Iterator to a std::complex<float> spectrum container, of at least (size / 2 + 1) elements 
+        /*! @param input Iterator to a std::complex<float> spectrum container, of at least realSpectrumSize elements 
             @param output Address of the output data, containing at least size elements */
         template <class ComplexIterator>
         void inverse(ComplexIterator input, float* output);
         
         //! Do the inverse Fourier transform
-        /*! @param input Iterator to a std::complex<double> spectrum container, of at least (size / 2 + 1) elements
+        /*! @param input Iterator to a std::complex<double> spectrum container, of at least realSpectrumSize elements
             @param output Address of the output data, containing at least size elements */
         template <class ComplexIterator>
         void inverse(ComplexIterator input, double* output);
         
         //! Do the inverse Fourier transform
-        /*! @param real Address of the real part of the input spectrum, containing at least (size / 2 + 1) elements
-            @param imaginary Address of the imaginary part of the input spectrum, containing at least (size / 2 + 1) elements
+        /*! @param real Address of the real part of the input spectrum, containing at least realSpectrumSize elements
+            @param imaginary Address of the imaginary part of the input spectrum, containing at least realSpectrumSize elements
             @param output Address of the output data, containing at least size elements */
         virtual void inverse(const float* real, const float* imaginary, float* output) = 0;
         
         //! Do the inverse Fourier transform
-        /*! @param real Address of the real part of the input spectrum, containing at least (size / 2 + 1) elements
-            @param imaginary Address of the imaginary part of the input spectrum, containing at least (size / 2 + 1) elements
+        /*! @param real Address of the real part of the input spectrum, containing at least realSpectrumSize elements
+            @param imaginary Address of the imaginary part of the input spectrum, containing at least realSpectrumSize elements
             @param output Address of the output data, containing at least size elements */
         virtual void inverse(const double* real, const double* imaginary, double* output) = 0;
         
@@ -180,6 +180,9 @@ namespace dsp
     public:
         //! The frame size
         const std::size_t size = 0;
+        
+        //! The frame size for real spectra
+        const std::size_t realSpectrumSize = 0;
     };
     
     template <class InputIterator1, class InputIterator2, class ComplexOutputIterator>
@@ -219,8 +222,8 @@ namespace dsp
         static_assert(std::is_same<typename ComplexIterator::value_type, std::complex<float>>::value, "should be an iterator to std::complex<float>");
         
         // The deinterleaved output will be stored in here
-        std::vector<float> real(size / 2 + 1, 0);
-        std::vector<float> imaginary(size / 2 + 1, 0);
+        std::vector<float> real(realSpectrumSize, 0);
+        std::vector<float> imaginary(realSpectrumSize, 0);
         
         // Do the forward transform
         forward(input, real.data(), imaginary.data());
@@ -234,8 +237,8 @@ namespace dsp
         static_assert(std::is_same<typename ComplexIterator::value_type, std::complex<double>>::value, "should be an iterator to std::complex<double>");
         
         // The deinterleaved output will be stored in here
-        std::vector<double> real(size / 2 + 1, 0);
-        std::vector<double> imaginary(size / 2 + 1, 0);
+        std::vector<double> real(realSpectrumSize, 0);
+        std::vector<double> imaginary(realSpectrumSize, 0);
         
         // Do the forward transform
         forward(input, real.data(), imaginary.data());
@@ -257,11 +260,11 @@ namespace dsp
         static_assert(std::is_same<typename ComplexIterator::value_type, std::complex<float>>::value, "should be an iterator to std::complex<float>");
         
         // The deinterleaved input is stored in here
-        std::vector<float> real(size / 2 + 1);
-        std::vector<float> imaginary(size / 2 + 1);
+        std::vector<float> real(realSpectrumSize);
+        std::vector<float> imaginary(realSpectrumSize);
         
         // Deinterleave
-        deinterleave(input, input + size / 2 + 1, real.begin(), imaginary.begin());
+        deinterleave(input, input + realSpectrumSize, real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);
@@ -273,8 +276,8 @@ namespace dsp
         static_assert(std::is_same<typename ComplexIterator::value_type, std::complex<double>>::value, "should be an iterator to std::complex<double>");
         
         // The deinterleaved input is stored in here
-        std::vector<double> real(size / 2 + 1);
-        std::vector<double> imaginary(size / 2 + 1);
+        std::vector<double> real(realSpectrumSize);
+        std::vector<double> imaginary(realSpectrumSize);
         
         // Deinterleave
         deinterleave(input, input + size, real.begin(), imaginary.begin());

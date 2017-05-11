@@ -72,8 +72,8 @@ namespace dsp
         // In the forward direction, the scale is 2 (for some reason), so scale back by a half
         // Probably because both the negative and positive frequencies get summed, or something. The complex-to-complex
         // DFT in Accelerate (see function below) doesn't need scaling).
-        std::transform(real, real + (size / 2 + 1), real, [](const float& lhs) { return lhs * 0.5f; });
-        std::transform(imaginary, imaginary + (size / 2 + 1), imaginary, [](const float& lhs) { return lhs * 0.5f; });
+        std::transform(real, real + realSpectrumSize, real, [](const float& lhs) { return lhs * 0.5f; });
+        std::transform(imaginary, imaginary + realSpectrumSize, imaginary, [](const float& lhs) { return lhs * 0.5f; });
 
         // Because the Im[0] and Im[Nyquist] are always 0, vDSP stores the Re[Nyquist]
         // in Im[0], so that it can return one complex number less. Imho, this only makes
@@ -97,8 +97,8 @@ namespace dsp
         // In the forward direction, the scale is 2 (for some reason), so scale back by a half
         // Probably because both the negative and positive frequencies get summed, or something. The complex-to-complex
         // DFT in Accelerate (see function below) doesn't need scaling).
-        std::transform(real, real + (size / 2 + 1), real, [](const float& lhs) { return lhs * 0.5f; });
-        std::transform(imaginary, imaginary + (size / 2 + 1), imaginary, [](const float& lhs) { return lhs * 0.5f; });
+        std::transform(real, real + realSpectrumSize, real, [](const float& lhs) { return lhs * 0.5f; });
+        std::transform(imaginary, imaginary + realSpectrumSize, imaginary, [](const float& lhs) { return lhs * 0.5f; });
         
         // Because the Im[0] and Im[Nyquist] are always 0, vDSP stores the Re[Nyquist]
         // in Im[0], so that it can return one complex number less. Imho, this only makes
@@ -136,8 +136,8 @@ namespace dsp
     {
         // Copy the input reals and imaginaries, so that we can change the format around to
         // the way vDSP accepts it
-        vector<double> real_(real, real + (size / 2 + 1));
-        vector<double> imaginary_(imaginary, imaginary + (size / 2 + 1));
+        vector<double> real_(real, real + realSpectrumSize);
+        vector<double> imaginary_(imaginary, imaginary + realSpectrumSize);
         
         // Re[Nyquist] is supposed to be stored in Im[0] for vDSP
         imaginary_[0] = real[size / 2];
