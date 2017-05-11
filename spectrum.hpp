@@ -189,7 +189,13 @@ namespace dsp
                 throw std::invalid_argument("iterator range is not of equal size");
             
             for (auto i = 0; i < bins.size(); ++i)
-                bins[i] = std::polar(static_cast<T>(*begin++), std::arg(bins[i]));
+            {
+                const auto& mag = static_cast<T>(*begin++);
+                const auto angle = std::arg(bins[i]);
+                
+                bins[i] = (mag < 0) ? std::polar(-mag, angle + math::HALF_PI<decltype(angle)>) : std::polar(mag, angle);
+            }
+            
             assert(begin == end);
         }
         
