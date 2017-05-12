@@ -49,6 +49,7 @@ namespace dsp
         //! Write a new sample to the filter
         void write(const T& x, float delayTime, float feedBack)
         {
+            delayTime = (delayTime == 0) ? 0 : (delayTime - 1);
             const auto d = delay.read(delayTime, math::linearInterpolation);
             y = x + feedBack * (postDelay ? postDelay(d) : d);
             

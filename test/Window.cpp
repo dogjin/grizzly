@@ -50,14 +50,14 @@ TEST_CASE("Window")
     {
         SECTION("symmetric")
         {
-            auto window = createSymmetricHanningWindow<float>(10);
+            auto window = createSymmetricHannWindow<float>(10);
             
             CHECK(window[4] == window[5]);
         }
         
         SECTION("periodic")
         {
-            auto window = createHanningWindow<float>(10);
+            auto window = createHannWindow<float>(10);
             float peakValue = *max_element(window.begin(), window.end());
             
             CHECK(peakValue == Approx(1));

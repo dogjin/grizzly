@@ -49,3 +49,5 @@ if (BUILD_SHARED_LIBS)
 else (BUILD_SHARED_LIBS)
     set_target_properties(Grizzly PROPERTIES OUTPUT_NAME grizzly_static)
 endif (BUILD_SHARED_LIBS)
+
+add_subdirectory(test)
