@@ -29,12 +29,11 @@
 #define GRIZZLY_ANALOG_ONE_POLE_FILTER_HPP
 
 #include <cmath>
+#include <dsperados/math/constants.hpp>
 #include <functional>
 #include <stdexcept>
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
-
-#include <dsperados/math/constants.hpp>
 
 namespace dsp
 {
@@ -106,7 +105,7 @@ namespace dsp
         }
         
         //! Set time with a default time-constant-factor
-        /*! @param timeConstantFactor: Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
+        /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
         void setTime(unit::second<float> time, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f)
         {
             // check sample rate

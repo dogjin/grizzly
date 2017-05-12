@@ -31,6 +31,8 @@
 #include <array>
 #include <cmath>
 #include <experimental/optional>
+#include <functional>
+#include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
 
 #include <dsperados/math/utility.hpp>
@@ -41,7 +43,7 @@ namespace dsp
     /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T, class CoeffType = double>
-    class AnalogStateVariableFilter
+    class StateVariableFilter
     {
     public:
         //! Set coefficients
@@ -113,7 +115,7 @@ namespace dsp
         T writeAndReadHighPass(const T& x)
         {
             write(x);
-            return readHighPass;
+            return readHighPass();
         }
         
         // Read unit-gain output
@@ -132,7 +134,7 @@ namespace dsp
         // Read band-shelving (bell) output
         T readBandShelf() const
         {
-            return x + 2 * gain * dampingFactor * bandPass;
+            return x + 2 * gain.value * dampingFactor * bandPass;
         }
         
         //! Write and read band-shelving (bell) output
@@ -181,6 +183,13 @@ namespace dsp
             return readPeak();
         }
         
+        //! Set the gain (for band-shelf type)
+        void setGain(unit::decibel<float> gain)
+        {
+            // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
+            this->gain = unit::amplitude<float>(unit::decibel<float>(gain)).value - 1;
+        }
+        
     public:
         //! Function for non-linear processing
         std::function<T(T)> nonLinear;
@@ -213,9 +222,8 @@ namespace dsp
         //! Integrator state 2
         CoeffType integratorState2 = 0;
         
-        //! Optinal distortion factor for non-linear processing
-        std::experimental::optional<float> distortionFactor;
-        
+        //! Gain (for band-shelf type)
+        unit::amplitude<float> gain = 0;
     };
 }
 
