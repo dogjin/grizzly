@@ -35,12 +35,13 @@ set(SOURCES
 
 add_executable(grizzly-test ${SOURCES})
 target_sources(grizzly-test PRIVATE ${SOURCES})
+source_group(\\ FILES ${SOURCES})
 
-find_library(Grizzly grizzly)
-target_link_libraries(grizzly-test ${Grizzly})
+target_link_libraries(grizzly-test Grizzly)
 
 if (APPLE)
     target_sources(grizzly-test PRIVATE fast_fourier_transform_accelerate.cpp)
+    source_group(\\ FILES fast_fourier_transform_accelerate.cpp)
 	find_library(Accelerate Accelerate REQUIRED)
 	target_link_libraries(grizzly-test ${Accelerate})
 endif (APPLE)
