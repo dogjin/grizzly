@@ -207,7 +207,11 @@ namespace dsp
                 throw std::invalid_argument("iterator range is not of equal size");
             
             for (auto i = 0; i < bins.size(); ++i)
-                bins[i] = std::polar(std::abs(bins[i]), static_cast<T>(*begin++));
+            {
+                bins[i] = std::polar(std::abs(bins[i]), static_cast<T>(begin->value));
+                ++begin;
+            }
+            
             assert(begin == end);
         }
 

@@ -15,7 +15,7 @@ set(SOURCES
     comb_filter.cpp
     convolution.cpp
     delay.cpp
-    down_sample.cpp
+    # down_sample.cpp
     # dynamic.cpp
     fast_fourier_transform_ooura.cpp
     first_order_filter.cpp
@@ -28,7 +28,7 @@ set(SOURCES
     segment_envelope.cpp
     spectral_centroid.cpp
     spectrum.cpp
-    up_sample.cpp
+    # up_sample.cpp
     # waveform.cpp
     window.cpp
     z_transform.cpp)
