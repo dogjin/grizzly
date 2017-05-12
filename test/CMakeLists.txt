@@ -29,7 +29,7 @@ set(SOURCES
     spectral_centroid.cpp
     spectrum.cpp
     # up_sample.cpp
-    # waveform.cpp
+    waveform.cpp
     window.cpp
     z_transform.cpp)
 
