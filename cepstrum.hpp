@@ -42,7 +42,12 @@ namespace dsp
     {
         auto spectrum = fft.forwardComplex(iterator);
         for (auto& bin : spectrum)
+        {
+            if (bin.real() == 0 && bin.imag() == 0)
+                bin.real(std::numeric_limits<typename Iterator::value_type::value_type>::min());
+            
             bin = std::log(bin);
+        }
         
         return fft.inverseComplex(spectrum.begin());
     }
