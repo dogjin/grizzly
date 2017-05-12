@@ -51,6 +51,7 @@ TEST_CASE("Spectrum")
         Spectrum<float> spectrum = vector<complex<float>>{ {-1, 0}, {-4, -5} };
         auto unwrapped = spectrum.unwrappedPhases();
         
+        CHECK(unwrapped[0].value == Approx(3.14159));
         CHECK(unwrapped[1].value == Approx(4.0377));
     }
     
