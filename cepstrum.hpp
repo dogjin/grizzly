@@ -46,6 +46,17 @@ namespace dsp
         
         return fft.inverseComplex(spectrum.begin());
     }
+    
+    //! Take the inverse of the complex cepstrum
+    template <typename Iterator>
+    std::vector<typename Iterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, Iterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        for (auto& bin : spectrum)
+            bin = std::exp(bin);
+        
+        return fft.inverseComplex(spectrum.begin());
+    }
         
     std::vector<float> cepstrum(FastFourierTransformBase& fft, float* data);
     std::vector<float> powerCepstrum(FastFourierTransformBase& fft, float* data);
