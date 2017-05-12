@@ -11,6 +11,7 @@ set(SOURCES
     analog_one_pole_filter.cpp
     analytic_transform.cpp
     biquad.cpp
+    cepstrum.cpp
     circular_buffer.cpp
     comb_filter.cpp
     convolution.cpp

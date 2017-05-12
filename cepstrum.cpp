@@ -11,7 +11,6 @@
 #include <limits>
 
 #include "cepstrum.hpp"
-#include "fast_fourier_transform_base.hpp"
 
 namespace dsp
 {

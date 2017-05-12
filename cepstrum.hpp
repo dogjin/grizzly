@@ -28,12 +28,25 @@
 #ifndef GRIZZLY_CEPSTRUM_HPP
 #define GRIZZLY_CEPSTRUM_HPP
 
+#include <cmath>
+#include <complex>
 #include <vector>
+
+#include "fast_fourier_transform_base.hpp"
 
 namespace dsp
 {
-    class FastFourierTransformBase;
-    
+    //! Take the complex cepstrum
+    template <typename Iterator>
+    std::vector<typename Iterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, Iterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        for (auto& bin : spectrum)
+            bin = std::log(bin);
+        
+        return fft.inverseComplex(spectrum.begin());
+    }
+        
     std::vector<float> cepstrum(FastFourierTransformBase& fft, float* data);
     std::vector<float> powerCepstrum(FastFourierTransformBase& fft, float* data);
 }
