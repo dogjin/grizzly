@@ -51,6 +51,7 @@ TEST_CASE("Spectrum")
         Spectrum<float> spectrum = vector<complex<float>>{ {-1, 0}, {-4, -5} };
         auto unwrapped = spectrum.unwrappedPhases();
         
+        CHECK(unwrapped[0].value == Approx(3.14159));
         CHECK(unwrapped[1].value == Approx(4.0377));
     }
     
@@ -59,7 +60,8 @@ TEST_CASE("Spectrum")
         Spectrum<float> a = vector<complex<float>>{{0, 0}, {0, 0}};
         Spectrum<float> b = vector<complex<float>>{{3, 4}, {3, 4}};
         
-        a.replaceMagnitudes(b.magnitudes());
+        const auto bmags = b.magnitudes();
+        a.replaceMagnitudes(bmags.begin(), bmags.end());
         auto real = a.real();
         for (auto& value: real)
             CHECK(value == Approx(5));
@@ -74,7 +76,8 @@ TEST_CASE("Spectrum")
         Spectrum<float> a = vector<complex<float>>{{0, 0}, {0, 0}};
         Spectrum<float> b = vector<complex<float>>{{3, 4}, {3, 4}};
         
-        a.replacePhases(b.phases());
+        const auto bph = b.phases();
+        a.replacePhases(bph.begin(), bph.end());
         auto real = a.real();
         for (auto& value: real)
             CHECK(value == Approx(0));
@@ -86,7 +89,8 @@ TEST_CASE("Spectrum")
     
     SECTION("replace real data")
     {
-        spectrum.replaceRealData(std::vector<float>{0, 0, 0, 0});
+        std::vector<float> d{0, 0, 0, 0};
+        spectrum.replaceReal(d.begin(), d.end());
         
         for (auto& value: spectrum)
             CHECK(value.real() == 0);
@@ -94,7 +98,8 @@ TEST_CASE("Spectrum")
     
     SECTION("replace imaginary data")
     {
-        spectrum.replaceImaginaryData(std::vector<float>{0, 0, 0, 0});
+        std::vector<float> d{0, 0, 0, 0};
+        spectrum.replaceImaginary(d.begin(), d.end());
         
         for (auto& value: spectrum)
             CHECK(value.imag() == 0);

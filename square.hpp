@@ -35,7 +35,7 @@ namespace dsp
 {
     //! Generate a square wave given a normalized phase
     template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth, T low = 0, T high = 1)
+    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth, const T& low, const T& high)
     {
         return math::wrap<Phase>(phase, 0, 1) < pulseWidth ? high : low;
     }
@@ -48,6 +48,7 @@ namespace dsp
         BipolarSquare(float pulseWidth = 0.5f) :
             pulseWidth(pulseWidth)
         {
+            
         }
         
         //! Change the pulse width

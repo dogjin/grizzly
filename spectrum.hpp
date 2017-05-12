@@ -39,6 +39,8 @@
 #include <dsperados/math/utility.hpp>
 #include <unit/radian.hpp>
 
+#include <iostream>
+
 namespace dsp
 {
     //! Spectrum of bins with a frequency and phase
@@ -144,11 +146,11 @@ namespace dsp
             auto previousPhase = phases_[0];
             std::transform(phases_.begin() + 1, phases_.end(), phases_.begin() + 1, [&](auto phase)
             {
-                while (phase.value - previousPhase.value < -math::PI<T>)
-                    phase.value += math::PI<T>;
+                while (phase.value - previousPhase.value <= -math::PI<T>)
+                    phase.value += math::TWO_PI<T>;
                 
-                while (phase.value - previousPhase.value >= math::PI<T>)
-                    phase.value -= math::PI<T>;
+                while (phase.value - previousPhase.value > math::PI<T>)
+                    phase.value -= math::TWO_PI<T>;
                 
                 previousPhase = phase;
                 return phase.value;
@@ -207,7 +209,11 @@ namespace dsp
                 throw std::invalid_argument("iterator range is not of equal size");
             
             for (auto i = 0; i < bins.size(); ++i)
-                bins[i] = std::polar(std::abs(bins[i]), static_cast<T>(*begin++));
+            {
+                bins[i] = std::polar(std::abs(bins[i]), static_cast<T>(begin->value));
+                ++begin;
+            }
+            
             assert(begin == end);
         }
 
