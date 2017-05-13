@@ -30,7 +30,6 @@
 
 #include <algorithm>
 #include <initializer_list>
-#include <gsl/gsl>
 #include <vector>
 
 #include "delay.hpp"
