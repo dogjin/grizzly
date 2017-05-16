@@ -41,7 +41,7 @@ namespace dsp
     //! Topology preserving 2-pole state variable filter with resolved zero feedback delay
     /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
-    template <class T, class CoeffType = double>
+    template <class T>
     class StateVariableFilter
     {
     public:
@@ -246,7 +246,7 @@ namespace dsp
         float q = math::SQRT_HALF<float>;
         
         //! Damping factor, related to q
-        CoeffType dampingFactor = 1.0 / (2.0 * q);
+        T dampingFactor = 1.0 / (2.0 * q);
         
         //! Input of last writing call
         T x = 0;
@@ -264,13 +264,13 @@ namespace dsp
         T integratorGainFactor = 0;
         
         //! Filter gain factor with resolved zero delay feedback
-        CoeffType cutOffGain = 0;
+        T cutOffGain = 0;
         
         //! Integrator state 1
-        CoeffType integratorState1 = 0;
+        T integratorState1 = 0;
         
         //! Integrator state 2
-        CoeffType integratorState2 = 0;
+        T integratorState2 = 0;
         
         //! Gain (for band-shelf type)
         unit::amplitude<float> gain = 0;
