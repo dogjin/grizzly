@@ -36,6 +36,7 @@
 #include <experimental/optional>
 #include <functional>
 #include <initializer_list>
+#include <mutex>
 #include <numeric>
 #include <unit/time.hpp>
 #include <utility>
@@ -55,8 +56,8 @@ namespace dsp
         public:
             //! Construct a segment
             /*! @param amplitude: The amplitude value, starting from the pervious amplitude or zero at envelope start
-                @param duration: The duration in seconds to get to the destination amplitude.
-                @param ease An: easing function to alther the shape of the segment */
+             @param duration: The duration in seconds to get to the destination amplitude.
+             @param ease An: easing function to alther the shape of the segment */
             Segment(SegmentEnvelope& envelope, Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr);
             
             //! Set the duration
@@ -100,7 +101,7 @@ namespace dsp
         
         //! Move constructor
         SegmentEnvelope(SegmentEnvelope&& rhs) { operator=(std::move(rhs)); }
-            
+        
         //! Move assignment
         SegmentEnvelope& operator=(SegmentEnvelope&& rhs);
         
@@ -117,7 +118,7 @@ namespace dsp
         //! Reset the envelope to its starting position, and enable its hold
         void reset();
         
-    // --- Segment insertion/removal --- //
+        // --- Segment insertion/removal --- //
         
         //! Add a segment
         template <typename... Args>
@@ -133,7 +134,7 @@ namespace dsp
         //! Clear all segments
         void clear();
         
-    // --- Hold point manipulation --- //
+        // --- Hold point manipulation --- //
         
         //! Set a hold point (and enable it on default)
         void setAndEnableHoldPoint(unit::second<Time> at);
@@ -150,7 +151,7 @@ namespace dsp
         //! Retrieve the hold point
         std::experimental::optional<Time> getHold() const;
         
-    // --- Access to the segments --- //
+        // --- Access to the segments --- //
         
         //! Retrieve the previous segment
         const Segment* previous(const Segment& segment) const;
@@ -170,7 +171,7 @@ namespace dsp
         auto end() { return segments.end(); }
         auto end() const { return segments.end(); }
         
-    // --- Utility construction functions --- //
+        // --- Utility construction functions --- //
         
         //! Create an attack, sustain, release envelope
         static SegmentEnvelope ar(unit::second<Time> attack, unit::second<Time> release, bool hold = true);
@@ -210,6 +211,9 @@ namespace dsp
         //! Optional hold point
         /*! The envelope will remain at this point until the hold point is disable */
         std::experimental::optional<Hold> hold = std::experimental::nullopt;
+        
+        //! A mutex for changing the envelope while its running
+        std::mutex mutex;
     };
     
     template <typename Value, typename Time>
@@ -218,7 +222,7 @@ namespace dsp
         for (auto& segment : segments)
             this->segments.emplace_back(*this, std::get<0>(segment), std::get<1>(segment));
     }
-        
+    
     template <typename Value, typename Time>
     SegmentEnvelope<Value, Time>& SegmentEnvelope<Value, Time>::operator=(SegmentEnvelope&& rhs)
     {
@@ -245,6 +249,8 @@ namespace dsp
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::increment(unit::second<Time> increment)
     {
+        std::unique_lock<std::mutex> lock(mutex);
+        
         // If we've reached the last segment, bail out
         if (index >= segments.size())
             return;
@@ -267,6 +273,8 @@ namespace dsp
     template <typename Value, typename Time>
     Value SegmentEnvelope<Value, Time>::read()
     {
+        std::unique_lock<std::mutex> lock(mutex);
+        
         // Make sure we're at the correct index
         canonizeIndex();
         
@@ -280,11 +288,14 @@ namespace dsp
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::setTime(unit::second<Time> to)
     {
+        std::unique_lock<std::mutex> lock(mutex);
+        
         if (segments.empty() || to.value <= 0)
         {
             envelopeTime = 0;
             segmentTime = 0;
             index = 0;
+            canonizeIndex();
             return;
         }
         
@@ -296,6 +307,7 @@ namespace dsp
             envelopeTime = envelopeDuration;
             segmentTime = segments.back().getDuration();
             index = segments.size();
+            canonizeIndex();
             return;
         }
         
@@ -314,6 +326,8 @@ namespace dsp
             segmentTime = envelopeTime - partialTime;
             break;
         }
+        
+        canonizeIndex();
     }
     
     template <typename Value, typename Time>
@@ -432,9 +446,12 @@ namespace dsp
             if (index == segments.size() && onEnd)
                 onEnd();
         }
+        
+        if (index < segments.size())
+            assert(segments[index].getDuration().value != 0);
     }
     
-// --- Static constructors --- //
+    // --- Static constructors --- //
     
     template <typename Value, typename Time>
     SegmentEnvelope<Value, Time> SegmentEnvelope<Value, Time>::ar(unit::second<Time> attack, unit::second<Time> release, bool hold)
@@ -453,7 +470,7 @@ namespace dsp
         return env;
     }
     
-// --- Segment --- //
+    // --- Segment --- //
     
     template <typename Value, typename Time>
     SegmentEnvelope<Value, Time>::Segment::Segment(SegmentEnvelope& envelope, Value amplitude, unit::second<Time> duration, std::function<double(double)> ease) :
@@ -468,6 +485,7 @@ namespace dsp
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::Segment::setDuration(unit::second<Time> duration)
     {
+        std::unique_lock<std::mutex> lock(envelope.mutex);
         this->duration = duration.value < 0 ? 0 : duration;
     }
     

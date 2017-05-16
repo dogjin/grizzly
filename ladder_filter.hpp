@@ -25,8 +25,8 @@
  
  */
 
-#ifndef GRIZZLY_ANALOG_LADDER_FILTER_HPP
-#define GRIZZLY_ANALOG_LADDER_FILTER_HPP
+#ifndef GRIZZLY_LADDER_FILTER_HPP
+#define GRIZZLY_LADDER_FILTER_HPP
 
 #include <cmath>
 #include <dsperados/math/utility.hpp>
@@ -37,40 +37,30 @@
 
 namespace dsp
 {
-    //! Topology preserving ladder filter with resolved zero delay feedback
-    /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
+    //! Topology preserving 4-pole ladder filter with resolved zero delay feedback.
+    /*! The ladder filter contains four stages resulting in a slope of 24 dB per octave.
+        See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T>
-    class AnalogLadderFilter
+    class LadderFilter
     {
     public:
-        //! Oberheim Xpander modes
-        enum class XpanderMode
-        {
-            SECONDORDERLOWPASS,
-            SECONDORDERHIGHPASS,
-            SECONDORDERBANDPASS,
-            FOURTHORDERBANDPASS,
-            FOURTHORDERHIGHPASS
-        };
-
-    public:
         //! Set coefficients
-        void setCoefficients(unit::hertz<T> cutOff, const T& feedbackFactor, unit::hertz<T> sampleRate)
+        void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
         {
             this->feedbackFactor = feedbackFactor;
             auto integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
             auto gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
             
-            stage1.setCutOffGain(gainFactorOnePole);
-            stage2.setCutOffGain(gainFactorOnePole);
-            stage3.setCutOffGain(gainFactorOnePole);
-            stage4.setCutOffGain(gainFactorOnePole);
+            stage1.filter.setCutOffGain(gainFactorOnePole);
+            stage2.filter.setCutOffGain(gainFactorOnePole);
+            stage3.filter.setCutOffGain(gainFactorOnePole);
+            stage4.filter.setCutOffGain(gainFactorOnePole);
             
-            feedbackFactorLP1 = gainFactorOnePole * gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
-            feedbackFactorLP2 = gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
-            feedbackFactorLP3 = gainFactorOnePole / (1.0 + integratorGainFactor);
-            feedbackFactorLP4 = 1.0 / (1.0 + integratorGainFactor);
+            stage1.feedbackFactor = gainFactorOnePole * gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
+            stage2.feedbackFactor = gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
+            stage3.feedbackFactor = gainFactorOnePole / (1.0 + integratorGainFactor);
+            stage4.feedbackFactor = 1.0 / (1.0 + integratorGainFactor);
             
             gainFactor = 1.0 / (1.0 + feedbackFactor * (gainFactorOnePole * gainFactorOnePole * gainFactorOnePole * gainFactorOnePole));
         }
@@ -78,27 +68,28 @@ namespace dsp
         //! Write a sample to the filter
         void write(const T& x)
         {
-            auto feedbackSum = feedbackFactorLP1 * stage1.getIntegratorState() +
-            feedbackFactorLP2 * stage2.getIntegratorState() +
-            feedbackFactorLP3 * stage3.getIntegratorState() +
-            feedbackFactorLP4 * stage4.getIntegratorState();
+            auto feedbackSum = stage1.feedbackFactor * stage1.filter.getIntegratorState() +
+            stage2.feedbackFactor * stage2.filter.getIntegratorState() +
+            stage3.feedbackFactor * stage3.filter.getIntegratorState() +
+            stage4.feedbackFactor * stage4.filter.getIntegratorState();
             
+            // Multiply cut-off gain with the input minus the feedback to get the input for the first stage
             ladderInput = passBandGain ? (x * (1.0 + feedbackFactor) - feedbackFactor * feedbackSum) * gainFactor : (x - feedbackFactor * feedbackSum) * gainFactor;
             
             // Optional non-linear processing
             if (nonLinear)
                 ladderInput = nonLinear(ladderInput);
             
-            stage1Output = stage1.writeAndReadLowPass(ladderInput);
-            stage2Output = stage2.writeAndReadLowPass(stage1Output);
-            stage3Output = stage3.writeAndReadLowPass(stage2Output);
-            stage4Output = stage4.writeAndReadLowPass(stage3Output);
+            stage1(ladderInput);
+            stage2(stage1.output);
+            stage3(stage2.output);
+            stage4(stage3.output);
         }
         
         //! Read the low-pass output
-        T readLowPass()
+        T readLowPass() const
         {
-            return stage4Output;
+            return stage4.output;
         }
         
         //! Write and read the low-pass output
@@ -109,9 +100,9 @@ namespace dsp
         }
         
         //! Read the band-pass output
-        T readBandPass()
+        T readBandPass() const
         {
-            return 4 * stage2Output + -8 * stage3Output + 4 * stage4Output;
+            return 4 * stage2.output + -8 * stage3.output + 4 * stage4.output;
         }
         
         //! Write and read the band-pass output
@@ -122,9 +113,9 @@ namespace dsp
         }
         
         //! Read the high-pass output
-        T readHighPass()
+        T readHighPass() const
         {
-            return ladderInput + -4 * stage1Output + 6 * stage2Output + -4 * stage3Output + stage4Output;
+            return ladderInput + -4 * stage1.output + 6 * stage2.output + -4 * stage3.output + stage4.output;
         }
         
         //! Write and read the high-pass output
@@ -135,9 +126,9 @@ namespace dsp
         }
         
         //! Read the second-order low-pass output
-        T readSecondOrderLowPass()
+        T readSecondOrderLowPass() const
         {
-            return stage2Output;
+            return stage2.output;
         }
         
         //! Write and read the second-order low-pass output
@@ -148,9 +139,9 @@ namespace dsp
         }
         
         //! Read the second-order band-pass output
-        T readSecondOrderBandPass()
+        T readSecondOrderBandPass() const
         {
-            return 2 * stage1Output + -2 * stage2Output;
+            return 2 * stage1.output + -2 * stage2.output;
         }
         
         //! Write and read the second-order band-pass output
@@ -161,9 +152,9 @@ namespace dsp
         }
         
         //! Read the second-order high-pass output
-        T readSecondOrderHighPass()
+        T readSecondOrderHighPass() const
         {
-            return ladderInput -2 * stage1Output + stage2Output;
+            return ladderInput -2 * stage1.output + stage2.output;
         }
         
         //! Write and read the second-order high-pass output
@@ -177,10 +168,10 @@ namespace dsp
         void setNonLinear(std::function<T(T)> nonLinear)
         {
             this->nonLinear = nonLinear;
-            stage1.nonLinear = nonLinear;
-            stage2.nonLinear = nonLinear;
-            stage3.nonLinear = nonLinear;
-            stage4.nonLinear = nonLinear;
+            stage1.filter.nonLinear = nonLinear;
+            stage2.filter.nonLinear = nonLinear;
+            stage3.filter.nonLinear = nonLinear;
+            stage4.filter.nonLinear = nonLinear;
         }
         
     public:
@@ -189,50 +180,44 @@ namespace dsp
         bool passBandGain = false;
         
     private:
-        //! Low-pass output state
-        T lowPassOutput = 0;
+        //! The filter stage
+        /*! Each stage contains an one-pole filter with a slope of 6 dB per octave. */
+        struct Stage
+        {
+            //! Calculate the stage output given an input sample
+            void operator()(const T& input)
+            {
+                output = filter.writeAndReadLowPass(input);
+            }
+            
+            //! The one-pole filter
+            AnalogOnePoleFilter<T> filter;
+            
+            //! The output of the filter
+            T output = 0;
+            
+            //! The feedback factor for the resonance peak
+            T feedbackFactor = 0;
+        };
         
+    private:
+        //! Filter stage 1
+        Stage stage1;
+        
+        //! Filter stage 2
+        Stage stage2;
+        
+        //! Filter stage 3
+        Stage stage3;
+        
+        //! Filter stage 4
+        Stage stage4;
+
         //! The input state before the first stage of the ladder
         T ladderInput = 0;
         
-        //! The output state of the first stage
-        T stage1Output = 0;
-        
-        //! The output state of the second stage
-        T stage2Output = 0;
-        
-        //! The output state of the third stage
-        T stage3Output = 0;
-        
-        //! The output state of the fourth stage, the 4th order low-pass
-        T stage4Output = 0;
-        
-        //! Low-pass filter stage 1
-        AnalogOnePoleFilter<T> stage1;
-        
-        //! Low-pass filter stage 2
-        AnalogOnePoleFilter<T> stage2;
-        
-        //! Low-pass filter stage 3
-        AnalogOnePoleFilter<T> stage3;
-        
-        //! Low-pass filter stage 4
-        AnalogOnePoleFilter<T> stage4;
-        
         //! Feedback factor
         T feedbackFactor = 1;
-        
-        //! Feedback factor for first low-pass filter stage
-        T feedbackFactorLP1 = 0;
-        
-        //! Feedback factor for second low-pass filter stage
-        T feedbackFactorLP2 = 0;
-        
-        //! Feedback factor for third low-pass filter stage
-        T feedbackFactorLP3 = 0;
-        
-        //! Feedback factor for fourth low-pass filter stage
-        T feedbackFactorLP4 = 0;
         
         //! Filter gain factor with resolved zero delay feedback
         T gainFactor = 0;
@@ -242,4 +227,4 @@ namespace dsp
     };
 }
 
-#endif /* AnalogLadderFilter_hpp */
+#endif
