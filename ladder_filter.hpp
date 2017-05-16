@@ -62,7 +62,7 @@ namespace dsp
             stage3.feedbackFactor = gainFactorOnePole / (1.0 + integratorGainFactor);
             stage4.feedbackFactor = 1.0 / (1.0 + integratorGainFactor);
             
-            gainFactor = 1.0 / (1.0 + feedbackFactor * (gainFactorOnePole * gainFactorOnePole * gainFactorOnePole * gainFactorOnePole));
+            cutOffGain = 1.0 / (1.0 + feedbackFactor * (gainFactorOnePole * gainFactorOnePole * gainFactorOnePole * gainFactorOnePole));
         }
         
         //! Write a sample to the filter
@@ -74,7 +74,7 @@ namespace dsp
             stage4.feedbackFactor * stage4.filter.getIntegratorState();
             
             // Multiply cut-off gain with the input minus the feedback to get the input for the first stage
-            ladderInput = passBandGain ? (x * (1.0 + feedbackFactor) - feedbackFactor * feedbackSum) * gainFactor : (x - feedbackFactor * feedbackSum) * gainFactor;
+            ladderInput = passBandGain ? (x * (1.0 + feedbackFactor) - feedbackFactor * feedbackSum) * cutOffGain : (x - feedbackFactor * feedbackSum) * cutOffGain;
             
             // Optional non-linear processing
             if (nonLinear)
@@ -220,7 +220,7 @@ namespace dsp
         T feedbackFactor = 1;
         
         //! Filter gain factor with resolved zero delay feedback
-        T gainFactor = 0;
+        T cutOffGain = 0;
         
         //! Function for non-linear processing
         std::function<T(T)> nonLinear;

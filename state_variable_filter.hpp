@@ -39,7 +39,7 @@
 
 namespace dsp
 {
-    //! Topology preserving state variable filter with resolved zero feedback delay
+    //! Topology preserving 2-pole state variable filter with resolved zero feedback delay
     /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T, class CoeffType = double>
