@@ -101,7 +101,7 @@ namespace dsp
         }
         
         //! Insert a stage at a given position
-        void emplace(std::function<T(T)> filter, std::size_t position)
+        void emplace(std::function<T(const T&)> filter, std::size_t position)
         {
             if (position > stages.size())
                 throw std::invalid_argument("Cascade position for emplace out of range");

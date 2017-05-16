@@ -28,14 +28,13 @@
 #ifndef GRIZZLY_STATE_VARIABLE_FILTER_HPP
 #define GRIZZLY_STATE_VARIABLE_FILTER_HPP
 
-#include <array>
 #include <cmath>
 #include <experimental/optional>
 #include <functional>
 #include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
 
-#include <dsperados/math/utility.hpp>
+#include <dsperados/math/constants.hpp>
 
 namespace dsp
 {
@@ -187,12 +186,12 @@ namespace dsp
         void setGain(unit::decibel<float> gain)
         {
             // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
-            this->gain = unit::amplitude<float>(unit::decibel<float>(gain)).value - 1;
+            this->gain = unit::amplitude<float>(gain).value - 1;
         }
         
     public:
         //! Function for non-linear processing
-        std::function<T(T)> nonLinear;
+        std::function<T(const T&)> nonLinear;
         
     private:
         //! Input of last writing call

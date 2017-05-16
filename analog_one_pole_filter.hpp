@@ -149,7 +149,7 @@ namespace dsp
         
     public:
         //! Function for non-linear processing
-        std::function<T(T)> nonLinear;
+        std::function<T(const T&)> nonLinear;
         
     private:
         //! Filter gain factor with resolved zero delay feedback

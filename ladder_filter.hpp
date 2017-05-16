@@ -29,6 +29,7 @@
 #define GRIZZLY_LADDER_FILTER_HPP
 
 #include <cmath>
+#include <dsperados/math/constants.hpp>
 #include <dsperados/math/utility.hpp>
 #include <functional>
 #include <unit/hertz.hpp>
@@ -165,7 +166,7 @@ namespace dsp
         }
         
         //! Set a function for non-linear processing (or nullptr for linear)
-        void setNonLinear(std::function<T(T)> nonLinear)
+        void setNonLinear(std::function<T(const T&)> nonLinear)
         {
             this->nonLinear = nonLinear;
             stage1.filter.nonLinear = nonLinear;
@@ -184,12 +185,14 @@ namespace dsp
         /*! Each stage contains an one-pole filter with a slope of 6 dB per octave. */
         struct Stage
         {
+        public:
             //! Calculate the stage output given an input sample
             void operator()(const T& input)
             {
                 output = filter.writeAndReadLowPass(input);
             }
-            
+        
+        public:
             //! The one-pole filter
             AnalogOnePoleFilter<T> filter;
             
@@ -223,7 +226,7 @@ namespace dsp
         T cutOffGain = 0;
         
         //! Function for non-linear processing
-        std::function<T(T)> nonLinear;
+        std::function<T(const T&)> nonLinear;
     };
 }
 
