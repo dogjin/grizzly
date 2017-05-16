@@ -29,12 +29,12 @@
 #define GRIZZLY_STATE_VARIABLE_FILTER_HPP
 
 #include <cmath>
+#include <dsperados/math/constants.hpp>
 #include <experimental/optional>
 #include <functional>
+#include <stdexcept>
 #include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
-
-#include <dsperados/math/constants.hpp>
 
 namespace dsp
 {
@@ -45,9 +45,51 @@ namespace dsp
     class StateVariableFilter
     {
     public:
-        //! Set coefficients
+        //! Construct the filter with a cut-off and sample rate
+        StateVariableFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
+            cutOff(cutOff),
+            sampleRate(sampleRate)
+        {
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the cut-off frequency
+        void setCutOff(unit::hertz<float> cutOff)
+        {
+            this->cutOff = cutOff;
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
+        void setQ(float q)
+        {
+            this->q = q;
+            dampingFactor = 1.0 / (2.0 * q);
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set coefficients given a cut-off, q factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float q, unit::hertz<float> sampleRate)
         {
+            // check cut-off
+            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
+                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
+            
+            // check q
+            if (q < 0.01)
+                throw std::invalid_argument("q < 0.01");
+            
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sample rate <= 0");
+            
             dampingFactor = 1.0 / (2.0 * q);
             integratorGainFactor = std::tan(math::PI<float> * (cutOff.value / sampleRate.value));
             cutOffGain = 1.0 / (1.0 + 2.0 * dampingFactor * integratorGainFactor + integratorGainFactor * integratorGainFactor);
@@ -194,6 +236,18 @@ namespace dsp
         std::function<T(const T&)> nonLinear;
         
     private:
+        //! The cut-off
+        unit::hertz<float> cutOff = sampleRate.value * 0.25;
+        
+        //! The sample rate
+        unit::hertz<float> sampleRate = 44100;
+        
+        //! The q factor for resonance
+        float q = math::SQRT_HALF<float>;
+        
+        //! Damping factor, related to q
+        CoeffType dampingFactor = 1.0 / (2.0 * q);
+        
         //! Input of last writing call
         T x = 0;
         
@@ -205,9 +259,6 @@ namespace dsp
         
         //! Low-pass output state
         T lowPass = 0;
-        
-        //! Damping factor, related to q
-        CoeffType dampingFactor = 1;
         
         //! Integrator gain factor
         T integratorGainFactor = 0;

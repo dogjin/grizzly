@@ -32,6 +32,7 @@
 #include <dsperados/math/constants.hpp>
 #include <dsperados/math/utility.hpp>
 #include <functional>
+#include <stdexcept>
 #include <unit/hertz.hpp>
 
 #include "analog_one_pole_filter.hpp"
@@ -46,9 +47,52 @@ namespace dsp
     class LadderFilter
     {
     public:
-        //! Set coefficients
+        //! Construct the filter with a cut-off and sample rate
+        LadderFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
+            cutOff(cutOff),
+            sampleRate(sampleRate)
+        {
+            setCoefficients(cutOff, feedbackFactor, sampleRate);
+        }
+        
+        //! Set the cut-off frequency
+        void setCutOff(unit::hertz<float> cutOff)
+        {
+            this->cutOff = cutOff;
+            setCoefficients(cutOff, feedbackFactor, sampleRate);
+        }
+        
+        //! Set the feedback factor for a resonance peak (self-oscillation at >= 4)
+        void setFeedback(float factor)
+        {
+            feedbackFactor = factor;
+            setCoefficients(cutOff, feedbackFactor, sampleRate);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            setCoefficients(cutOff, feedbackFactor, sampleRate);
+        }
+        
+        //! Set coefficients given a cut-off, feedback factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
         {
+            // check cut-off
+            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
+                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
+            
+            // check feedback factor
+            if (feedbackFactor < 0)
+                throw std::invalid_argument("feedback factor < 0");
+            else if (nonLinear == nullptr && feedbackFactor >= 4)
+                throw std::invalid_argument("feedback factor >= 4, filter has no saturation in feedback");
+            
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sample rate <= 0");
+            
             this->feedbackFactor = feedbackFactor;
             auto integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
             auto gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
@@ -166,6 +210,8 @@ namespace dsp
         }
         
         //! Set a function for non-linear processing (or nullptr for linear)
+        /*! Add colour to the filter with a saturating function to shape the feedback.
+            Use with caution as this migth blow up the filter */
         void setNonLinear(std::function<T(const T&)> nonLinear)
         {
             this->nonLinear = nonLinear;
@@ -204,6 +250,15 @@ namespace dsp
         };
         
     private:
+        //! The cut-off
+        unit::hertz<float> cutOff = sampleRate.value * 0.25;
+        
+        //! The sample rate
+        unit::hertz<float> sampleRate = 44100;
+        
+        //! Feedback factor for resonance
+        T feedbackFactor = 0;
+        
         //! Filter stage 1
         Stage stage1;
         
@@ -218,9 +273,6 @@ namespace dsp
 
         //! The input state before the first stage of the ladder
         T ladderInput = 0;
-        
-        //! Feedback factor
-        T feedbackFactor = 1;
         
         //! Filter gain factor with resolved zero delay feedback
         T cutOffGain = 0;
