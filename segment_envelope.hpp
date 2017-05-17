@@ -55,9 +55,9 @@ namespace dsp
         {
         public:
             //! Construct a segment
-            /*! @param amplitude: The amplitude value, starting from the pervious amplitude or zero at envelope start
-             @param duration: The duration in seconds to get to the destination amplitude.
-             @param ease An: easing function to alther the shape of the segment */
+            /*! @param amplitude The amplitude value, starting from the pervious amplitude or zero at envelope start
+             @param duration The duration in seconds to get to the destination amplitude.
+             @param ease An easing function to alther the shape of the segment */
             Segment(SegmentEnvelope& envelope, Value amplitude, unit::second<Time> duration, std::function<double(double)> ease = nullptr);
             
             //! Set the duration
