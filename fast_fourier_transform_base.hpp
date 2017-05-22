@@ -87,7 +87,7 @@ namespace dsp
         /* @param input Iterator to a std::complex<float> or std::complex<double> spectrum container, of at least realSpectrumSize elements
             @return: A spectrum signal of realSpectrumSize elements */
         template <class ComplexIterator>
-        std::vector<typename ComplexIterator::value_type::value_type> inverse(ComplexIterator begin, ComplexIterator end);
+        std::vector<typename ComplexIterator::value_type::value_type> inverse(ComplexIterator input);
 
         //! Do the inverse Fourier transform
         /* @param input A spectrum of at least realSpectrumSize bins */
@@ -253,10 +253,8 @@ namespace dsp
     }
     
     template <class ComplexIterator>
-    std::vector<typename ComplexIterator::value_type::value_type> FastFourierTransformBase::inverse(ComplexIterator begin, ComplexIterator end)
-    {
-        assert(std::distance(begin, end) == realSpectrumSize);
-        
+    std::vector<typename ComplexIterator::value_type::value_type> FastFourierTransformBase::inverse(ComplexIterator begin)
+    {        
         std::vector<typename ComplexIterator::value_type::value_type> output(size);
         inverse(begin, output.data());
         return output;

@@ -57,11 +57,11 @@ namespace dsp
 
     vector<float> FastFourierTransformBase::inverse(const Spectrum<float>& input)
     {
-        return inverse(input.begin(), input.end());
+        return inverse(input.begin());
     }
 
     vector<double> FastFourierTransformBase::inverse(const Spectrum<double>& input)
     {
-        return inverse(input.begin(), input.end());
+        return inverse(input.begin());
     }
 }
