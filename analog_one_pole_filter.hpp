@@ -101,7 +101,7 @@ namespace dsp
                 throw std::invalid_argument("cut-off <= 0 or >= nyquist");
             
             auto unresolvedCutOffGain = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
-            cutOffGain = unresolvedCutOffGain / (1.0 + unresolvedCutOffGain);
+            cutOffGain = unresolvedCutOffGain / (1.0f + unresolvedCutOffGain);
         }
         
         //! Set time with a default time-constant-factor

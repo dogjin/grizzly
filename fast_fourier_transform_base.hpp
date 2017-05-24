@@ -191,7 +191,7 @@ namespace dsp
         static_assert(std::is_same<typename InputIterator1::value_type, typename ComplexOutputIterator::value_type::value_type>::value, "input and output are not of the same type");
         static_assert(std::is_same<typename InputIterator2::value_type, typename ComplexOutputIterator::value_type::value_type>::value, "input and output are not of the same type");
         
-        std::vector<typename ComplexOutputIterator::value_type::value_type> fout(std::distance(inBegin1, inEnd) * 2);
+        std::vector<typename ComplexOutputIterator::value_type::value_type> fout(static_cast<unsigned long>(std::distance(inBegin1, inEnd)) * 2);
         math::interleave(inBegin1, inEnd, inBegin2, fout.begin());
         
         for (auto it = fout.begin(); it != fout.end(); ++it)
@@ -209,7 +209,7 @@ namespace dsp
         static_assert(std::is_same<typename ComplexInputIterator::value_type::value_type, typename OutputIterator1::value_type>::value, "input and output are not of the same type");
         static_assert(std::is_same<typename ComplexInputIterator::value_type::value_type, typename OutputIterator2::value_type>::value, "input and output are not of the same type");
         
-        std::vector<typename ComplexInputIterator::value_type::value_type> fin(std::distance(inBegin, inEnd) * 2);
+        std::vector<typename ComplexInputIterator::value_type::value_type> fin(static_cast<unsigned long>(std::distance(inBegin, inEnd)) * 2);
         
         for (auto it = fin.begin(); it != fin.end(); ++it)
         {
@@ -270,7 +270,7 @@ namespace dsp
         std::vector<float> imaginary(realSpectrumSize);
         
         // Deinterleave
-        deinterleaveComplex(input, input + realSpectrumSize, real.begin(), imaginary.begin());
+        deinterleaveComplex(input, input + static_cast<long>(realSpectrumSize), real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);
@@ -286,7 +286,7 @@ namespace dsp
         std::vector<double> imaginary(realSpectrumSize);
         
         // Deinterleave
-        deinterleaveComplex(input, input + size, real.begin(), imaginary.begin());
+        deinterleaveComplex(input, input + static_cast<long>(size), real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);

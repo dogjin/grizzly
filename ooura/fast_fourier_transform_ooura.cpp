@@ -52,10 +52,10 @@ namespace dsp
         
         rdft(static_cast<int>(size), 1, data.data(), ip.data(), w.data());
         
-        for (size_t i = 0; i < size / 2; ++i)
+        for (std::size_t i = 0; i < size / 2; ++i)
         {
-            real[i] = data[i * 2];
-            imaginary[i] = -data[i * 2 + 1];
+            real[i] = static_cast<float>(data[i * 2]);
+            imaginary[i] = -static_cast<float>(data[i * 2 + 1]);
         }
         
         real[size / 2] = - imaginary[0];
@@ -94,7 +94,7 @@ namespace dsp
         
         move(data.begin(), data.end(), output);
         
-        float factor = 2.0 / size;
+        float factor = 2.0f / size;
         std::transform(output, output + size, output, [&](const float& x){ return x * factor; });
     }
     
@@ -112,7 +112,7 @@ namespace dsp
         
         move(data.begin(), data.end(), output);
         
-        float factor = 2.0 / size;
+        double factor = 2.0 / size;
         std::transform(output, output + size, output, [&](const double& x){ return x * factor; });
     }
     
@@ -142,7 +142,7 @@ namespace dsp
         
         cdft(static_cast<int>(size * 2), -1, dataComplex.data(), ip.data(), w.data());
         
-        const float factor = 1.0 / size;
+        const float factor = 1.0f / size;
         std::transform(dataComplex.begin(), dataComplex.end(), dataComplex.begin(), [&](const double& x){ return x * factor; });
         
         math::deinterleave(dataComplex.begin(), dataComplex.end(), outReal, outImaginary);

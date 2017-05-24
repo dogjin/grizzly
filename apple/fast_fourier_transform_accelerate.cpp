@@ -130,7 +130,7 @@ namespace dsp
         math::interleave(outReal.begin(), outReal.end(), outImaginary.begin(), output);
 
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
-        const float factor = 1.0 / size;
+        const float factor = 1.0f / size;
         std::transform(output, output + size, output, [&](const float& lhs) { return lhs * factor; });
     }
     
@@ -175,7 +175,7 @@ namespace dsp
         vDSP_DFT_Execute(floatComplexSetup.inverse, inReal, inImaginary, outReal, outImaginary);
         
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
-        const float factor = 1.0 / size;
+        const float factor = 1.0f / size;
         std::transform(outReal, outReal + size, outReal, [&](const float& lhs) { return lhs * factor; });
         std::transform(outImaginary, outImaginary + size, outImaginary, [&](const float& lhs) { return lhs * factor; });
     }

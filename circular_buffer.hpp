@@ -57,7 +57,7 @@ namespace dsp
             
         public:
             //! Dereference the iterator
-            ReferenceType operator*() { return buffer[index]; }
+            ReferenceType operator*() { return buffer[static_cast<std::size_t>(index)]; }
             
             //! Dereference the iterator
             const ReferenceType operator*() const { return buffer[index]; }

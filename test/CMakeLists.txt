@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5.1)
 project(grizzly-test)
 
 add_definitions(-std=c++14 -Wall -Werror)
+remove_definitions(-Wconversion)
 include_directories(/usr/local/include)
 
 set(SOURCES
