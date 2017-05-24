@@ -28,25 +28,68 @@
 #ifndef GRIZZLY_STATE_VARIABLE_FILTER_HPP
 #define GRIZZLY_STATE_VARIABLE_FILTER_HPP
 
-#include <array>
 #include <cmath>
+#include <dsperados/math/constants.hpp>
 #include <experimental/optional>
+#include <functional>
+#include <stdexcept>
+#include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
-
-#include <dsperados/math/utility.hpp>
 
 namespace dsp
 {
-    //! Topology preserving state variable filter with resolved zero feedback delay
+    //! Topology preserving 2-pole state variable filter with resolved zero feedback delay
     /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
-    template <class T, class CoeffType = double>
-    class AnalogStateVariableFilter
+    template <class T>
+    class StateVariableFilter
     {
     public:
-        //! Set coefficients
+        //! Construct the filter with a cut-off and sample rate
+        StateVariableFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
+            cutOff(cutOff),
+            sampleRate(sampleRate)
+        {
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the cut-off frequency
+        void setCutOff(unit::hertz<float> cutOff)
+        {
+            this->cutOff = cutOff;
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
+        void setQ(float q)
+        {
+            this->q = q;
+            dampingFactor = 1.0 / (2.0 * q);
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            setCoefficients(cutOff, q, sampleRate);
+        }
+        
+        //! Set coefficients given a cut-off, q factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float q, unit::hertz<float> sampleRate)
         {
+            // check cut-off
+            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
+                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
+            
+            // check q
+            if (q < 0.01)
+                throw std::invalid_argument("q < 0.01");
+            
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sample rate <= 0");
+            
             dampingFactor = 1.0 / (2.0 * q);
             integratorGainFactor = std::tan(math::PI<float> * (cutOff.value / sampleRate.value));
             cutOffGain = 1.0 / (1.0 + 2.0 * dampingFactor * integratorGainFactor + integratorGainFactor * integratorGainFactor);
@@ -113,7 +156,7 @@ namespace dsp
         T writeAndReadHighPass(const T& x)
         {
             write(x);
-            return readHighPass;
+            return readHighPass();
         }
         
         // Read unit-gain output
@@ -132,7 +175,7 @@ namespace dsp
         // Read band-shelving (bell) output
         T readBandShelf() const
         {
-            return x + 2 * gain * dampingFactor * bandPass;
+            return x + 2 * gain.value * dampingFactor * bandPass;
         }
         
         //! Write and read band-shelving (bell) output
@@ -181,11 +224,30 @@ namespace dsp
             return readPeak();
         }
         
+        //! Set the gain (for band-shelf type)
+        void setGain(unit::decibel<float> gain)
+        {
+            // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
+            this->gain = unit::amplitude<float>(gain).value - 1;
+        }
+        
     public:
         //! Function for non-linear processing
-        std::function<T(T)> nonLinear;
+        std::function<T(const T&)> nonLinear;
         
     private:
+        //! The cut-off
+        unit::hertz<float> cutOff = sampleRate.value * 0.25;
+        
+        //! The sample rate
+        unit::hertz<float> sampleRate = 44100;
+        
+        //! The q factor for resonance
+        float q = math::SQRT_HALF<float>;
+        
+        //! Damping factor, related to q
+        T dampingFactor = 1.0 / (2.0 * q);
+        
         //! Input of last writing call
         T x = 0;
         
@@ -198,24 +260,20 @@ namespace dsp
         //! Low-pass output state
         T lowPass = 0;
         
-        //! Damping factor, related to q
-        CoeffType dampingFactor = 1;
-        
         //! Integrator gain factor
         T integratorGainFactor = 0;
         
         //! Filter gain factor with resolved zero delay feedback
-        CoeffType cutOffGain = 0;
+        T cutOffGain = 0;
         
         //! Integrator state 1
-        CoeffType integratorState1 = 0;
+        T integratorState1 = 0;
         
         //! Integrator state 2
-        CoeffType integratorState2 = 0;
+        T integratorState2 = 0;
         
-        //! Optinal distortion factor for non-linear processing
-        std::experimental::optional<float> distortionFactor;
-        
+        //! Gain (for band-shelf type)
+        unit::amplitude<float> gain = 0;
     };
 }
 

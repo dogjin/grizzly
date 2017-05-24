@@ -122,10 +122,12 @@ namespace dsp
         imaginary_[0] = real[size / 2];
 
         // Do the transform
-        vDSP_DFT_Execute(floatSetup.inverse, real_.data(), imaginary_.data(), real_.data(), imaginary_.data());
+        vector<float> outReal(size / 2);
+        vector<float> outImaginary(size / 2);
+        vDSP_DFT_Execute(floatSetup.inverse, real_.data(), imaginary_.data(), outReal.data(), outImaginary.data());
 
         // Combine the even and odd output signals into one interleaved output signal
-        math::interleave(real_.begin(), real_.end(), imaginary_.begin(), output);
+        math::interleave(outReal.begin(), outReal.end(), outImaginary.begin(), output);
 
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
         const float factor = 1.0 / size;
@@ -143,10 +145,12 @@ namespace dsp
         imaginary_[0] = real[size / 2];
         
         // Do the transform
-        vDSP_DFT_ExecuteD(doubleSetup.inverse, real_.data(), imaginary_.data(), real_.data(), imaginary_.data());
+        vector<double> outReal(size / 2);
+        vector<double> outImaginary(size / 2);
+        vDSP_DFT_ExecuteD(doubleSetup.inverse, real_.data(), imaginary_.data(), outReal.data(), outImaginary.data());
         
         // Combine the even and odd output signals into one interleaved output signal
-        math::interleave(real_.begin(), real_.end(), imaginary_.begin(), output);
+        math::interleave(outReal.begin(), outReal.end(), outImaginary.begin(), output);
         
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
         const double factor = 1.0 / size;

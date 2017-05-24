@@ -9,8 +9,9 @@ add_definitions(-std=c++14 -Wall -Werror)
 include_directories(/usr/local/include)
 
 # Setup the common headers and sources
-set(HEADERS all_pass_filter.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp cepstrum.hpp circular_buffer.hpp comb_filter.hpp convolution.hpp crossover_filter.hpp delay.hpp dynamic.hpp envelope_follower.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp mid_side.hpp multi_crossover_filter.hpp multi_tap_resonator.hpp phase_generator.hpp pink_noise.hpp poly_blep.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp spectral_centroid.hpp spectrum.hpp square.hpp state_variable_filter.hpp triangle.hpp waveform.hpp window.hpp yin.hpp z_transform.hpp)
+set(HEADERS all_pass_filter.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp cepstrum.hpp circular_buffer.hpp comb_filter.hpp convolution.hpp crossover_filter.hpp delay.hpp dynamic.hpp envelope_follower.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp frequency_estimation.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp ladder_filter.hpp mid_side.hpp multi_crossover_filter.hpp multi_tap_resonator.hpp phase_generator.hpp pink_noise.hpp poly_blep.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp spectral_centroid.hpp spectrum.hpp square.hpp state_variable_filter.hpp triangle.hpp waveform.hpp window.hpp z_transform.hpp)
 set(SOURCES cepstrum.cpp fast_fourier_transform_base.cpp)
+
 source_group(\\ FILES ${HEADERS} ${SOURCES})
 install (FILES ${HEADERS} DESTINATION include/grizzly)
 

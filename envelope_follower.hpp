@@ -50,6 +50,9 @@ namespace dsp
             setTimeConstantFactor(timeConstantFactor);
         }
         
+        //! Virtual destructor
+        virtual ~AttackReleaseEnvelopeFollower() = default;
+        
     public:
         //! Set the sample rate
         void setSampleRate(unit::hertz<float> sampleRate)

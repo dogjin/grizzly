@@ -186,10 +186,13 @@ namespace dsp
     };
     
     template <class InputIterator1, class InputIterator2, class ComplexOutputIterator>
-    void interleave(InputIterator1 inBegin1, InputIterator1 inEnd, InputIterator2 rhs, ComplexOutputIterator outBegin)
+    void interleaveComplex(InputIterator1 inBegin1, InputIterator1 inEnd, InputIterator2 inBegin2, ComplexOutputIterator outBegin)
     {
+        static_assert(std::is_same<typename InputIterator1::value_type, typename ComplexOutputIterator::value_type::value_type>::value, "input and output are not of the same type");
+        static_assert(std::is_same<typename InputIterator2::value_type, typename ComplexOutputIterator::value_type::value_type>::value, "input and output are not of the same type");
+        
         std::vector<typename ComplexOutputIterator::value_type::value_type> fout(std::distance(inBegin1, inEnd) * 2);
-        math::interleave(inBegin1, inEnd, rhs, fout.begin());
+        math::interleave(inBegin1, inEnd, inBegin2, fout.begin());
         
         for (auto it = fout.begin(); it != fout.end(); ++it)
         {
@@ -201,8 +204,11 @@ namespace dsp
     }
     
     template <class ComplexInputIterator, class OutputIterator1, class OutputIterator2>
-    void deinterleave(ComplexInputIterator inBegin, ComplexInputIterator inEnd, OutputIterator1 outBegin1, OutputIterator2 outBegin2)
+    void deinterleaveComplex(ComplexInputIterator inBegin, ComplexInputIterator inEnd, OutputIterator1 outBegin1, OutputIterator2 outBegin2)
     {
+        static_assert(std::is_same<typename ComplexInputIterator::value_type::value_type, typename OutputIterator1::value_type>::value, "input and output are not of the same type");
+        static_assert(std::is_same<typename ComplexInputIterator::value_type::value_type, typename OutputIterator2::value_type>::value, "input and output are not of the same type");
+        
         std::vector<typename ComplexInputIterator::value_type::value_type> fin(std::distance(inBegin, inEnd) * 2);
         
         for (auto it = fin.begin(); it != fin.end(); ++it)
@@ -228,7 +234,7 @@ namespace dsp
         // Do the forward transform
         forward(input, real.data(), imaginary.data());
         
-        interleave(real.begin(), real.end(), imaginary.begin(), output);
+        interleaveComplex(real.begin(), real.end(), imaginary.begin(), output);
     }
     
     template <class ComplexIterator>
@@ -243,14 +249,14 @@ namespace dsp
         // Do the forward transform
         forward(input, real.data(), imaginary.data());
         
-        interleave(real.begin(), real.end(), imaginary.begin(), output);
+        interleaveComplex(real.begin(), real.end(), imaginary.begin(), output);
     }
     
     template <class ComplexIterator>
-    std::vector<typename ComplexIterator::value_type::value_type> FastFourierTransformBase::inverse(ComplexIterator input)
-    {
+    std::vector<typename ComplexIterator::value_type::value_type> FastFourierTransformBase::inverse(ComplexIterator begin)
+    {        
         std::vector<typename ComplexIterator::value_type::value_type> output(size);
-        inverse(input, output.data());
+        inverse(begin, output.data());
         return output;
     }
     
@@ -264,7 +270,7 @@ namespace dsp
         std::vector<float> imaginary(realSpectrumSize);
         
         // Deinterleave
-        deinterleave(input, input + realSpectrumSize, real.begin(), imaginary.begin());
+        deinterleaveComplex(input, input + realSpectrumSize, real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);
@@ -280,7 +286,7 @@ namespace dsp
         std::vector<double> imaginary(realSpectrumSize);
         
         // Deinterleave
-        deinterleave(input, input + size, real.begin(), imaginary.begin());
+        deinterleaveComplex(input, input + size, real.begin(), imaginary.begin());
         
         // Do the inverse transform
         inverse(real.data(), imaginary.data(), output);
@@ -302,7 +308,7 @@ namespace dsp
         std::vector<typename ComplexInputIterator::value_type::value_type> inputImaginary(size);
         
         // Deinterleave
-        deinterleave(input, input + size, inputReal.begin(), inputImaginary.begin());
+        deinterleaveComplex(input, input + size, inputReal.begin(), inputImaginary.begin());
         
         std::vector<typename ComplexOutputIterator::value_type::value_type> outputReal(size);
         std::vector<typename ComplexOutputIterator::value_type::value_type> outputImaginary(size);
@@ -310,7 +316,7 @@ namespace dsp
         // Do the inverse transform
         forwardComplex(inputReal.data(), inputImaginary.data(), outputReal.data(), outputImaginary.data());
         
-        interleave(outputReal.begin(), outputReal.end(), outputImaginary.begin(), output);
+        interleaveComplex(outputReal.begin(), outputReal.end(), outputImaginary.begin(), output);
     }
     
     template <class ComplexIterator>
@@ -331,7 +337,7 @@ namespace dsp
         std::vector<typename ComplexInputIterator::value_type::value_type> inputImaginary(size);
         
         // Deinterleave
-        deinterleave(input, input + size, inputReal.begin(), inputImaginary.begin());
+        deinterleaveComplex(input, input + size, inputReal.begin(), inputImaginary.begin());
         
         std::vector<typename ComplexOutputIterator::value_type::value_type> outputReal(size);
         std::vector<typename ComplexOutputIterator::value_type::value_type> outputImaginary(size);
@@ -339,7 +345,7 @@ namespace dsp
         // Do the inverse transform
         inverseComplex(inputReal.data(), inputImaginary.data(), outputReal.data(), outputImaginary.data());
         
-        interleave(outputReal.begin(), outputReal.end(), outputImaginary.begin(), output);
+        interleaveComplex(outputReal.begin(), outputReal.end(), outputImaginary.begin(), output);
     }
 }
 
