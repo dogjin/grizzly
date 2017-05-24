@@ -1,0 +1,70 @@
+/*
+ 
+ This file is a part of Grizzly, a modern C++ library for digital signal
+ processing. See https://github.com/dsperados/grizzly for more information.
+ 
+ Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>
+ 
+ --------------------------------------------------------------------
+ 
+ If you would like to use Grizzly for commercial or closed-source
+ purposes, please contact us for a commercial license.
+ 
+ */
+
+#ifndef GRIZZLY_CEPSTRUM_HPP
+#define GRIZZLY_CEPSTRUM_HPP
+
+#include <cmath>
+#include <complex>
+#include <vector>
+
+#include "fast_fourier_transform_base.hpp"
+
+namespace dsp
+{
+    //! Take the complex cepstrum
+    template <typename Iterator>
+    std::vector<typename Iterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, Iterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        for (auto& bin : spectrum)
+        {
+            if (bin.real() == 0 && bin.imag() == 0)
+                bin.real(std::numeric_limits<typename Iterator::value_type::value_type>::min());
+            
+            bin = std::log(bin);
+        }
+        
+        return fft.inverseComplex(spectrum.begin());
+    }
+    
+    //! Take the inverse of the complex cepstrum
+    template <typename Iterator>
+    std::vector<typename Iterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, Iterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        for (auto& bin : spectrum)
+            bin = std::exp(bin);
+        
+        return fft.inverseComplex(spectrum.begin());
+    }
+        
+    std::vector<float> cepstrum(FastFourierTransformBase& fft, float* data);
+    std::vector<float> powerCepstrum(FastFourierTransformBase& fft, float* data);
+}
+
+#endif
