@@ -143,6 +143,14 @@ namespace dsp
         }
     }
     
+    //! Unwrap the phases of a collection of complex numbers in-place
+    template <typename ComplexIterator>
+    void unwrapPhases(ComplexIterator begin, ComplexIterator end)
+    {
+        const auto phases = unwrappedPhases(begin, end);
+        replacePhases(phases.begin(), phases.end(), begin);
+    }
+    
     //! Take the log of a vector of complex numbers
     template <typename ComplexIterator>
     void log(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
@@ -161,6 +169,22 @@ namespace dsp
         std::vector<typename ComplexIterator::value_type> logs(std::distance(begin, end));
         log(begin, end, logs.begin());
         return logs;
+    }
+    
+    //! Take the abs of a vector of complex numbers
+    template <typename ComplexIterator>
+    void abs(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
+    {
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return std::abs(x); });
+    }
+    
+    //! Take the abs of a vector of complex numbers
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> abs(ComplexIterator begin, ComplexIterator end)
+    {
+        std::vector<typename ComplexIterator::value_type> out(std::distance(begin, end));
+        abs(begin, end, out.begin());
+        return out;
     }
 }
 
