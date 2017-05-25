@@ -32,6 +32,7 @@
 #include <cmath>
 #include <complex>
 #include <iterator>
+#include <limits>
 #include <vector>
 
 #include <dsperados/math/constants.hpp>
@@ -147,7 +148,7 @@ namespace dsp
     void log(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
     {
         using T = typename ComplexIterator::value_type::value_type;
-        std::transform(inBegin, inEnd, outBegin, [](auto x) -> typename ComplexIterator::value_type
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x) -> typename ComplexIterator::value_type
         {
             return (x == T(0)) ? std::numeric_limits<T>::lowest() : std::log(x);
         });

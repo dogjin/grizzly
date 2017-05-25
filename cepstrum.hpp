@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <complex>
+#include <limits>
 #include <vector>
 
 #include "complex.hpp"
@@ -56,9 +57,53 @@ namespace dsp
         
         return fft.inverseComplex(spectrum.begin());
     }
+    
+    template <typename T>
+    std::vector<T> cepstrum(FastFourierTransformBase& fft, T* data)
+    {
+        // Take the Fourier transform
+        const auto spectrum = fft.forward(data);
         
-    std::vector<float> cepstrum(FastFourierTransformBase& fft, float* data);
-    std::vector<float> powerCepstrum(FastFourierTransformBase& fft, float* data);
+        // Compute the log of the magnitudes
+        std::vector<T> logs(spectrum.size());
+        std::transform(spectrum.begin(), spectrum.end(), logs.begin(), [](const auto& x) -> T
+        {
+            const auto mag = std::abs(x);
+            return (mag == 0) ? std::numeric_limits<T>::lowest() : std::log(mag);
+        });
+        
+        // Take the inverse transform
+        const std::vector<T> imaginary(logs.size(), 0);
+        std::vector<T> result(fft.size, 0);
+        fft.inverse(logs.data(), imaginary.data(), result.data());
+        
+        // Return the result
+        return result;
+    }
+    
+    template <typename T>
+    std::vector<float> powerCepstrum(FastFourierTransformBase& fft, T* data)
+    {
+        // Take the Fourier transform
+        const auto spectrum = fft.forward(data);
+        
+        // Compute the log of the magnitudes
+        std::vector<T> logs(spectrum.size());
+        std::transform(spectrum.begin(), spectrum.end(), logs.begin(), [](const auto& x) -> T
+        {
+            const auto magsq = std::norm(x);
+            return (magsq == 0) ? std::numeric_limits<T>::lowest() : std::log(magsq);
+        });
+        
+        // Take the inverse transform
+        const std::vector<T> imaginary(logs.size(), 0);
+        std::vector<T> result(fft.size, 0);
+        fft.inverse(logs.data(), imaginary.data(), result.data());
+        
+        // Return the result, squared
+        std::transform(result.begin(), result.end(), result.begin(), [](const auto& x){ return x * x; });
+        return result;
+    }
 }
 
 #endif
