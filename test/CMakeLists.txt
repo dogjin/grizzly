@@ -15,6 +15,7 @@ set(SOURCES
     cepstrum.cpp
     circular_buffer.cpp
     comb_filter.cpp
+    complex.cpp
     convolution.cpp
     delay.cpp
     # down_sample.cpp
@@ -29,7 +30,6 @@ set(SOURCES
     multi_tap_resonator.cpp
     segment_envelope.cpp
     spectral_centroid.cpp
-    spectrum.cpp
     # up_sample.cpp
     waveform.cpp
     window.cpp

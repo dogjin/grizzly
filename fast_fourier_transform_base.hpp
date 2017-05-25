@@ -33,7 +33,7 @@
 #include <dsperados/math/interleave.hpp>
 #include <vector>
 
-#include "spectrum.hpp"
+#include "complex.hpp"
 
 namespace dsp
 {
@@ -52,12 +52,12 @@ namespace dsp
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
             @return: A spectrum of realSpectrumSize complex bins */
-        Spectrum<float> forward(const float* input);
+        std::vector<std::complex<float>> forward(const float* input);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
             @return: A spectrum of realSpectrumSize complex bins */
-        Spectrum<double> forward(const double* input);
+        std::vector<std::complex<double>> forward(const double* input);
         
         //! Do the forward Fourier transform
         /*! @param input Address of the input data, containing at least size elements
@@ -91,11 +91,11 @@ namespace dsp
 
         //! Do the inverse Fourier transform
         /* @param input A spectrum of at least realSpectrumSize bins */
-        std::vector<float> inverse(const Spectrum<float>& input);
+        std::vector<float> inverse(const std::vector<std::complex<float>>& input);
 
         //! Do the inverse Fourier transform
         /* @param input A spectrum of at least realSpectrumSize bins */
-        std::vector<double> inverse(const Spectrum<double>& input);
+        std::vector<double> inverse(const std::vector<std::complex<double>>& input);
         
         //! Do the inverse Fourier transform
         /*! @param input Iterator to a std::complex<float> spectrum container, of at least realSpectrumSize elements 

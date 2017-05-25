@@ -41,26 +41,26 @@ namespace dsp
         
     }
     
-    Spectrum<float> FastFourierTransformBase::forward(const float* input)
+    std::vector<std::complex<float>> FastFourierTransformBase::forward(const float* input)
     {
-        Spectrum<float> output(realSpectrumSize);
+        std::vector<std::complex<float>> output(realSpectrumSize);
         forward(input, output.begin());
         return output;
     }
     
-    Spectrum<double> FastFourierTransformBase::forward(const double* input)
+    std::vector<std::complex<double>> FastFourierTransformBase::forward(const double* input)
     {
-        Spectrum<double> output(realSpectrumSize);
+        std::vector<std::complex<double>> output(realSpectrumSize);
         forward(input, output.begin());
         return output;
     }
 
-    vector<float> FastFourierTransformBase::inverse(const Spectrum<float>& input)
+    vector<float> FastFourierTransformBase::inverse(const std::vector<std::complex<float>>& input)
     {
         return inverse(input.begin());
     }
 
-    vector<double> FastFourierTransformBase::inverse(const Spectrum<double>& input)
+    vector<double> FastFourierTransformBase::inverse(const std::vector<std::complex<double>>& input)
     {
         return inverse(input.begin());
     }
