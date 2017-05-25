@@ -20,6 +20,7 @@ set(SOURCES
     delay.cpp
     # down_sample.cpp
     # dynamic.cpp
+    even_odd.cpp
     fast_fourier_transform_ooura.cpp
     first_order_filter.cpp
     gordon_smith_oscillator.cpp

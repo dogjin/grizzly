@@ -38,26 +38,6 @@
 
 namespace dsp
 {
-    //! Take the complex cepstrum
-    template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, ComplexIterator iterator)
-    {
-        auto spectrum = fft.forwardComplex(iterator);
-        log(spectrum.begin(), spectrum.end(), spectrum.begin());
-        return fft.inverseComplex(spectrum.begin());
-    }
-    
-    //! Take the inverse of the complex cepstrum
-    template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, ComplexIterator iterator)
-    {
-        auto spectrum = fft.forwardComplex(iterator);
-        for (auto& bin : spectrum)
-            bin = std::exp(bin);
-        
-        return fft.inverseComplex(spectrum.begin());
-    }
-    
     template <typename T>
     std::vector<T> cepstrum(FastFourierTransformBase& fft, T* data)
     {
@@ -103,6 +83,26 @@ namespace dsp
         // Return the result, squared
         std::transform(result.begin(), result.end(), result.begin(), [](const auto& x){ return x * x; });
         return result;
+    }
+    
+    //! Take the complex cepstrum
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, ComplexIterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        log(spectrum.begin(), spectrum.end(), spectrum.begin());
+        return fft.inverseComplex(spectrum.begin());
+    }
+    
+    //! Take the inverse of the complex cepstrum
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, ComplexIterator iterator)
+    {
+        auto spectrum = fft.forwardComplex(iterator);
+        for (auto& bin : spectrum)
+            bin = std::exp(bin);
+        
+        return fft.inverseComplex(spectrum.begin());
     }
 }
 

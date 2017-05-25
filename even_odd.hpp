@@ -21,14 +21,14 @@ namespace dsp
         using T = typename Iterator::value_type;
         std::vector<T> even(std::distance(begin, end));
         
-        std::advance(end, -1);
+        auto rbegin = std::make_reverse_iterator(end);
         for (auto i = 0; i < even.size(); ++i)
         {
-            even[i] = (*begin + *end) / T(2);
+            even[i] = (*begin + *rbegin) / T(2);
             std::advance(begin, 1);
-            std::advance(end, -1);
+            std::advance(rbegin, 1);
         }
-        
+
         return even;
     }
     
@@ -39,12 +39,12 @@ namespace dsp
         using T = typename Iterator::value_type;
         std::vector<T> odd(std::distance(begin, end));
         
-        std::advance(end, -1);
+        auto rbegin = std::make_reverse_iterator(end);
         for (auto i = 0; i < odd.size(); ++i)
         {
-            odd[i] = (*begin - *end) / T(2);
+            odd[i] = (*begin - *rbegin) / T(2);
             std::advance(begin, 1);
-            std::advance(end, -1);
+            std::advance(rbegin, 1);
         }
         
         return odd;
