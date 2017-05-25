@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <iterator>
 #include <vector>
 
 #include <dsperados/math/constants.hpp>
@@ -139,6 +140,26 @@ namespace dsp
             std::advance(complexBegin, 1);
             std::advance(phaseBegin, 1);
         }
+    }
+    
+    //! Take the log of a vector of complex numbers
+    template <typename ComplexIterator>
+    void log(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
+    {
+        using T = typename ComplexIterator::value_type::value_type;
+        std::transform(inBegin, inEnd, outBegin, [](auto x) -> typename ComplexIterator::value_type
+        {
+            return (x == T(0)) ? std::numeric_limits<T>::lowest() : std::log(x);
+        });
+    }
+    
+    //! Take the log of a vector of complex numbers
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> log(ComplexIterator begin, ComplexIterator end)
+    {
+        std::vector<typename ComplexIterator::value_type> logs(std::distance(begin, end));
+        log(begin, end, logs.begin());
+        return logs;
     }
 }
 

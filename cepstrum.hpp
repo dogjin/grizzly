@@ -32,29 +32,23 @@
 #include <complex>
 #include <vector>
 
+#include "complex.hpp"
 #include "fast_fourier_transform_base.hpp"
 
 namespace dsp
 {
     //! Take the complex cepstrum
-    template <typename Iterator>
-    std::vector<typename Iterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, Iterator iterator)
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, ComplexIterator iterator)
     {
         auto spectrum = fft.forwardComplex(iterator);
-        for (auto& bin : spectrum)
-        {
-            if (bin.real() == 0 && bin.imag() == 0)
-                bin.real(std::numeric_limits<typename Iterator::value_type::value_type>::min());
-            
-            bin = std::log(bin);
-        }
-        
+        log(spectrum.begin(), spectrum.end(), spectrum.begin());
         return fft.inverseComplex(spectrum.begin());
     }
     
     //! Take the inverse of the complex cepstrum
-    template <typename Iterator>
-    std::vector<typename Iterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, Iterator iterator)
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, ComplexIterator iterator)
     {
         auto spectrum = fft.forwardComplex(iterator);
         for (auto& bin : spectrum)
