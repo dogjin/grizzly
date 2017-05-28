@@ -40,6 +40,7 @@
 #include <vector>
 #include <utility>
 
+#include "cepstrum.hpp"
 
 namespace dsp
 {
@@ -194,6 +195,18 @@ namespace dsp
         else
             // Parabolically interpolate to get a better local minimum, use the offset of the peak as correction on the index
             return {sampleRate / (*minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
+    }
+    
+    //! Estimate the frequency of a buffer using Cepstrum analysis
+    /*! @param lowTimeRemoval The amount of low-time quefrencies to leave out of the analysis. Usually around 0.025 - 0.1. */
+    template <typename T>
+    float estimateFrequencyWithCepstrum(FastFourierTransformBase& fft, T* data, float sampleRate, float lowTimeRemoval)
+    {
+        const auto halfSize = fft.size * 0.5;
+        
+        const auto cs = cepstrum(fft, data);
+        const auto peak = std::max_element(cs.begin() + halfSize * lowTimeRemoval, cs.begin() + halfSize, std::less<>());
+        return sampleRate / std::distance(cs.begin(), peak);
     }
 }
 
