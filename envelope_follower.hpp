@@ -155,7 +155,7 @@ namespace dsp
         //! Write the new input to the follower
         void write(const T& x) final override
         {
-            this->y = -this->releaseCoefficients.b1 * this->y + this->attackCoefficients.a0 * std::max<T>(x - this->y, 0);
+            this->y = static_cast<T>(-this->releaseCoefficients.b1 * this->y + this->attackCoefficients.a0 * std::max<T>(x - this->y, 0));
         }
         
         //! Read the last computed value

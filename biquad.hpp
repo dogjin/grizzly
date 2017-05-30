@@ -42,7 +42,7 @@ namespace dsp
         //! Compute a sample
         void write(const T& x)
         {
-            y = x * coefficients.a0 + xz1 * coefficients.a1 + xz2 * coefficients.a2 - coefficients.b1 * yz1 - coefficients.b2 * yz2;
+            y = static_cast<T>(x * coefficients.a0 + xz1 * coefficients.a1 + xz2 * coefficients.a2 - coefficients.b1 * yz1 - coefficients.b2 * yz2);
             
             // Update the delays
             xz2 = xz1;
@@ -101,7 +101,7 @@ namespace dsp
         void write(const T& x)
         {
             auto v = x - coefficients.b1 * z1 - coefficients.b2 * z2;
-            y = coefficients.a0 * v + coefficients.a1 * z1 + coefficients.a2 * z2;
+            y = static_cast<T>(coefficients.a0 * v + coefficients.a1 * z1 + coefficients.a2 * z2);
             
             z2 = z1;
             z1 = v;
@@ -152,12 +152,12 @@ namespace dsp
         void write(const T& x)
         {
             auto v = x + yz1;
-            yz1 = -coefficients.b1 * v + yz2;
-            yz2 = -coefficients.b2 * v;
+            yz1 = static_cast<T>(-coefficients.b1 * v + yz2);
+            yz2 = static_cast<T>(-coefficients.b2 * v);
             
-            y = coefficients.a0 * v + xz1;
-            xz1 = coefficients.a1 * v + xz2;
-            xz2 = coefficients.a2 * v;
+            y = static_cast<T>(coefficients.a0 * v + xz1);
+            xz1 = static_cast<T>(coefficients.a1 * v + xz2);
+            xz2 = static_cast<T>(coefficients.a2 * v);
         }
         
         //! Insert a new sample in the Biquad
@@ -209,11 +209,11 @@ namespace dsp
         //! Insert a new sample in the Biquad
         void write(const T& x)
         {
-            y = x * coefficients.a0 + z1;
+            y = static_cast<T>(x * coefficients.a0 + z1);
             
             // Update the delays
-            z1 = x * coefficients.a1 + y * -coefficients.b1 + z2;
-            z2 = x * coefficients.a2 + y * -coefficients.b2;
+            z1 = static_cast<T>(x * coefficients.a1 + y * -coefficients.b1 + z2);
+            z2 = static_cast<T>(x * coefficients.a2 + y * -coefficients.b2);
         }
         
         //! Insert a new sample in the Biquad

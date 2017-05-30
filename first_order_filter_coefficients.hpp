@@ -120,11 +120,11 @@ namespace dsp
         // safety check
         FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
-        const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
+        const T b1 = std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
         
         coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
-        coefficients.a0 = 1.0 - b1;
-        coefficients.a1 = 0;
+        coefficients.a0 = 1.0f - b1;
+        coefficients.a1 = 0.f;
     }
     
     //! Set filter to low pass filtering using one pole, given a samplerate, time and and a time constant factor.
@@ -135,11 +135,11 @@ namespace dsp
         // safety check
         FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
         
-        const auto b1 = exp(-timeConstantFactor / (time.value * sampleRate.value));
+        const T b1 = std::exp(-timeConstantFactor / (time.value * sampleRate.value));
         
         coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
-        coefficients.a0 = 1.0 - b1;
-        coefficients.a1 = 0;
+        coefficients.a0 = 1.0f - b1;
+        coefficients.a1 = 0.f;
     }
     
     //! Set filter to low pass filtering using one pole and one zero, given a samplerate and a cutoff
@@ -150,10 +150,10 @@ namespace dsp
         FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
-        const auto s = (z - 1) / (z + 1);
+        const T s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
-        coefficients.a0 = (1.0 + s) / 2; // or z / (1 + z)
+        coefficients.a0 = (1.0 + s) / 2; // same as z / (1 + z)
         coefficients.a1 = coefficients.a0;
     }
     
@@ -172,10 +172,10 @@ namespace dsp
             return throughPass(coefficients);
         
         const auto z = std::tan(normalizedAngularFrequency / 2);
-        const auto s = (z - 1) / (z + 1);
+        const T s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
-        coefficients.a0 = (1.0 + s) / 2;
+        coefficients.a0 = (1.0 + s) / 2; // same as z / (1 + z)
         coefficients.a1 = coefficients.a0;
     }
     
@@ -186,7 +186,7 @@ namespace dsp
         // safety check
         FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
-        const auto b1 = exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
+        const T b1 = std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
         
         coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0 + b1;
@@ -201,7 +201,7 @@ namespace dsp
         FirstOrderCoefficients<T>::check(sampleRate, cutOff);
         
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
-        const auto s = (1 - z) / (z + 1);
+        const T s = (1 - z) / (z + 1);
         
         coefficients.b1 = -s;
         coefficients.a0 = (1 + s) / 2;
@@ -227,8 +227,8 @@ namespace dsp
         // safety check
         FirstOrderCoefficients<T>::check(sampleRate, centerFrequency);
         
-        auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
-        auto s = (z - 1) / (z + 1);
+        const auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
+        const T s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
         coefficients.a0 = s;

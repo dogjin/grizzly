@@ -66,7 +66,7 @@ namespace dsp
             assert(knee != 0);
             
             // Compute gain factor within the knee range
-            return -slope * std::pow(input.value - threshold.value + halfKnee, 2) * doubleKneeReciprocal;
+            return -slope * std::pow(input.value - threshold.value + halfKnee, 2.f) * doubleKneeReciprocal;
         }
         
         //! Compute a gain factor for signals below a threshold
@@ -84,7 +84,7 @@ namespace dsp
             assert(knee != 0);
             
             //! Apply compression within knee range
-            return slope * std::pow(threshold.value - input.value + halfKnee, 2) * doubleKneeReciprocal;
+            return slope * std::pow(threshold.value - input.value + halfKnee, 2.f) * doubleKneeReciprocal;
         }
         
         //! Set the ratio

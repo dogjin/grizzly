@@ -29,6 +29,7 @@
 #define GRIZZLY_CROSSOVER_FILTER_HPP
 
 #include <cstddef>
+#include <dsperados/math/constants.hpp>
 #include <functional>
 #include <unit/hertz.hpp>
 #include <vector>
@@ -116,7 +117,7 @@ namespace dsp
             lowPass.biquads.resize(numberOfStagesInCascade);
             highPass.biquads.resize(numberOfStagesInCascade);
             
-            for (auto i = 0; i < numberOfStagesInCascade; ++i)
+            for (size_t i = 0; i < numberOfStagesInCascade; ++i)
             {
                 lowPass.cascade.emplaceBack(&dsp::BiquadDirectFormI<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
                 highPass.cascade.emplaceBack(&dsp::BiquadDirectFormI<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
@@ -157,26 +158,26 @@ namespace dsp
                     
                 case CrossoverFilterOrder::FOURTH:
                     // low-pass coefficients
-                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, std::sqrt(0.5));
-                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, std::sqrt(0.5));
+                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     
                     // high-pass coefficients
-                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, std::sqrt(0.5));
-                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, std::sqrt(0.5));
+                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     break;
                     
                 case CrossoverFilterOrder::EIGHTH:
                     // low-pass coefficients according to Butterworth filters
-                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541);
-                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307);
-                    dsp::lowPass(lowPass.biquads[2].coefficients, sampleRate, cutOff, 0.541);
-                    dsp::lowPass(lowPass.biquads[3].coefficients, sampleRate, cutOff, 1.307);
+                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    dsp::lowPass(lowPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    dsp::lowPass(lowPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     
                     // high-pass coefficients according to Butterworth filters
-                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.541);
-                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, 1.307);
-                    dsp::highPass(highPass.biquads[2].coefficients, sampleRate, cutOff, 0.541);
-                    dsp::highPass(highPass.biquads[3].coefficients, sampleRate, cutOff, 1.307);
+                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    dsp::highPass(highPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    dsp::highPass(highPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     break;
             }
         }
