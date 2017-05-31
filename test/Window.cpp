@@ -1,108 +1,108 @@
 #include <algorithm>
 #include <vector>
 
-#include "doctest.h"
+#include "catch.hpp"
 
-#include "../Window.hpp"
+#include "../window.hpp"
 
 using namespace dsp;
 using namespace std;
 
 TEST_CASE("Window")
 {
-    SUBCASE("rectangular")
+    SECTION("rectangular")
     {
-        SUBCASE("default")
+        SECTION("default")
         {
             auto window = createRectangularWindow<float>(4);
             for(auto& value : window)
-                CHECK(value == doctest::Approx(1));
+                CHECK(value == Approx(1));
         }
         
-        SUBCASE("with argument")
+        SECTION("with argument")
         {
             auto window = createRectangularWindow<float>(4, 2.3);
             
             for(auto& value : window)
-                CHECK(value == doctest::Approx(2.3));
+                CHECK(value == Approx(2.3));
         }
     }
     
-    SUBCASE("triangle")
+    SECTION("triangle")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
             auto window = createSymmetricTriangleWindow<float>(10);
             
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
             auto window = createTriangleWindow<float>(10);
             float peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
         }
     }
     
-    SUBCASE("Hanning")
+    SECTION("Hanning")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
-            auto window = createSymmetricHanningWindow<float>(10);
+            auto window = createSymmetricHannWindow<float>(10);
             
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
-            auto window = createHanningWindow<float>(10);
+            auto window = createHannWindow<float>(10);
             float peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
         }
     }
     
-    SUBCASE("Hamming")
+    SECTION("Hamming")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
             auto window = createSymmetricHammingWindow<float>(10);
             
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
             auto window = createHammingWindow<float>(10);
             float peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
         }
     }
     
-    SUBCASE("Blackman")
+    SECTION("Blackman")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
             auto window = createSymmetricBlackmanWindow<float>(10);
             
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
             auto window = createBlackmanWindow<float>(10);
             float peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
         }
     }
     
-    SUBCASE("sinc")
+    SECTION("sinc")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
             auto window = createSincWindow<float>(10, M_PI, 4.5);
             CHECK(window[4] == window[5]);
@@ -111,32 +111,32 @@ TEST_CASE("Window")
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
             auto window = createSincWindow<float>(10, M_PI, 5);
             float peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
             
             window = createSincWindow<float>(10, 0.1, 5);
             peakValue = *max_element(window.begin(), window.end());
             
-            CHECK(peakValue == doctest::Approx(1));
+            CHECK(peakValue == Approx(1));
         }
     }
     
-    SUBCASE("Kaiser")
+    SECTION("Kaiser")
     {
-        SUBCASE("symmetric")
+        SECTION("symmetric")
         {
             auto window = createSymmetricKaiserWindow<float>(10, 1);
             CHECK(window[4] == window[5]);
         }
         
-        SUBCASE("periodic")
+        SECTION("periodic")
         {
             auto window = createKaiserWindow<float>(10, 1);
-            CHECK(window[5] == doctest::Approx(1));
+            CHECK(window[5] == Approx(1));
         }
     }
 }
