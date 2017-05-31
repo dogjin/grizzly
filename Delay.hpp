@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
+ Copyright (C) 2016 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 #include <dsperados/math/interpolation.hpp>
 
-#include "circular_buffer.hpp"
+#include "CircularBuffer.hpp"
 
 namespace dsp
 {
@@ -40,13 +40,9 @@ namespace dsp
     class Delay
     {
     public:
-        using iterator = typename CircularBuffer<T>::reverse_iterator;
-        using const_iterator = typename CircularBuffer<T>::reverse_const_iterator;
-
-    public:
-        //! Construct by feeding the maximal delay size
-        Delay(std::size_t maximalDelayTime) :
-            data(maximalDelayTime + 1)
+        //! Construct by feeding the maximum delay size
+        Delay(std::size_t maximumDelayTime) :
+            data(maximumDelayTime + 1)
         {
             
         }
@@ -55,40 +51,24 @@ namespace dsp
         template <typename... Args>
         void write(Args&&... args)
         {
-            data.write(std::forward<Args&&>(args)...);
+            data.emplace_back(std::forward<Args&&>(args)...);
         }
         
         //! Read from the delay line
-        template <typename Index>
-        std::enable_if_t<std::is_integral<Index>::value, T> read(Index index) const
+        template <typename Index, typename Interpolator>
+        T read(Index index, Interpolator interpolator = math::linearInterpolation) const
         {
-            return math::clampAccess(begin(), end(), index);
+            return interpolate(data.rbegin(), data.rend(), index, interpolator, math::clampAccess);
         }
         
-        //! Read from the delay line with a fractional index
-        template <typename Index, typename Interpolation>
-        auto read(Index index, Interpolation interpolate) const
+        //! Set the maximum delay
+        void resize(std::size_t maximumDelayTime)
         {
-            return interpolate(begin(), end(), index, math::clampAccess);
+            data.resize_front(maximumDelayTime + 1);
         }
         
-        //! Set the maximal delay
-        void setMaximalDelayTime(std::size_t maximalDelayTime)
-        {
-            data.resize_front(maximalDelayTime + 1);
-        }
-        
-        //! Return the maximal number of delay samples
-        std::size_t getMaximalDelayTime() const { return data.size() - 1; }
-        
-        // Begin and end for ranged for-loops
-        iterator begin() { return data.rbegin(); }
-        const_iterator begin() const { return data.rbegin(); }
-        const_iterator cbegin() const { return data.crbegin(); }
-        
-        iterator end() { return data.rend(); }
-        const_iterator end() const { return data.rend(); }
-        const_iterator cend() const { return data.crend(); }
+        //! Return the maximum number of delay samples
+        std::size_t getMaximumDelayTime() const { return data.size() - 1; }
         
     private:
         //! The data in the delay line

@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
+ Copyright (C) 2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -28,27 +28,53 @@
 #ifndef GRIZZLY_CASCADE_HPP
 #define GRIZZLY_CASCADE_HPP
 
-#include <cstddef>
 #include <functional>
 #include <stdexcept>
 #include <vector>
 
 namespace dsp
 {
-    //! Cascade of functions with a T(T) signature
-    /*! A cascade chains multiple functions with one call, using the output of one stage as the input for the next stage. */
-    template <typename T>
+    //! Cascade functions with a T(T) signature
+    /*! A cascade can comute multiple functions in one call, using the output of one stage as the input for the next stage.
+     */
+    template <class T>
     class Cascade
     {
     public:
-        //! Input a new value into the cascade, recomputing the output of every stage
+        //! Write all stages, return output
+        T writeAndRead(const T& input)
+        {
+            write(input);
+            return readOutput();
+        }
+        
+        //! Write a value to the cascade
         void write(const T& input)
         {
             this->input = input;
             
             T stageOutput = input;
-            for (auto& stage : stages)
-                stage.output = stageOutput = stage.filter(stageOutput);
+            
+            for (auto i = 0; i < stages.size(); ++i)
+            {
+                stageOutput = stages[i](stageOutput);
+                output[i] = stageOutput;
+            }
+        }
+        
+        //! Read the last stage
+        T readOutput() const
+        {
+            if (output.empty())
+                return input;
+            
+            return output.back();
+        }
+        
+        //! Read the output state of a stage
+        T readStage(size_t index) const
+        {
+            return output[index];
         }
         
         //! Read the input state
@@ -57,132 +83,86 @@ namespace dsp
             return input;
         }
         
-        //! Read the output state of a stage
-        T readStage(std::size_t index) const
+        //! Add a stage at the back of the cascade
+        void emplaceBack(std::function<T(T)> stage)
         {
-            if (index >= stages.size())
-                throw std::out_of_range("Cascade readStage index is out of range");
-            
-            return stages[index].output;
-        }
-        
-        //! Read output from the last stage
-        /*! If there are not stages, the input will be returned */
-        T readOutput() const
-        {
-            return stages.empty() ? input : stages.back().output;
-        }
-        
-        //! Call write and then readOutput
-        T writeAndReadOutput(const T& input)
-        {
-            write(input);
-            return readOutput();
-        }
-        
-        //! Add a filter stage to the back of the cascade
-        void emplaceBack(std::function<T(const T&)> filter)
-        {
-            Stage stage;
-            stage.filter = std::move(filter);
-            stages.emplace_back(std::move(stage));
-            
-            clear();
+            stages.emplace_back(stage);
+            clearStates();
         }
         
         //! Add a stage at the back of the cascade
         /*! @param method The address of a class member function with a T(T) signature
-            @param ptr The addres of your class instance containing the method */
+         @param ptr The addres of your class instance containing the method */
         template <typename Method, typename This>
-        void emplaceBack(Method method, This ptr)
+        void emplaceBack(Method method, This ptr, size_t position)
         {
-            emplaceBack([method, ptr](const T& x){ return (ptr->*method)(x); });
-            clear();
+            emplaceBack([method, ptr](T x){ return (ptr->*method)(x); });
+            clearStates();
         }
         
         //! Insert a stage at a given position
-        void emplace(std::function<T(const T&)> filter, std::size_t position)
+        void emplace(std::function<T(T)> stage, size_t position)
         {
             if (position > stages.size())
-                throw std::invalid_argument("Cascade position for emplace out of range");
+                throw std::invalid_argument("position > stages.size()");
             
-            Stage stage;
-            stage.filter = std::move(filter);
-            stages.emplace(stages.begin() + position, std::move(stage));
-            
-            clear();
+            stages.emplace(stages.begin() + position, stage);
+            clearStates();
         }
         
         //! Insert a stage at a given position
         /*! @param method The address of a class member function with a T(T) signature
          @param ptr The addres of your class instance containing the method */
         template <typename Method, typename This>
-        void emplace(Method method, This ptr, std::size_t position)
+        void emplace(Method method, This ptr, size_t position)
         {
             emplace([method, ptr](T x){ return (ptr->*method)(x); }, position);
-            clear();
+            clearStates();
         }
         
         //! Erase a stage at a given position
-        void erase(std::size_t position)
+        void erase(size_t position)
         {
             if (position >= stages.size())
-                throw std::out_of_range("Cascade position for erase out of range");
+                throw std::invalid_argument("position >= stages.size()");
             
             stages.erase(stages.begin() + position);
-            clear();
+            clearStates();
         }
         
         //! Erase all stages
         void eraseAll()
         {
             stages.clear();
-            clear();
+            clearStates();
         }
         
         //! Clear all the input and output states
-        void clear()
+        void clearStates()
         {
-            input = T();
-            for (auto& stage : stages)
-                stage.output = T();
+            output.clear();
+            output.resize(stages.size());
+            input = 0;
         }
         
         //! Get the number of stages
-        std::size_t getSize() const
+        size_t getSize() const
         {
             return stages.size();
         }
         
         //! Return a single stage
-        std::function<T(const T&)>& operator[](std::size_t index)
-        {
-            if (index >= stages.size())
-                throw std::out_of_range("Cascade position for operator[] out of range");
-            
-            return stages[index].filter;
-        }
+        std::function<T(T)>& operator[](size_t index) { return stages[index]; };
         
         //! Return a single stage
-        const std::function<T(const T&)>& operator[](std::size_t index) const
-        {
-            if (index >= stages.size())
-                throw std::out_of_range("Cascade position for operator[] out of range");
-            
-            return stages[index].filter;
-        }
-        
-    private:
-        //! Private structure containing the data for each stage
-        struct Stage
-        {
-            std::function<T(const T&)> filter;
-            T output = T{};
-        };
+        const std::function<T(T)>& operator[](size_t index) const { return stages[index]; };
         
     private:
         //! The stage functions
-        std::vector<Stage> stages;
+        std::vector<std::function<T(T)>> stages;
+        
+        //! The output states
+        std::vector<T> output;
         
         //! The input state
         T input = 0;
