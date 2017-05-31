@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
+ Copyright (C) 2016 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -30,9 +30,10 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <gsl/gsl>
 #include <vector>
 
-#include "delay.hpp"
+#include "Delay.hpp"
 
 namespace dsp
 {
@@ -82,7 +83,7 @@ namespace dsp
         void setKernel(Iterator begin, Iterator end)
         {
             kernel.assign(begin, end);
-            delay.setMaximalDelayTime(kernel.size());
+            delay.resize(kernel.size());
         }
         
         //! Return the kernel
@@ -96,22 +97,34 @@ namespace dsp
         std::vector<T> kernel;
     };
     
-    //! Convolve two buffers, return a buffer with size input + kernel - 1 (output-side algorithm)
+    //! Convolve two buffers, return a buffer with size input + kernel - 1
     template <typename InputIterator, typename KernelIterator>
-    static std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
+    static std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>>
+    convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
     {
-        auto inputSize = std::distance(inBegin, inEnd);
-        auto kernelSize = std::distance(kernelBegin, kernelEnd);
-        auto outputSize = inputSize + kernelSize - 1;
+        const auto inputSize = std::distance(inBegin, inEnd);
+        const auto kernelSize = std::distance(kernelBegin, kernelEnd);
         
-        std::vector<float> output(outputSize);
-        for (auto i = 0 ; i < outputSize; i++)
-            for (auto h = 0; h < kernelSize; h++)
+        std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> output(inputSize + kernelSize - 1);
+        
+        InputIterator input = inBegin;
+        for (int sample = 0; sample < output.size(); ++sample)
+        {
+            InputIterator input2 = input++;
+            KernelIterator kernel = kernelBegin;
+            
+            for (int h = 0; h < kernelSize; ++h)
             {
-                if (i - h < 0) continue;
-                else if (i - h >= inputSize) continue;
-                output[i] += kernelBegin[h] * inBegin[i - h];
+                auto input3 = input2--;
+                if (sample - h < 0)
+                    continue;
+                
+                if (sample - h >= inputSize)
+                    continue;
+                
+                output[sample] += (*kernel++) * (*input3);
             }
+        }
         
         return output;
     }

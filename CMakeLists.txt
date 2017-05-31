@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.5.1)
 # Create the project
 project(Grizzly CXX)
 
+# Add global definitions and include directories
+
 # Setup the common headers and sources
 set(HEADERS all_pass_filter.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp cepstrum.hpp circular_buffer.hpp comb_filter.hpp complex.hpp convolution.hpp crossover_filter.hpp delay.hpp dynamic.hpp envelope_follower.hpp even_odd.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp frequency_estimation.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp ladder_filter.hpp mid_side.hpp multi_crossover_filter.hpp multi_tap_resonator.hpp phase_generator.hpp pink_noise.hpp poly_blep.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp spectral_centroid.hpp square.hpp state_variable_filter.hpp triangle.hpp waveform.hpp window.hpp z_transform.hpp)
 set(SOURCES fast_fourier_transform_base.cpp)
@@ -20,6 +22,7 @@ list(APPEND SOURCES ${OOURA_SOURCES})
 # Apple
 if (APPLE)
 
+
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 	add_definitions(-std=c++14 -Wall -Werror -Wconversion)
 	include_directories(/usr/local/include)
@@ -33,6 +36,7 @@ if (APPLE)
     list(APPEND SOURCES ${APPLE_SOURCES})
     install (FILES ${HEADERS} DESTINATION include/grizzly)
     install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/ooura)
+
 
     add_subdirectory(test)
 endif()
