@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016 Dsperados <info@dsperados.com>
+ Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -29,14 +29,15 @@
 #define GRIZZLY_DYNAMIC_HPP
 
 #include <cassert>
+#include <cmath>
+#include <limits>
 #include <stdexcept>
-
 #include <unit/amplitude.hpp>
 
 namespace dsp
 {
     //! Compressor make-up gain estimation for a 'standard' mixing situation
-    inline static unit::decibel<float> compressorMakeUpGain(unit::decibel<float> threshold, float ratio)
+    inline static unit::decibel<float> computeCompressorMakeUpGain(unit::decibel<float> threshold, float ratio)
     {
         if (ratio <= 0)
             throw std::invalid_argument("ratio <= zero");
@@ -44,55 +45,79 @@ namespace dsp
         return 0.5f * threshold.value * (1.0f / ratio - 1.0f);
     }
     
-    //! Downward compression for signals exceeding a threshold
-    /*! Upward expansion is possible with a ratio lower than 1 (> 0) */
-    inline static unit::decibel<float> compressDownFactor(unit::decibel<float> x, unit::decibel<float> threshold, float ratio, unit::decibel<float> knee = 0.f)
+    //! Dynamic Gain
+    /*! Compute a gain factor for signals below/above a given threshold or within a knee range.
+     A typical application is a compressor/expander where the the gain factor is computed from a followed input and multiplied with the original input. */
+    class DynamicGain
     {
-        if (ratio <= 0)
-            throw std::invalid_argument("ratio <= zero");
+    public:
+        //! Compute a gain factor for signals exceeding a threshold
+        unit::decibel<float> computeGainAbove(unit::decibel<float> input, unit::decibel<float> threshold) const
+        {
+            // Compute gain factor above the threshold and knee range
+            if (input.value > threshold.value + halfKnee)
+                return -slope * (input.value - threshold.value);
+            
+            // Throughput, no gain
+            if (input.value <= threshold.value - halfKnee)
+                return 0;
+            
+            // One of the two above if statements should fire if the knee is 0, so we should never reach this
+            assert(knee != 0);
+            
+            // Compute gain factor within the knee range
+            return -slope * std::pow(input.value - threshold.value + halfKnee, 2.f) * doubleKneeReciprocal;
+        }
         
-        const auto slope = 1.0f / ratio - 1.0f;
-        const auto halfKnee = knee.value * 0.5f;
+        //! Compute a gain factor for signals below a threshold
+        unit::decibel<float> computeGainBelow(unit::decibel<float> input, unit::decibel<float> threshold) const
+        {
+            // Throughput, no gain
+            if (input.value >= threshold.value + halfKnee)
+                return 0;
+            
+            //! Compute gain factor below the threshold and knee range
+            if (input.value < threshold.value - halfKnee)
+                return -slope * (input.value - threshold.value);
+            
+            // One of the two above if statements should fire if the knee is 0, so we should never reach this
+            assert(knee != 0);
+            
+            //! Apply compression within knee range
+            return slope * std::pow(threshold.value - input.value + halfKnee, 2.f) * doubleKneeReciprocal;
+        }
         
-        //! Apply compression
-        if (x.value > threshold.value + halfKnee)
-            return slope * (x.value - threshold.value);
+        //! Set the ratio
+        void setRatio(float ratio)
+        {
+            if (ratio <= 0)
+                throw std::invalid_argument("ratio <= zero");
+            
+            slope = 1.f - 1.f / ratio;
+        }
         
-        //! Throughput
-        if (x.value <= threshold.value - halfKnee)
-            return 0;
+        //! The the knee range around the threshold
+        void setKnee(unit::decibel<float> knee)
+        {
+            this->knee = knee.value;
+            halfKnee = knee.value * 0.5f;
+            doubleKneeReciprocal = 1.f / (knee.value * 2.f);
+        }
         
-        // One of the two above if statements should fire if the knee is 0, so we should never reach this
-        assert(knee.value != 0);
+    public:
+        //! The slope factor
+        float slope = 0;
         
-        //! Apply compression within knee range
-        return slope * (x.value - threshold.value + halfKnee) * (x.value - threshold.value + halfKnee) / (2.0f * knee.value);
-    }
-    
-    //! Downward expansion for signals below a threshold
-    /*! Upward expansion is possible with a ratio lower than 1 (> 0) */
-    inline static unit::decibel<float> expandDownFactor(unit::decibel<float> x, unit::decibel<float> threshold, float ratio, unit::decibel<float> knee = 0.f)
-    {
-        if (ratio <= 0)
-            throw std::invalid_argument("ratio <= zero");
+    private:
+        //! The knee range
+        float knee = 0;
         
-        const auto slope = 1.f - (1.0f / ratio);
-        const auto halfKnee = knee.value * 0.5f;
+        //! Half-knee
+        float halfKnee = 0;
         
-        //! Throughput
-        if (x.value >= threshold.value + halfKnee)
-            return 0;
-        
-        //! Apply expansion
-        if (x.value < threshold.value - halfKnee)
-            return -slope * (x.value - threshold.value);
-        
-        // One of the two above if statements should fire if the knee is 0, so we should never reach this
-        assert(knee.value != 0);
-        
-        //! Apply compression within knee range
-        return slope * (threshold.value + halfKnee - x.value) * (threshold.value + halfKnee - x.value) / (2.0f * knee.value);
-    }
+        //! Double-knee reciprocal
+        float doubleKneeReciprocal = 0;
+    };
 }
 
 #endif
