@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 project(grizzly CXX)
+
+add_definitions(-std=c++1z -Wall)
+include_directories(/usr/local/include)
+
 add_library(grizzly STATIC "")
+install(TARGETS grizzly DESTINATION lib)
 
 set(HEADERS
     AllPassFilter.hpp
@@ -45,6 +50,7 @@ set(SOURCES
 
 target_sources(grizzly PRIVATE ${HEADERS} ${SOURCES})
 source_group(\\ FILES ${HEADERS} ${SOURCES})
+install (FILES ${HEADERS} DESTINATION include/grizzly)
 
 # Ooura
 set(OOURA_HEADERS
@@ -57,13 +63,10 @@ set(OOURA_SOURCES
 
 target_sources(grizzly PRIVATE ${OOURA_HEADERS} ${OOURA_SOURCES})
 source_group(\\Ooura FILES ${OOURA_HEADERS} ${OOURA_SOURCES})
+install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/Ooura)
 
 # Apple
 if (APPLE)
-
-	add_definitions(-std=c++1z -Wall)
-	include_directories(/usr/local/include)
-
     set(APPLE_HEADERS
         Apple/FastFourierTransformAccelerate.hpp)
 
@@ -76,21 +79,4 @@ if (APPLE)
 
 	find_library(Accelerate Accelerate REQUIRED)
 	target_link_libraries(grizzly ${Accelerate})
-
-	install (FILES ${HEADERS} DESTINATION include/grizzly)
-	install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/Ooura)
-
 endif()
-
-if(WIN32)
-
-	add_definitions(/std:latest /Wall /WX-)
-	include_directories("C:/Program Files (x86)/dsperados/dsperados")
-	include_directories("C:/Program Files (x86)/dsperados")
-
-	install (FILES ${HEADERS} DESTINATION dsperados/grizzly)
-	install (FILES ${OOURA_HEADERS} DESTINATION dsperados/grizzly/Ooura)
-
-endif(WIN32)
-
-install(TARGETS grizzly DESTINATION lib)
