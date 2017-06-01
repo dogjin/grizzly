@@ -33,34 +33,6 @@
 
 namespace dsp
 {
-    //! Convert a left and right to mid
-    template <class T>
-    constexpr T stereo2mid(const T& left, const T& right)
-    {
-        return static_cast<T>((left + right) * 0.5);
-    }
-    
-    //! Convert a left and right to side
-    template <class T>
-    constexpr T stereo2side(const T& left, const T& right)
-    {
-        return static_cast<T>((left - right) * 0.5);
-    }
-    
-    //! Convert a mid-side to left
-    template <class T>
-    constexpr T midSide2left(const T& mid, const T& side)
-    {
-        return mid + side;
-    }
-    
-    //! Convert a mid-side to right
-    template <class T>
-    constexpr T midSide2right(const T& mid, const T& side)
-    {
-        return mid - side;
-    }
-    
     //! Sample with a left and right channel
     template <class T>
     struct Stereo
@@ -116,7 +88,7 @@ namespace dsp
     template <class T>
     constexpr MidSide<T> stereo2ms(const T& left, const T& right)
     {
-        return {stereo2mid(left, right), stereo2side(left, right)};
+        return {(left + right) * static_cast<T>(0.5), (left - right) * static_cast<T>(0.5)};
     }
 
     //! Convert a left and right stereo sample to mid-side
@@ -130,7 +102,7 @@ namespace dsp
     template <class T>
     constexpr Stereo<T> ms2stereo(const T& mid, const T& side)
     {
-        return {midSide2left(mid, side), midSide2right(mid, side)};
+        return {mid + side, mid - side};
     }
 
     //! Convert mid-side sample to a stereo left-right

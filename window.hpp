@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016 Dsperados <info@dsperados.com>
+ Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 #include <unit/radian.hpp>
 #include <vector>
 
-#include "Waveform.hpp"
+#include "triangle.hpp"
 
 namespace dsp
 {
@@ -71,9 +71,9 @@ namespace dsp
         return window;
     }
     
-    //! Create a Hanning window
+    //! Create a Hann window
     template <typename T>
-    std::vector<T> createHanningWindow(std::size_t size)
+    std::vector<T> createHannWindow(std::size_t size)
     {
         std::vector<T> window(size);
         
@@ -83,9 +83,9 @@ namespace dsp
         return window;
     }
     
-    //! Create a symmetric Hanning window
+    //! Create a symmetric Hann window
     template <typename T>
-    std::vector<T> createSymmetricHanningWindow(std::size_t size)
+    std::vector<T> createSymmetricHannWindow(std::size_t size)
     {
         std::vector<T> window(size);
         
@@ -187,7 +187,7 @@ namespace dsp
     }
     
     //! Create an asymmetric Kaiser window.
-    /*! @param beta: Larger beta gives lower side-lobe levels, but a wider main lobe and vice versa
+    /*! @param beta Larger beta gives lower side-lobe levels, but a wider main lobe and vice versa
         beta of 1 ~= rectangular
         beta of 5 ~= hamming
         beta of 6 ~= hann
@@ -206,7 +206,7 @@ namespace dsp
     }
     
     //! Create a symmetric Kaiser window.
-    /*! @param beta: Larger beta gives lower side-lobe levels, but a wider main lobe and vice versa
+    /*! @param beta Larger beta gives lower side-lobe levels, but a wider main lobe and vice versa
         beta of 1 ~= rectangular
         beta of 5 ~= hamming
         beta of 6 ~= hann
