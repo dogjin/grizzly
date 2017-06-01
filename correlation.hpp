@@ -26,12 +26,15 @@ namespace dsp
         
         for (auto lag = start; lag < bufferSize; ++lag)
         {
+            auto bufferIt = std::next(bufferBegin, lag);
+            auto kernelIt = kernelBegin;
             for (auto k = 0; k < kernelSize; ++k)
             {
-                if ((lag + k < 0) || (lag + k >= bufferSize))
-                    continue;
+                if ((lag + k >= 0) && (lag + k < bufferSize))
+                    result[lag - start] += (*bufferIt) * (*kernelIt);
                 
-                result[lag - start] += (*(bufferBegin + lag + k) * (*(kernelBegin + k)));
+                std::advance(kernelIt, 1);
+                std::advance(bufferIt, 1);
             }
         }
         
