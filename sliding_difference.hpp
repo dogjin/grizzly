@@ -1,23 +1,21 @@
 //
-//  sliding_dot_product.hpp
+//  sliding_difference.hpp
 //  Grizzly
 //
 //  Created by Stijn Frishert on 01/06/17.
 //
 //
 
-#ifndef GRIZZLY_SLIDING_DOT_PRODUCT_HPP
-#define GRIZZLY_SLIDING_DOT_PRODUCT_HPP
+#ifndef GRIZZLY_SLIDING_DIFFERENCE_HPP
+#define GRIZZLY_SLIDING_DIFFERENCE_HPP
 
-#include <dsperados/math/linear/dot.hpp>
 #include <iterator>
 #include <vector>
 
 namespace dsp
 {
-    //! Compute the dot product of a kernel and buffer, slide the kernel and repeat
     template <typename KernelIterator, typename BufferIterator>
-    std::vector<float> computeSlidingDotProduct(KernelIterator kernelBegin, KernelIterator kernelEnd, BufferIterator bufferBegin, BufferIterator bufferEnd, int start)
+    std::vector<float> computeSlidingDifference(KernelIterator kernelBegin, KernelIterator kernelEnd, BufferIterator bufferBegin, BufferIterator bufferEnd, int start)
     {
         const auto bufferSize = std::distance(bufferBegin, bufferEnd);
         const auto kernelSize = std::distance(kernelBegin, kernelEnd);
@@ -30,8 +28,11 @@ namespace dsp
             auto kernelIt = kernelBegin;
             for (auto k = 0; k < kernelSize; ++k)
             {
+                auto x = 0;
                 if ((lag + k >= 0) && (lag + k < bufferSize))
-                    result[lag - start] += (*bufferIt) * (*kernelIt);
+                    x = *bufferIt;
+                
+                result[lag - start] += std::pow(x - (*kernelIt), 2);
                 
                 std::advance(kernelIt, 1);
                 std::advance(bufferIt, 1);
@@ -42,4 +43,4 @@ namespace dsp
     }
 }
 
-#endif /* GRIZZLY_SLIDING_DOT_PRODUCT_HPP */
+#endif /* GRIZZLY_SLIDING_DIFFERENCE_HPP */
