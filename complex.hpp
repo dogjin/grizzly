@@ -40,7 +40,23 @@
 #include <unit/radian.hpp>
 
 namespace dsp
-{    
+{
+    //! Construct a complex buffer from a real one
+    template <typename RealIterator, typename ComplexIterator>
+    void convertRealsToComplex(RealIterator inBegin, RealIterator inEnd, ComplexIterator outBegin)
+    {
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return static_cast<typename ComplexIterator::value_type>(x); });
+    }
+    
+    //! Construct a complex buffer from a real one
+    template <typename RealIterator>
+    std::vector<std::complex<typename RealIterator::value_type>> convertRealsToComplex(RealIterator begin, RealIterator end)
+    {
+        std::vector<std::complex<typename RealIterator::value_type>> complex;
+        convertRealsToComplex(begin, end, complex.begin());
+        return complex;
+    }
+    
     //! Return the real parts of a vector of complex numbers
     template <typename ComplexIterator>
     std::vector<typename ComplexIterator::value_type::value_type> getReals(ComplexIterator begin, ComplexIterator end)
