@@ -18,21 +18,21 @@ TEST_CASE("MidSide")
 			REQUIRE(s1 != s2);
 		}
 
-		SECTION("stereo2ms")
+		SECTION("stereo2midSide")
 		{
 			SECTION("left == right")
 			{
-			    CHECK(stereo2ms<float>(0, 0) == MidSide<float>(0, 0));
-			    CHECK(stereo2ms<float>(1, 1) == MidSide<float>(1, 0));
-			    CHECK(stereo2ms<float>(-1, -1) == MidSide<float>(-1, 0));
+			    CHECK(stereo2midSide<float>(0, 0) == MidSide<float>(0, 0));
+			    CHECK(stereo2midSide<float>(1, 1) == MidSide<float>(1, 0));
+			    CHECK(stereo2midSide<float>(-1, -1) == MidSide<float>(-1, 0));
 			}
 
 			SECTION("left != right")
 			{
-				CHECK(stereo2ms<float>(0, 1) == MidSide<float>(0.5, -0.5));
-				CHECK(stereo2ms<float>(0, -1) == MidSide<float>(-0.5, 0.5));
-				CHECK(stereo2ms<float>(1, 0) == MidSide<float>(0.5, 0.5));
-				CHECK(stereo2ms<float>(-1, 0) == MidSide<float>(-0.5, -0.5));
+				CHECK(stereo2midSide<float>(0, 1) == MidSide<float>(0.5, -0.5));
+				CHECK(stereo2midSide<float>(0, -1) == MidSide<float>(-0.5, 0.5));
+				CHECK(stereo2midSide<float>(1, 0) == MidSide<float>(0.5, 0.5));
+				CHECK(stereo2midSide<float>(-1, 0) == MidSide<float>(-0.5, -0.5));
 			}
 		}
 	}
@@ -41,29 +41,29 @@ TEST_CASE("MidSide")
 	{
 		SECTION("comparison")
 		{
-			MidSide<float> ms1(1, 2);
-			MidSide<float> ms2(1, 2);
-			REQUIRE(ms1 == ms2);
+			MidSide<float> midSide1(1, 2);
+			MidSide<float> midSide2(1, 2);
+			REQUIRE(midSide1 == midSide2);
 
-			ms2.mid = 3;
-			REQUIRE(ms1 != ms2);
+			midSide2.mid = 3;
+			REQUIRE(midSide1 != midSide2);
 		}
 
-		SECTION("ms2stereo")
+		SECTION("midSide2stereo")
 		{
 			SECTION("side == 0")
 			{
-				CHECK(ms2stereo<float>(0, 0) == Stereo<float>(0, 0));
-				CHECK(ms2stereo<float>(1, 0) == Stereo<float>(1, 1));
-				CHECK(ms2stereo<float>(-1, 0) == Stereo<float>(-1, -1));
+				CHECK(midSide2stereo<float>(0, 0) == Stereo<float>(0, 0));
+				CHECK(midSide2stereo<float>(1, 0) == Stereo<float>(1, 1));
+				CHECK(midSide2stereo<float>(-1, 0) == Stereo<float>(-1, -1));
 			}
 
 			SECTION("side != 0")
 			{
-				CHECK(ms2stereo<float>(0.5, -0.5) == Stereo<float>(0, 1));
-				CHECK(ms2stereo<float>(-0.5, 0.5) == Stereo<float>(0, -1));
-				CHECK(ms2stereo<float>(0.5, 0.5) == Stereo<float>(1, 0));
-				CHECK(ms2stereo<float>(-0.5, -0.5) == Stereo<float>(-1, 0));
+				CHECK(midSide2stereo<float>(0.5, -0.5) == Stereo<float>(0, 1));
+				CHECK(midSide2stereo<float>(-0.5, 0.5) == Stereo<float>(0, -1));
+				CHECK(midSide2stereo<float>(0.5, 0.5) == Stereo<float>(1, 0));
+				CHECK(midSide2stereo<float>(-0.5, -0.5) == Stereo<float>(-1, 0));
 			}
 		}
 	}

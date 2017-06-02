@@ -33,6 +33,34 @@
 
 namespace dsp
 {
+    //! Convert a left and right stereo sample to mid
+    template <class T>
+    constexpr T stereo2mid(const T& left, const T& right)
+    {
+        return static_cast<T>((left + right) * 0.5);
+    }
+    
+    //! Convert a left and right stereo sample to side
+    template <class T>
+    constexpr T stereo2side(const T& left, const T& right)
+    {
+        return static_cast<T>((left - right) * 0.5);
+    }
+    
+    //! Convert mid-side sample to a stereo left
+    template <class T>
+    constexpr T midSide2left(const T& mid, const T& side)
+    {
+        return mid + side;
+    }
+    
+    //! Convert mid-side sample to a stereo right
+    template <class T>
+    constexpr T midSide2right(const T& mid, const T& side)
+    {
+        return mid - side;
+    }
+    
     //! Sample with a left and right channel
     template <class T>
     struct Stereo
@@ -86,30 +114,30 @@ namespace dsp
 
     //! Convert a left and right stereo sample to mid-side
     template <class T>
-    constexpr MidSide<T> stereo2ms(const T& left, const T& right)
+    constexpr MidSide<T> stereo2midSide(const T& left, const T& right)
     {
-        return {(left + right) * static_cast<T>(0.5), (left - right) * static_cast<T>(0.5)};
+        return {stereo2mid(left, right), stereo2side(left, right)};
     }
 
     //! Convert a left and right stereo sample to mid-side
     template <class T>
-    constexpr MidSide<T> stereo2ms(const Stereo<T>& stereo)
+    constexpr MidSide<T> stereo2midSide(const Stereo<T>& stereo)
     {
         return stereo2ms(stereo.left, stereo.right);
     }
 
     //! Convert mid-side sample to a stereo left-right
     template <class T>
-    constexpr Stereo<T> ms2stereo(const T& mid, const T& side)
+    constexpr Stereo<T> midSide2stereo(const T& mid, const T& side)
     {
-        return {mid + side, mid - side};
+        return {midSide2left(mid, side), midSide2right(mid, side)};
     }
 
     //! Convert mid-side sample to a stereo left-right
     template <class T>
-    constexpr Stereo<T> ms2stereo(const MidSide<T>& ms)
+    constexpr Stereo<T> midSide2stereo(const MidSide<T>& ms)
     {
-        return ms2stereo(ms.mid, ms.side);
+        return midSide2stereo(ms.mid, ms.side);
     }
 }
 
