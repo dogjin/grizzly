@@ -57,6 +57,22 @@ namespace dsp
         return complex;
     }
     
+    //! Construct a complex buffer from a real one
+    template <typename RealIterator, typename ComplexIterator>
+    void convertImaginariesToComplex(RealIterator inBegin, RealIterator inEnd, ComplexIterator outBegin)
+    {
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return typename ComplexIterator::value_type(0, x); });
+    }
+    
+    //! Construct a complex buffer from a real one
+    template <typename RealIterator>
+    std::vector<std::complex<typename RealIterator::value_type>> convertImaginariesToComplex(RealIterator begin, RealIterator end)
+    {
+        std::vector<std::complex<typename RealIterator::value_type>> complex;
+        convertImaginariesToComplex(begin, end, complex.begin());
+        return complex;
+    }
+    
     //! Return the real parts of a vector of complex numbers
     template <typename ComplexIterator>
     std::vector<typename ComplexIterator::value_type::value_type> getReals(ComplexIterator begin, ComplexIterator end)
