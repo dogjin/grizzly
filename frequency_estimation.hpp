@@ -204,7 +204,7 @@ namespace dsp
     {
         const auto halfSize = fft.size * 0.5;
         
-        const auto cs = cepstrum(fft, data);
+        const auto cs = computeCepstrum(fft, data);
         const auto peak = std::max_element(cs.begin() + halfSize * lowTimeRemoval, cs.begin() + halfSize, std::less<>());
         return sampleRate / std::distance(cs.begin(), peak);
     }

@@ -43,55 +43,62 @@ namespace dsp
 {    
     //! Return the real parts of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type::value_type> real(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type::value_type> getReals(ComplexIterator begin, ComplexIterator end)
     {
-        std::vector<typename ComplexIterator::value_type::value_type> real(std::distance(begin, end));
-        std::transform(begin, end, real.begin(), [&](auto bin){ return bin.real(); });
-        return real;
+        std::vector<typename ComplexIterator::value_type::value_type> reals(std::distance(begin, end));
+        std::transform(begin, end, reals.begin(), [&](auto x){ return x.real(); });
+        return reals;
     }
     
     //! Return the imaginary parts of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type::value_type> imaginary(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type::value_type> getImaginaries(ComplexIterator begin, ComplexIterator end)
     {
-        std::vector<typename ComplexIterator::value_type::value_type> imaginary(std::distance(begin, end));
-        std::transform(begin, end, imaginary.begin(), [&](auto bin){ return bin.imag(); });
-        return imaginary;
+        std::vector<typename ComplexIterator::value_type::value_type> imaginaries(std::distance(begin, end));
+        std::transform(begin, end, imaginaries.begin(), [&](auto x){ return x.imag(); });
+        return imaginaries;
+    }
+    
+    //! Take the abs of a vector of complex numbers
+    template <typename InputIterator, typename OutputIterator>
+    void computeMagnitudes(InputIterator inBegin, InputIterator inEnd, OutputIterator outBegin)
+    {
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return std::abs(x); });
     }
     
     //! Return the magnitudes of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type::value_type> magnitudes(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type::value_type> computeMagnitudes(ComplexIterator begin, ComplexIterator end)
     {
         std::vector<typename ComplexIterator::value_type::value_type> magnitudes(std::distance(begin, end));
-        std::transform(begin, end, magnitudes.begin(), [&](auto bin){ return std::abs(bin); });
+        computeMagnitudes(begin, end, magnitudes.begin());
         return magnitudes;
     }
     
     //! Return the phases of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> phases(ComplexIterator begin, ComplexIterator end)
+    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> computePhases(ComplexIterator begin, ComplexIterator end)
     {
         std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> phases(std::distance(begin, end));
-        std::transform(begin, end, phases.begin(), [&](auto bin){ return std::arg(bin); });
+        std::transform(begin, end, phases.begin(), [&](auto x){ return std::arg(x); });
         return phases;
     }
     
     //! Return the unwrapped phases of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> unwrappedPhases(ComplexIterator begin, ComplexIterator end)
+    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> computeUnwrappedPhases(ComplexIterator begin, ComplexIterator end)
     {
         using T = typename ComplexIterator::value_type::value_type;
         
         // Retrieve the phases
-        auto phases_ = phases(begin, end);
-        math::unwrap(phases_.begin(), phases_.end(), -math::PI<T>, math::PI<T>);
-        return phases_;
+        auto phases = computePhases(begin, end);
+        math::unwrap(phases.begin(), phases.end(), -math::PI<T>, math::PI<T>);
+        return phases;
     }
     
     //! Replace the real parts of a vector of complex numbers
     template <typename RealIterator, typename ComplexIterator>
-    void replaceReal(RealIterator realBegin, RealIterator realEnd, ComplexIterator complexBegin)
+    void replaceReals(RealIterator realBegin, RealIterator realEnd, ComplexIterator complexBegin)
     {
         while (realBegin != realEnd)
         {
@@ -103,7 +110,7 @@ namespace dsp
     
     //! Replace the imaginary parts of a vector of complex numbers
     template <typename RealIterator, typename ComplexIterator>
-    void replaceImaginary(RealIterator imagBegin, RealIterator imagEnd, ComplexIterator complexBegin)
+    void replaceImaginaries(RealIterator imagBegin, RealIterator imagEnd, ComplexIterator complexBegin)
     {
         while (imagBegin != imagEnd)
         {
@@ -153,7 +160,7 @@ namespace dsp
     
     //! Take the log of a vector of complex numbers
     template <typename ComplexIterator>
-    void log(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
+    void computeLogs(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
     {
         using T = typename ComplexIterator::value_type::value_type;
         std::transform(inBegin, inEnd, outBegin, [](const auto& x) -> typename ComplexIterator::value_type
@@ -164,28 +171,21 @@ namespace dsp
     
     //! Take the log of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> log(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type> computeLogs(ComplexIterator begin, ComplexIterator end)
     {
         std::vector<typename ComplexIterator::value_type> logs(std::distance(begin, end));
-        log(begin, end, logs.begin());
+        computeLogs(begin, end, logs.begin());
         return logs;
     }
     
-    //! Take the abs of a vector of complex numbers
-    template <typename ComplexIterator>
-    void abs(ComplexIterator inBegin, ComplexIterator inEnd, ComplexIterator outBegin)
-    {
-        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return std::abs(x); });
-    }
-    
-    //! Take the abs of a vector of complex numbers
-    template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> abs(ComplexIterator begin, ComplexIterator end)
-    {
-        std::vector<typename ComplexIterator::value_type> out(std::distance(begin, end));
-        abs(begin, end, out.begin());
-        return out;
-    }
+//    //! Take the abs of a vector of complex numbers
+//    template <typename ComplexIterator>
+//    std::vector<typename ComplexIterator::value_type> computeMagnitudes(ComplexIterator begin, ComplexIterator end)
+//    {
+//        std::vector<typename ComplexIterator::value_type> out(std::distance(begin, end));
+//        abs(begin, end, out.begin());
+//        return out;
+//    }
 }
 
 #endif /* GRIZZLY_COMPLEX_HPP */

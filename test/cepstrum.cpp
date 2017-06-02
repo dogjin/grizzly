@@ -19,6 +19,6 @@ TEST_CASE("Cepstrum")
             sine[i] = std::sin((float)i / sine.size());
         
         FastFourierTransform fft(sine.size());
-        const std::vector<std::complex<float>> cepstrum = cepstrumComplex(fft, sine.begin());
+        const std::vector<std::complex<float>> cepstrum = computeComplexCepstrum(fft, sine.begin());
     }
 }

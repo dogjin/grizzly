@@ -39,7 +39,7 @@
 namespace dsp
 {
     template <typename T>
-    std::vector<T> cepstrum(FastFourierTransformBase& fft, T* data)
+    std::vector<T> computeCepstrum(FastFourierTransformBase& fft, T* data)
     {
         // Take the Fourier transform
         const auto spectrum = fft.forward(data);
@@ -62,7 +62,7 @@ namespace dsp
     }
     
     template <typename T>
-    std::vector<float> powerCepstrum(FastFourierTransformBase& fft, T* data)
+    std::vector<float> computePowerCepstrum(FastFourierTransformBase& fft, T* data)
     {
         // Take the Fourier transform
         const auto spectrum = fft.forward(data);
@@ -87,16 +87,16 @@ namespace dsp
     
     //! Take the complex cepstrum
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> cepstrumComplex(FastFourierTransformBase& fft, ComplexIterator iterator)
+    std::vector<typename ComplexIterator::value_type> computeComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator iterator)
     {
         auto spectrum = fft.forwardComplex(iterator);
-        log(spectrum.begin(), spectrum.end(), spectrum.begin());
+        computeLogs(spectrum.begin(), spectrum.end(), spectrum.begin());
         return fft.inverseComplex(spectrum.begin());
     }
     
     //! Take the inverse of the complex cepstrum
     template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> cepstrumComplexInverse(FastFourierTransformBase& fft, ComplexIterator iterator)
+    std::vector<typename ComplexIterator::value_type> computeInverseComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator iterator)
     {
         auto spectrum = fft.forwardComplex(iterator);
         for (auto& bin : spectrum)
