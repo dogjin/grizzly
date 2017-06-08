@@ -52,7 +52,7 @@ namespace dsp
     template <typename RealIterator>
     std::vector<std::complex<typename RealIterator::value_type>> convertRealsToComplex(RealIterator begin, RealIterator end)
     {
-        std::vector<std::complex<typename RealIterator::value_type>> complex;
+        std::vector<std::complex<typename RealIterator::value_type>> complex(std::distance(begin, end));
         convertRealsToComplex(begin, end, complex.begin());
         return complex;
     }
@@ -208,6 +208,22 @@ namespace dsp
         std::vector<typename ComplexIterator::value_type> logs(std::distance(begin, end));
         computeLogs(begin, end, logs.begin());
         return logs;
+    }
+    
+    // Convert real data to complex
+    template <typename Iterator, typename complexIterator>
+    void convertRealToComplex(Iterator inBegin, Iterator inEnd, complexIterator outBegin)
+    {
+        std::transform(inBegin, inEnd, outBegin, [](const auto& x){ return std::complex<typename complexIterator::value_type::value_type>(x, 0); });
+    }
+    
+    // Convert real data to complex
+    template <typename Iterator>
+    std::vector<std::complex<typename Iterator::value_type>> convertRealToComplex(Iterator begin, Iterator end)
+    {
+        std::vector<std::complex<typename Iterator::value_type>> out(std::distance(begin, end));
+        convertRealToComplex(begin, end, out.begin());
+        return out;
     }
     
 //    //! Take the abs of a vector of complex numbers

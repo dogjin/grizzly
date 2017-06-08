@@ -38,46 +38,55 @@
 
 namespace dsp
 {
-    template <typename T>
-    std::vector<T> computeCepstrum(FastFourierTransformBase& fft, T* data)
+    // Compute the ceptrum of a spectrum of real data
+    template <class ComplexIterator>
+    std::vector<typename ComplexIterator::value_type::value_type> computeRealCepstrum(FastFourierTransformBase& fft, ComplexIterator spectrumBegin, ComplexIterator spectrumEnd)
     {
-        // Take the Fourier transform
-        const auto spectrum = fft.forward(data);
-        
         // Compute the log of the magnitudes
-        std::vector<T> logs(spectrum.size());
-        std::transform(spectrum.begin(), spectrum.end(), logs.begin(), [](const auto& x) -> T
-        {
-            const auto mag = std::abs(x);
-            return (mag == 0) ? std::numeric_limits<T>::lowest() : std::log(mag);
-        });
+        std::vector<typename ComplexIterator::value_type::value_type> logs(std::distance(spectrumBegin, spectrumEnd));
+        
+        std::transform(spectrumBegin, spectrumEnd, logs.begin(), [](const auto& x)
+                       {
+                           const auto mag = std::abs(x);
+                           return (mag == 0) ? std::numeric_limits<typename ComplexIterator::value_type::value_type>::lowest() : std::log(mag);
+                       });
         
         // Take the inverse transform
-        const std::vector<T> imaginary(logs.size(), 0);
-        std::vector<T> result(fft.size, 0);
+        const std::vector<typename ComplexIterator::value_type::value_type> imaginary(logs.size(), 0);
+        std::vector<typename ComplexIterator::value_type::value_type> result(fft.size, 0);
         fft.inverse(logs.data(), imaginary.data(), result.data());
         
         // Return the result
         return result;
     }
     
+    //! Compute the ceptrum of real data
     template <typename T>
-    std::vector<float> computePowerCepstrum(FastFourierTransformBase& fft, T* data)
+    std::vector<T> computeRealCepstrum(FastFourierTransformBase& fft, T* data)
     {
         // Take the Fourier transform
         const auto spectrum = fft.forward(data);
         
+        // Compute the cepstrum
+        return computeRealCepstrum(fft, spectrum.begin(), spectrum.end());
+    }
+    
+    
+    //! Comute the power cepstrum of a spectrum of real data
+    template <class ComplexIterator>
+    std::vector<typename ComplexIterator::value_type::value_type> computeRealPowerCepstrum(FastFourierTransformBase& fft, ComplexIterator spectrumBegin, ComplexIterator spectrumEnd)
+    {
         // Compute the log of the magnitudes
-        std::vector<T> logs(spectrum.size());
-        std::transform(spectrum.begin(), spectrum.end(), logs.begin(), [](const auto& x) -> T
-        {
-            const auto magsq = std::norm(x);
-            return (magsq == 0) ? std::numeric_limits<T>::lowest() : std::log(magsq);
-        });
+        std::vector<typename ComplexIterator::value_type::value_type> logs(std::distance(spectrumBegin, spectrumEnd));
+        std::transform(spectrumBegin, spectrumEnd, logs.begin(), [](const auto& x)
+                       {
+                           const auto magsq = std::norm(x);
+                           return (magsq == 0) ? std::numeric_limits<typename ComplexIterator::value_type::value_type>::lowest() : std::log(magsq);
+                       });
         
         // Take the inverse transform
-        const std::vector<T> imaginary(logs.size(), 0);
-        std::vector<T> result(fft.size, 0);
+        const std::vector<typename ComplexIterator::value_type::value_type> imaginary(logs.size(), 0);
+        std::vector<typename ComplexIterator::value_type::value_type> result(fft.size, 0);
         fft.inverse(logs.data(), imaginary.data(), result.data());
         
         // Return the result, squared
@@ -85,16 +94,35 @@ namespace dsp
         return result;
     }
     
-    //! Take the complex cepstrum
-    template <typename ComplexIterator>
-    std::vector<typename ComplexIterator::value_type> computeComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator iterator)
+    //! Compute the power ceptrum of real data
+    template <typename T>
+    std::vector<T> computeRealPowerCepstrum(FastFourierTransformBase& fft, T* data)
     {
-        auto spectrum = fft.forwardComplex(iterator);
-        computeLogs(spectrum.begin(), spectrum.end(), spectrum.begin());
-        return fft.inverseComplex(spectrum.begin());
+        // Take the Fourier transform
+        const auto spectrum = fft.forward(data);
+        
+        // Compute the power cepstrum
+        return computeRealPowerCepstrum(fft, spectrum.begin(), spectrum.end());
     }
     
-    //! Take the inverse of the complex cepstrum
+    
+    //! Compute the complex cepstrum of a spectrum of complex data
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> computeComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator spectrumBegin, ComplexIterator spectrumEnd)
+    {
+        auto logs = computeLogs(spectrumBegin, spectrumEnd);
+        return fft.inverseComplex(logs.begin());
+    }
+    
+    //! Compute the complex cepstrum of complex data
+    template <typename ComplexIterator>
+    std::vector<typename ComplexIterator::value_type> computeComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator dataBegin)
+    {
+        auto spectrum = fft.forwardComplex(dataBegin);
+        return computeComplexCepstrum(fft, spectrum.begin(), spectrum.end());
+    }
+    
+    //! Compute the inverse of the complex cepstrum
     template <typename ComplexIterator>
     std::vector<typename ComplexIterator::value_type> computeInverseComplexCepstrum(FastFourierTransformBase& fft, ComplexIterator iterator)
     {
