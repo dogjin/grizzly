@@ -55,7 +55,7 @@ namespace dsp
         Normalising the SDF (NSDF) results in +2r / m.
         The sum runs over each window but decreases with increasing the tau (index + windowSize - 1 - tau). */
     template <class Iterator>
-    static inline std::vector<float> computeNormalizedSquareDifference(Iterator begin, Iterator end)
+    std::vector<float> computeNormalizedSquareDifference(Iterator begin, Iterator end)
     {
         auto size = std::distance(begin, end);
         // auto size = frame.size();
