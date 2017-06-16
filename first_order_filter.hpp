@@ -33,7 +33,7 @@
 namespace dsp
 {
     //! A first-order, one-pole/one-zero filter (6bd/oct roll-off)
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class FirstOrderFilter
     {
     public:

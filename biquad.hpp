@@ -35,7 +35,7 @@ namespace dsp
     //! A biquad using Direct Form I
     /*! Biquad that computes samples using the Direct Form I topology.
      This topology gives you less side-effects when chaning coefficients during processing. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class BiquadDirectFormI
     {
     public:
@@ -93,7 +93,7 @@ namespace dsp
     /*! Biquad that computes samples using the Direct Form II topology.
      This topology minimizes the use of delays as it is shared between branches.
      A better floating-point accuracy is achieved in the transposed version. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class BiquadDirectFormII
     {
     public:
@@ -144,7 +144,7 @@ namespace dsp
     /*! Biquad that computes samples using the Transposed Direct Form I topology.
      Use transposed direct form II for better floating-point accuracy.
      Use direct form I for less side-effects when chaning coefficients during processing. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class BiquadTransposedDirectFormI
     {
     public:
@@ -202,7 +202,7 @@ namespace dsp
     /*! Biquad that computes samples using the Transposed Direct Form II topology.
      This structes minimizes the use of delays and has a good floating-point accuracy,
      although it has more side-effects when you change the coefficients during processing. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class BiquadTransposedDirectFormII
     {
     public:
