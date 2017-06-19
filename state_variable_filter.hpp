@@ -68,6 +68,54 @@ namespace dsp
             setTime(time, timeConstantFactor);
         }
         
+        //! Set the coefficients given a cut-off, q factor and sample-rate
+        void setCoefficients(unit::hertz<float> cutOff, float q, unit::hertz<float> sampleRate)
+        {
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sample rate <= 0");
+            
+            // check q
+            if (q < 0.01)
+                throw std::invalid_argument("q < 0.01");
+            
+            // check cut-off
+            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
+                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
+            
+            gain = std::tan(math::PI<float> * (cutOff.value / sampleRate.value));
+            damping = 1.0 / (2.0 * q);
+            computeResolvedGain(gain, damping, sampleRate);
+        }
+        
+        //! Set the coefficients given a time, q factor, sample-rate and time constant factor (default 5)
+        /*! Supplied with a time, the filter will reach to the input (smooth) in the given time 
+            using a time constant factor of approximately 5 and a q factor of 0.5 (no damping). */
+        void setCoefficients(unit::second<float> time, float q, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f)
+        {
+            const float t = time.value * math::SQRT_HALF<float>;
+            
+            // check sample rate
+            if (sampleRate.value <= 0)
+                throw std::invalid_argument("sample rate <= 0");
+            
+            // check q
+            if (q < 0.01)
+                throw std::invalid_argument("q < 0.01");
+            
+            // check time
+            if (t <= 0)
+                throw std::invalid_argument("time <= 0");
+            
+            // check time-constant-filter
+            if (timeConstantFactor < 0)
+                throw std::invalid_argument("time constant factor < 0");
+            
+            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
+            damping = 1.0 / (2.0 * q);
+            computeResolvedGain(gain, damping, sampleRate);
+        }
+        
         //! Set the cut-off frequency
         void setCutOff(unit::hertz<float> cutOff)
         {
@@ -80,6 +128,9 @@ namespace dsp
             computeResolvedGain(gain, damping, sampleRate);
         }
         
+        //! Set the time and time constant factor (default 5)
+        /*! Supplied with a time, the filter will reach to the input (smooth) in the given time
+            using a time constant factor of approximately 5 and a q factor of 0.5 (no damping). */
         void setTime(unit::second<float> time, float timeConstantFactor = 5.f)
         {
             const float t = time.value * math::SQRT_HALF<float>;
