@@ -29,6 +29,7 @@
 #define GRIZZLY_PARAMETER_SMOOTHER_HPP
 
 #include "first_order_filter.hpp"
+#include "state_variable_filter.hpp"
 
 namespace  dsp
 {
@@ -36,6 +37,11 @@ namespace  dsp
     class ParameterSmoother
     {
     public:
+        ParameterSmoother(unit::second<float> time, unit::hertz<float> sampleRate) :
+            filter(time, sampleRate)
+        {
+        }
+        
         void write()
         {
             filter.write(destination);
@@ -43,23 +49,36 @@ namespace  dsp
         
         T read()
         {
-            return filter.read();
+            return filter.readLowPass();
         }
         
         T writeAndRead()
         {
-            filter.write(destination);
+            write();
             return read();
+        }
+        
+        void setTime(unit::second<float> time)
+        {
+            filter.setTime(time);
+        }
+        
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            filter.setSampleRate(sampleRate);
         }
         
         bool reachedDestination()
         {
-            return (filter.read() == destination) ? true : false;
+            return (filter.readLowPass() == destination) ? true : false;
         }
         
     public:
-        FirstOrderFilter<T> filter;
         T destination = 0;
+        
+    private:
+        StateVariableFilter<float> filter;
+
     };
 }
 

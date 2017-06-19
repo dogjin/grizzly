@@ -32,14 +32,16 @@
 #include <dsperados/math/utility.hpp>
 #include <stdexcept>
 
-#include "first_order_filter_coefficients.hpp"
+#include "biquad.hpp"
+#include "biquad_coefficients.hpp"
 #include "first_order_filter.hpp"
+#include "first_order_filter_coefficients.hpp"
 
 namespace dsp
 {
     //! AttackReleaseEnvelopeFollower
     /*! Abstract base class for envelope followers that use an attack and release time */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class AttackReleaseEnvelopeFollower
     {
     public:
@@ -69,11 +71,8 @@ namespace dsp
         }
         
         //! Set the attack time
-        void setAttackTime(unit::second<float> attackTime)
+        virtual void setAttackTime(unit::second<float> attackTime)
         {
-            if (attackTime.value < 0)
-                throw std::invalid_argument("time < 0");
-            
             this->attackTime = attackTime;
             
             if (attackTime.value > 0)
@@ -82,12 +81,9 @@ namespace dsp
                 throughPass(attackCoefficients);
         }
         
-        //! Set the attack time
-        void setReleaseTime(unit::second<float> releaseTime)
+        //! Set the release time
+        virtual void setReleaseTime(unit::second<float> releaseTime)
         {
-            if (releaseTime.value < 0)
-                throw std::invalid_argument("time < 0");
-            
             this->releaseTime = releaseTime;
             
             if (releaseTime.value > 0)
@@ -145,7 +141,7 @@ namespace dsp
     /*! The capacitor continuously discharges via the release resistor. Due to this design, the peak will not
      reach its maximal value. choosing a bigger release time makes this less noticeably. See "Investigation
      in Dynamic Range Compression" by Massberg. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class EnvelopeFollowerRCR : public AttackReleaseEnvelopeFollower<T, CoeffType>
     {
     public:
@@ -170,13 +166,13 @@ namespace dsp
             this->y = y;
         }
     };
-
+    
     
     //! Envelope detector based on an analog circuit with two resistor, two capacitors and a diode
     /*! The first set of resistor/capacitor is decoupled from the second set. In contrast to the EnvelopeDetectorRCR,
      the envelope will reach the maximal value regardless of different release settings. See "Investigation in Dynamic
      Range Compression" by Massberg. */
-    template <class T, class CoeffType = double>
+    template <class T, class CoeffType = T>
     class EnvelopeFollowerDecoupled : public AttackReleaseEnvelopeFollower<T, CoeffType>
     {
     public:
@@ -209,12 +205,12 @@ namespace dsp
     
     //! Envelope detector using a one-pole low-pass filter
     /*! Notice the input is not rectified */
-    template <class T, class CoeffType = double>
-    class EnvelopeFollowerDigital : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    template <class T, class CoeffType = T>
+    class EnvelopeFollowerOnePole : public AttackReleaseEnvelopeFollower<T, CoeffType>
     {
     public:
         //! Construct the Follower
-        EnvelopeFollowerDigital(unit::hertz<float> sampleRate, bool releaseToZero, float timeConstantFactor = 5) :
+        EnvelopeFollowerOnePole(unit::hertz<float> sampleRate, bool releaseToZero, float timeConstantFactor = 5) :
             AttackReleaseEnvelopeFollower<T, CoeffType>(sampleRate, timeConstantFactor),
             releaseToZero(releaseToZero)
         {
@@ -255,6 +251,81 @@ namespace dsp
     private:
         //! First order filter
         FirstOrderFilter<T, CoeffType> lowPassFilter;
+    };
+    
+    //! Envelope detector using a biquad low-pass filter
+    /*! Notice the input is not rectified */
+    template <class T, class CoeffType = T>
+    class EnvelopeFollowerBiquad : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    {
+    public:
+        //! Construct the Follower
+        EnvelopeFollowerBiquad(unit::hertz<float> sampleRate, bool releaseToZero, float timeConstantFactor = 5) :
+            AttackReleaseEnvelopeFollower<T, CoeffType>(sampleRate, timeConstantFactor),
+            releaseToZero(releaseToZero)
+        {
+        }
+        
+        //! Write the new input to the follower
+        void write(const T& x) final override
+        {
+            if (x > lowPassFilter.read())
+            {
+                lowPassFilter.coefficients = this->attackCoefficients;
+                lowPassFilter.write(x);
+            }
+            else
+            {
+                lowPassFilter.coefficients = this->releaseCoefficients;
+                lowPassFilter.write(releaseToZero ? 0 : x);
+            }
+        }
+        
+        //! Read the last computed value
+        T read() const final override
+        {
+            return lowPassFilter.read();
+        }
+        
+        //! Set the envelope state
+        void setState(const T& y) final override
+        {
+            lowPassFilter.setState(y);
+        }
+        
+        //! Set the attack time
+        void setAttackTime(unit::second<float> attackTime) override
+        {
+            this->attackTime = attackTime;
+            
+            if (attackTime.value > 0)
+                lowPass(attackCoefficients, this->sampleRate, attackTime, 0.5);
+            else
+                throughPass(attackCoefficients);
+        }
+        
+        //! Set the release time
+        void setReleaseTime(unit::second<float> releaseTime) override
+        {
+            this->releaseTime = releaseTime;
+            
+            if (releaseTime.value > 0)
+                lowPass(releaseCoefficients, this->sampleRate, releaseTime, 0.5);
+            else
+                throughPass(releaseCoefficients);
+        }
+        
+    public:
+        //! Boolian for release mode
+        /*! When true, the follower reaches for zero in its release state, otherwise the follower reaches to the input */
+        bool releaseToZero = false;
+        
+    private:
+        //! First order filter
+        BiquadDirectFormI<T, CoeffType> lowPassFilter;
+        
+        BiquadCoefficients<CoeffType> attackCoefficients;
+        BiquadCoefficients<CoeffType> releaseCoefficients;
     };
 }
 

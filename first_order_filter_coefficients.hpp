@@ -164,14 +164,8 @@ namespace dsp
     {
         // safety check
         FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
-        
-        const auto normalizedAngularFrequency = timeConstantFactor / (time.value * sampleRate.value);
-        
-        // return through-pass when normalizedAngularFrequency is higher than pi (nyquist)
-        if (normalizedAngularFrequency > math::PI<float>)
-            return throughPass(coefficients);
-        
-        const auto z = std::tan(normalizedAngularFrequency / 2);
+                
+        const auto z = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
         const T s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;

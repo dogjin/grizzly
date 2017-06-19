@@ -84,7 +84,7 @@ TEST_CASE("Biquad")
         
         SECTION("lowPass()")
         {
-            lowPass(coefficients, 44100, 10000, 0.707);
+            lowPass(coefficients, 44100, unit::hertz<float>(10000), 0.707);
             
             CHECK(coefficients.a0 == Approx(0.25136438));
             CHECK(coefficients.a1 == Approx(0.50272876));
