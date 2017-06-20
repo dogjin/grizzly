@@ -28,6 +28,7 @@
 #ifndef GRIZZLY_TRIANGLE_HPP
 #define GRIZZLY_TRIANGLE_HPP
 
+#include "poly_blamp.hpp"
 #include "phase_generator.hpp"
 
 namespace dsp
@@ -63,6 +64,40 @@ namespace dsp
     private:
         //! Recompute the most recently computed value
         T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarTriangle<T>(phase); }
+    };
+    
+    //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
+    template <typename T>
+    class BipolarTriangleBlamp : public PhaseGenerator<T>
+    {
+    private:
+        //! Recompute the most recently computed value
+        T convertPhaseToY(long double phase) final override
+        {
+            // Compute the non-bandlimited triangle
+            auto y = dsp::generateBipolarTriangle<T>(phase);
+            
+            auto increment = phase - previousPhase;
+            
+            // Downward
+            auto scale = 4 * increment;
+            auto modifiedPhase = phase + 0.25;
+            modifiedPhase -= floor(modifiedPhase);
+            y += scale * polyBlamp(modifiedPhase, increment);
+            
+            // Upward
+            modifiedPhase += 0.5;
+            modifiedPhase -= floor(modifiedPhase);
+            y -= scale * polyBlamp(modifiedPhase, increment);
+            
+            // Update the previous phase
+            previousPhase = phase;
+            
+            return y;
+        }
+        
+    private:
+        long double previousPhase = 0;
     };
 }
 
