@@ -38,18 +38,36 @@ namespace  dsp
     {
     public:
         ParameterSmoother(unit::second<float> time, unit::hertz<float> sampleRate) :
-            filter(time, sampleRate)
+        filter(time, sampleRate)
         {
         }
         
         void write()
         {
-            filter.write(destination);
+            if (reachedDestination())
+                return;
+            
+            if (destination > value)
+            {
+                value = filter.writeAndReadLowPass(destination + offset);
+                
+                // correct for overshoot
+                if (value > destination)
+                    value = destination;
+            }
+            else
+            {
+                value = filter.writeAndReadLowPass(destination - offset);
+                
+                // correct for undershoot
+                if (value < destination)
+                    value = destination;
+            }
         }
         
         T read()
         {
-            return filter.readLowPass();
+            return value;
         }
         
         T writeAndRead()
@@ -70,15 +88,17 @@ namespace  dsp
         
         bool reachedDestination()
         {
-            return (filter.readLowPass() == destination) ? true : false;
+            return (value == destination) ? true : false;
         }
         
     public:
         T destination = 0;
+        T value = 0;
+        T offset = 0.0000001;
         
     private:
         StateVariableFilter<float> filter;
-
+        
     };
 }
 
