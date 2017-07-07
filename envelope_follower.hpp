@@ -322,7 +322,7 @@ namespace dsp
         
     private:
         //! First order filter
-        BiquadDirectFormI<T, CoeffType> lowPassFilter;
+        BiquadDirectForm1<T, CoeffType> lowPassFilter;
         
         BiquadCoefficients<CoeffType> attackCoefficients;
         BiquadCoefficients<CoeffType> releaseCoefficients;

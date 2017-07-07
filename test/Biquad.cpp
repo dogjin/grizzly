@@ -9,9 +9,9 @@ using namespace std;
 
 TEST_CASE("Biquad")
 {
-    SECTION("BiquadDirectFormI")
+    SECTION("BiquadDirectForm1")
     {
-        BiquadDirectFormI<float> filter;
+        BiquadDirectForm1<float> filter;
 
         filter.coefficients.a0 = 0.1;
         filter.coefficients.a1 = 0.2;
@@ -38,9 +38,9 @@ TEST_CASE("Biquad")
         CHECK(filter.read() == Approx(0.0897));
     }
     
-    SECTION("BiquadTransposedDirectFormII")
+    SECTION("BiquadTransposedDirectForm2")
     {
-        BiquadTransposedDirectFormII<float> filter;
+        BiquadTransposedDirectForm2<float> filter;
         
         filter.coefficients.a0 = 0.1;
         filter.coefficients.a1 = 0.2;

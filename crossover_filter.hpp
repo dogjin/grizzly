@@ -119,8 +119,8 @@ namespace dsp
             
             for (size_t i = 0; i < numberOfStagesInCascade; ++i)
             {
-                lowPass.cascade.emplaceBack(&dsp::BiquadDirectFormI<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
-                highPass.cascade.emplaceBack(&dsp::BiquadDirectFormI<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
+                lowPass.cascade.emplaceBack(&dsp::BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
+                highPass.cascade.emplaceBack(&dsp::BiquadDirectForm1<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
             }
             
             setCoefficients();
@@ -191,7 +191,7 @@ namespace dsp
             dsp::FirstOrderFilter<T, CoeffType> firstOrderFilter;
             
             //! A vector of biquad filters used for an order >= 1
-            std::vector<dsp::BiquadDirectFormI<T, CoeffType>> biquads;
+            std::vector<dsp::BiquadDirectForm1<T, CoeffType>> biquads;
             
             //! A cascade for chaining biquads used for an order >= 1
             dsp::Cascade<T> cascade;
