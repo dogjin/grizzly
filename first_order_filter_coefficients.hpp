@@ -106,7 +106,7 @@ namespace dsp
     
     //! Set filter to low pass using one zero, given a default gain coefficient of 0.5 (coefficient is clamped in range 0 to 1)
     template <typename T>
-    void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, float a0 = 0.5f)
+    void lowPassOneZero(FirstOrderCoefficients<T>& coefficients, float a0 = 0.5f)
     {
         coefficients.b1 = 0;
         coefficients.a0 = math::clamp<float>(a0, 0, 1);
