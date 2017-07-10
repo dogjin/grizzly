@@ -36,8 +36,6 @@
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
 
-#include "optional.hpp"
-
 namespace dsp
 {
     //! Topology preserving 2-pole state variable filter with resolved zero feedback delay

@@ -40,7 +40,6 @@
 #include <utility>
 
 #include "cepstrum.hpp"
-#include "optional.hpp"
 
 namespace dsp
 {
@@ -147,7 +146,7 @@ namespace dsp
         std::vector<float> slides(halfSize);
         slides[0] = 1;
         float sum = 0;
-        std::optional<unsigned int> minIndex;
+        unsigned int minIndex = -1;
         for (auto slideIndex = 1; slideIndex < halfSize; ++slideIndex)
         {
             auto& slide = slides[slideIndex];
@@ -164,7 +163,7 @@ namespace dsp
             slide *= slideIndex / sum;
             
             // If we've reached a minimum, we can stop computing new slides
-            if (minIndex && slides[*minIndex] < slide)
+            if ((minIndex != -1) && slides[minIndex] < slide)
                 break;
             
             // If we've dropped below the threshold, and not reached a minimum yet, store this slide
@@ -174,27 +173,27 @@ namespace dsp
         }
         
         // No pitch found
-        if (!minIndex)
+        if (minIndex == -1)
             return {0, 0};
         
         // We found the minimum, now compute the actual minimum using parabolic interpolation
-        const auto& minValue = slides[*minIndex];
+        const auto& minValue = slides[minIndex];
         
         // Apply parabolic interpolation
-        const auto leftBound = math::clamp<std::size_t>(*minIndex - 1, 0, halfSize - 1);
-        const auto rightBound = math::clamp<std::size_t>(*minIndex + 1, 0, halfSize - 1);
+        const auto leftBound = math::clamp<std::size_t>(minIndex - 1, 0, halfSize - 1);
+        const auto rightBound = math::clamp<std::size_t>(minIndex + 1, 0, halfSize - 1);
         
         // Compute the probability
         const auto probability = 1 - minValue;
         
         // Return the pitch and its probability
-        if (leftBound == *minIndex)
-            return {sampleRate / (minValue <= slides[rightBound] ? *minIndex : rightBound), probability};
-        else if (rightBound == *minIndex)
-            return {sampleRate / (minValue <= slides[leftBound] ? *minIndex : leftBound), probability};
+        if (leftBound == minIndex)
+            return {sampleRate / (minValue <= slides[rightBound] ? minIndex : rightBound), probability};
+        else if (rightBound == minIndex)
+            return {sampleRate / (minValue <= slides[leftBound] ? minIndex : leftBound), probability};
         else
             // Parabolically interpolate to get a better local minimum, use the offset of the peak as correction on the index
-            return {sampleRate / (*minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
+            return {sampleRate / (minIndex + math::interpolateParabolic(slides[leftBound], minValue, slides[rightBound]).first), probability};
     }
     
     //! Estimate the frequency of a buffer using Cepstrum analysis

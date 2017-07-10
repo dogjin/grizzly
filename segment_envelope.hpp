@@ -36,12 +36,11 @@
 #include <functional>
 #include <initializer_list>
 #include <mutex>
+#include <memory>
 #include <numeric>
 #include <unit/time.hpp>
 #include <utility>
 #include <vector>
-
-#include "optional.hpp"
 
 namespace dsp
 {
@@ -150,7 +149,7 @@ namespace dsp
         void disableHold();
         
         //! Retrieve the hold point
-        std::optional<Time> getHold() const;
+        Time* getHold() const;
         
         // --- Access to the segments --- //
         
@@ -211,7 +210,7 @@ namespace dsp
         
         //! Optional hold point
         /*! The envelope will remain at this point until the hold point is disable */
-        std::optional<Hold> hold = std::nullopt;
+        std::unique_ptr<Hold> hold;
         
         //! A mutex for changing the envelope while its running
         std::mutex mutex;
@@ -232,17 +231,10 @@ namespace dsp
             segments.emplace_back(*this, segment.amplitude, segment.getDuration(), segment.ease);
         rhs.segments.clear();
         
-        index = rhs.index;
-        rhs.index = 0;
-        
-        segmentTime = rhs.segmentTime;
-        rhs.segmentTime = 0;
-        
-        envelopeTime = rhs.envelopeTime;
-        rhs.envelopeTime = 0;
-        
-        hold = rhs.hold;
-        rhs.hold = std::nullopt;
+        index = std::move(rhs.index);
+        segmentTime = std::move(rhs.segmentTime);
+        envelopeTime = std::move(rhs.envelopeTime);
+        hold = std::move(rhs.hold);
         
         return *this;
     }
@@ -370,19 +362,19 @@ namespace dsp
         index = 0;
         segmentTime = 0;
         envelopeTime = 0;
-        hold = std::nullopt;
+        hold = nullptr;
     }
     
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::setAndEnableHoldPoint(unit::second<Time> at)
     {
-        hold = Hold{at, true};
+        hold = std::make_unique<Hold>(Hold{at, true});
     }
     
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::removeHoldPoint()
     {
-        hold = std::nullopt;
+        hold = nullptr;
     }
     
     template <typename Value, typename Time>
@@ -400,12 +392,12 @@ namespace dsp
     }
     
     template <typename Value, typename Time>
-    std::optional<Time> SegmentEnvelope<Value, Time>::getHold() const
+    Time* SegmentEnvelope<Value, Time>::getHold() const
     {
         if (hold)
-            return hold->timePoint.value;
+            return &hold->timePoint.value;
         else
-            return std::nullopt;
+            return nullptr;
     }
     
     template <typename Value, typename Time>
