@@ -33,7 +33,6 @@
 #include <cmath>
 #include <dsperados/math/analysis.hpp>
 #include <dsperados/math/interpolation.hpp>
-#include <experimental/optional>
 #include <iterator>
 #include <cstddef>
 #include <stdexcept>
@@ -41,6 +40,7 @@
 #include <utility>
 
 #include "cepstrum.hpp"
+#include "optional.hpp"
 
 namespace dsp
 {
@@ -147,7 +147,7 @@ namespace dsp
         std::vector<float> slides(halfSize);
         slides[0] = 1;
         float sum = 0;
-        std::experimental::optional<unsigned int> minIndex;
+        std::optional<unsigned int> minIndex;
         for (auto slideIndex = 1; slideIndex < halfSize; ++slideIndex)
         {
             auto& slide = slides[slideIndex];

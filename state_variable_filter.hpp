@@ -30,12 +30,13 @@
 
 #include <cmath>
 #include <dsperados/math/constants.hpp>
-#include <experimental/optional>
 #include <functional>
 #include <stdexcept>
 #include <unit/amplitude.hpp>
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
+
+#include "optional.hpp"
 
 namespace dsp
 {

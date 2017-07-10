@@ -33,7 +33,6 @@
 #include <dsperados/math/utility.hpp>
 #include <dsperados/math/ease.hpp>
 #include <dsperados/math/interpolation.hpp>
-#include <experimental/optional>
 #include <functional>
 #include <initializer_list>
 #include <mutex>
@@ -41,6 +40,8 @@
 #include <unit/time.hpp>
 #include <utility>
 #include <vector>
+
+#include "optional.hpp"
 
 namespace dsp
 {
@@ -149,7 +150,7 @@ namespace dsp
         void disableHold();
         
         //! Retrieve the hold point
-        std::experimental::optional<Time> getHold() const;
+        std::optional<Time> getHold() const;
         
         // --- Access to the segments --- //
         
@@ -210,7 +211,7 @@ namespace dsp
         
         //! Optional hold point
         /*! The envelope will remain at this point until the hold point is disable */
-        std::experimental::optional<Hold> hold = std::experimental::nullopt;
+        std::optional<Hold> hold = std::nullopt;
         
         //! A mutex for changing the envelope while its running
         std::mutex mutex;
@@ -241,7 +242,7 @@ namespace dsp
         rhs.envelopeTime = 0;
         
         hold = rhs.hold;
-        rhs.hold = std::experimental::nullopt;
+        rhs.hold = std::nullopt;
         
         return *this;
     }
@@ -369,7 +370,7 @@ namespace dsp
         index = 0;
         segmentTime = 0;
         envelopeTime = 0;
-        hold = std::experimental::nullopt;
+        hold = std::nullopt;
     }
     
     template <typename Value, typename Time>
@@ -381,7 +382,7 @@ namespace dsp
     template <typename Value, typename Time>
     void SegmentEnvelope<Value, Time>::removeHoldPoint()
     {
-        hold = std::experimental::nullopt;
+        hold = std::nullopt;
     }
     
     template <typename Value, typename Time>
@@ -399,12 +400,12 @@ namespace dsp
     }
     
     template <typename Value, typename Time>
-    std::experimental::optional<Time> SegmentEnvelope<Value, Time>::getHold() const
+    std::optional<Time> SegmentEnvelope<Value, Time>::getHold() const
     {
         if (hold)
             return hold->timePoint.value;
         else
-            return std::experimental::nullopt;
+            return std::nullopt;
     }
     
     template <typename Value, typename Time>
