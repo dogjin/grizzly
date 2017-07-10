@@ -25,8 +25,8 @@
  
  */
 
-#ifndef GRIZZLY_OPTIONAL_HPP
-#define GRIZZLY_OPTIONAL_HPP
+#ifndef BEAR_CORE_OPTIONAL_HPP
+#define BEAR_CORE_OPTIONAL_HPP
 
 #ifdef WIN32
     #include <optional>
@@ -40,4 +40,4 @@
     }
 #endif
 
-#endif /* GRIZZLY_OPTIONAL_HPP */
+#endif /* BEAR_CORE_OPTIONAL_HPP */
