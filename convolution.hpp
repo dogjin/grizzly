@@ -29,13 +29,94 @@
 #define GRIZZLY_CONVOLUTION_HPP
 
 #include <algorithm>
+#include <complex>
 #include <initializer_list>
 #include <vector>
 
 #include "delay.hpp"
+#include "fast_fourier_transform.hpp"
 
 namespace dsp
 {
+
+    class ConvolutionFFT
+    {
+    public:
+        ConvolutionFFT(size_t frameSize, std::vector<float> kernel) :
+        frameSize(frameSize),
+        doubleFrameSize(2 * frameSize),
+        fft(doubleFrameSize),
+        delay(0),
+        olaBuffer(frameSize)
+        {
+            size_t numberOfKernelFrames = kernel.size() / frameSize + 1;
+            
+            // Resize to fit last frame with frame size
+            kernel.resize(frameSize * numberOfKernelFrames);
+            
+            delay.setMaximalDelayTime(numberOfKernelFrames - 1);
+            
+            resultMatrix.resize(numberOfKernelFrames, std::vector<std::complex<float>>(fft.realSpectrumSize));
+            
+            // fill kernel
+            std::vector<std::vector<float>> kernelInZeroPaddedFrames(numberOfKernelFrames, std::vector<float>(doubleFrameSize));
+            for (auto i = 0; i < numberOfKernelFrames; i++)
+            {
+                std::copy(kernel.begin() + frameSize * i, kernel.begin() + frameSize * (i + 1), kernelInZeroPaddedFrames[i].begin());
+                fftKernel.emplace_back(fft.forward(kernelInZeroPaddedFrames[i].data()));
+                delay.write(std::vector<std::complex<float>>(fft.realSpectrumSize));
+            }
+        }
+        
+        std::vector<float> process(std::vector<float> x)
+        {
+            // Resize to prevent circular convolution
+            x.resize(doubleFrameSize);
+            
+            // Take fft of x
+            delay.write(fft.forward(x.data()));
+            
+            // Convolve
+            for (auto frame = 0; frame < fftKernel.size(); frame++)
+                for (auto i = 0; i < fftKernel[frame].size(); i++)
+                    resultMatrix[frame][i] = fftKernel[frame][i] * delay.read(frame)[i];
+            
+            // Initialse the output with the ola buffer
+            std::vector<float> y = olaBuffer;
+            
+            // Reset ola buffer with zeros
+            std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
+            
+            for (auto frame = 0; frame < resultMatrix.size(); frame++)
+            {
+                auto inv = fft.inverse(resultMatrix[frame]);
+                for (auto i = 0; i < frameSize; i ++)
+                {
+                    y[i] += inv[i];
+                    olaBuffer[i] += inv[i + frameSize];
+                }
+            }
+            
+            return y;
+        }
+        
+    private:
+        size_t frameSize = 0;
+        
+        size_t doubleFrameSize = 0;
+        
+        dsp::FastFourierTransform fft;
+        
+        dsp::Delay<std::vector<std::complex<float>>> delay;
+        
+        std::vector<float> olaBuffer;
+        
+        std::vector<std::vector<std::complex<float>>> resultMatrix;
+        
+        std::vector<std::vector<std::complex<float>>> fftKernel;
+    };
+    
+    
     //! Convolution, in the mathematical sense
     template <class T>
     class Convolution
@@ -98,7 +179,7 @@ namespace dsp
     
     //! Convolve two buffers, return a buffer with size input + kernel - 1 (output-side algorithm)
     template <typename InputIterator, typename KernelIterator>
-    static std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
+    std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> convolve(InputIterator inBegin, InputIterator inEnd, KernelIterator kernelBegin, KernelIterator kernelEnd)
     {
         auto inputSize = std::distance(inBegin, inEnd);
         auto kernelSize = std::distance(kernelBegin, kernelEnd);
