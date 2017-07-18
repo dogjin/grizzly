@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <complex>
 #include <initializer_list>
+#include <iterator>
 #include <vector>
 
 #include "delay.hpp"
@@ -38,43 +39,58 @@
 
 namespace dsp
 {
-
+    template <class T>
     class ConvolutionFFT
     {
     public:
-        ConvolutionFFT(size_t frameSize, std::vector<float> kernel) :
+        template <typename Iterator>
+        ConvolutionFFT(size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
         frameSize(frameSize),
         doubleFrameSize(2 * frameSize),
         fft(doubleFrameSize),
         delay(0),
         olaBuffer(frameSize)
         {
-            size_t numberOfKernelFrames = kernel.size() / frameSize + 1;
+            size_t kernelSize = std::distance(kernelBegin, kernelEnd);
+            size_t numberOfKernelFrames = kernelSize / frameSize + 1;
             
-            // Resize to fit last frame with frame size
-            kernel.resize(frameSize * numberOfKernelFrames);
-            
+            fftKernel.reserve(numberOfKernelFrames);
             delay.setMaximalDelayTime(numberOfKernelFrames - 1);
+            resultMatrix.resize(numberOfKernelFrames, std::vector<std::complex<T>>(fft.realSpectrumSize));
             
-            resultMatrix.resize(numberOfKernelFrames, std::vector<std::complex<float>>(fft.realSpectrumSize));
-            
-            // fill kernel
-            std::vector<std::vector<float>> kernelInZeroPaddedFrames(numberOfKernelFrames, std::vector<float>(doubleFrameSize));
-            for (auto i = 0; i < numberOfKernelFrames; i++)
+            // Fill fftKernel
+            auto frameBegin = kernelBegin;
+            while (std::distance(frameBegin, kernelEnd) >= frameSize)
             {
-                std::copy(kernel.begin() + frameSize * i, kernel.begin() + frameSize * (i + 1), kernelInZeroPaddedFrames[i].begin());
-                fftKernel.emplace_back(fft.forward(kernelInZeroPaddedFrames[i].data()));
-                delay.write(std::vector<std::complex<float>>(fft.realSpectrumSize));
+                auto frameEnd = std::next(frameBegin, frameSize);
+                std::vector<T> frame(frameBegin, frameEnd);
+                frame.resize(doubleFrameSize, 0);
+                
+                fftKernel.emplace_back(fft.forward(frame.data()));
+                delay.write(std::vector<std::complex<T>>(fft.realSpectrumSize));
+                
+                frameBegin = frameEnd;
+            }
+            
+            // Last frame
+            std::vector<float> lastFrame(frameBegin, kernelEnd);
+            if (!lastFrame.empty())
+            {
+                lastFrame.resize(doubleFrameSize, 0);
+                
+                fftKernel.emplace_back(fft.forward(lastFrame.data()));
+                delay.write(std::vector<std::complex<T>>(fft.realSpectrumSize));
             }
         }
         
-        std::vector<float> process(std::vector<float> x)
+        template <typename Iterator>
+        std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
         {
-            // Resize to prevent circular convolution
-            x.resize(doubleFrameSize);
-            
+            std::vector<T> frame(doubleFrameSize);
+            std::copy(frameBegin, frameEnd, frame.begin());
+
             // Take fft of x
-            delay.write(fft.forward(x.data()));
+            delay.write(fft.forward(frame.data()));
             
             // Convolve
             for (auto frame = 0; frame < fftKernel.size(); frame++)
@@ -82,7 +98,7 @@ namespace dsp
                     resultMatrix[frame][i] = fftKernel[frame][i] * delay.read(frame)[i];
             
             // Initialse the output with the ola buffer
-            std::vector<float> y = olaBuffer;
+            std::vector<T> y = olaBuffer;
             
             // Reset ola buffer with zeros
             std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
@@ -100,20 +116,21 @@ namespace dsp
             return y;
         }
         
+    public:
+        const size_t frameSize;
+        
     private:
-        size_t frameSize = 0;
-        
-        size_t doubleFrameSize = 0;
-        
+        const size_t doubleFrameSize;
+
         dsp::FastFourierTransform fft;
         
-        dsp::Delay<std::vector<std::complex<float>>> delay;
+        dsp::Delay<std::vector<std::complex<T>>> delay;
         
-        std::vector<float> olaBuffer;
+        std::vector<T> olaBuffer;
         
-        std::vector<std::vector<std::complex<float>>> resultMatrix;
+        std::vector<std::vector<std::complex<T>>> resultMatrix;
         
-        std::vector<std::vector<std::complex<float>>> fftKernel;
+        std::vector<std::vector<std::complex<T>>> fftKernel;
     };
     
     
@@ -185,7 +202,7 @@ namespace dsp
         auto kernelSize = std::distance(kernelBegin, kernelEnd);
         auto outputSize = inputSize + kernelSize - 1;
         
-        std::vector<float> output(outputSize);
+        std::vector<std::common_type_t<typename InputIterator::value_type, typename KernelIterator::value_type>> output(outputSize);
         for (auto i = 0 ; i < outputSize; i++)
             for (auto h = 0; h < kernelSize; h++)
             {
