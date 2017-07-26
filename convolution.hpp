@@ -44,15 +44,18 @@ namespace dsp
     {
     public:
         template <typename Iterator>
-        ConvolutionFFT(size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
-        frameSize(frameSize),
-        doubleFrameSize(2 * frameSize),
-        fft(doubleFrameSize),
-        delay(0),
-        olaBuffer(frameSize)
+        ConvolutionFFT(std::size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
+            frameSize(frameSize),
+            doubleFrameSize(2 * frameSize),
+            fft(doubleFrameSize),
+            delay(0),
+            olaBuffer(frameSize)
         {
-            size_t kernelSize = std::distance(kernelBegin, kernelEnd);
-            size_t numberOfKernelFrames = kernelSize / frameSize + 1;
+            if (frameSize == 0)
+                throw std::invalid_argument("convolution can't be created with a frame size of 0");
+            
+            const auto kernelSize = std::distance(kernelBegin, kernelEnd);
+            const auto numberOfKernelFrames = kernelSize / frameSize + 1;
             
             fftKernel.reserve(numberOfKernelFrames);
             delay.setMaximalDelayTime(numberOfKernelFrames - 1);
@@ -86,7 +89,8 @@ namespace dsp
         template <typename Iterator>
         std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
         {
-            std::vector<T> frame(doubleFrameSize);
+            frame.clear();
+            frame.resize(doubleFrameSize, T(0));
             std::copy(frameBegin, frameEnd, frame.begin());
 
             // Take fft of x
@@ -94,8 +98,10 @@ namespace dsp
             
             // Convolve
             for (auto frame = 0; frame < fftKernel.size(); frame++)
+            {
                 for (auto i = 0; i < fftKernel[frame].size(); i++)
                     resultMatrix[frame][i] = fftKernel[frame][i] * delay.read(frame)[i];
+            }
             
             // Initialse the output with the ola buffer
             std::vector<T> y = olaBuffer;
@@ -117,11 +123,10 @@ namespace dsp
         }
         
     public:
-        const size_t frameSize;
+        const std::size_t frameSize = 0;
+        const std::size_t doubleFrameSize = 0;
         
     private:
-        const size_t doubleFrameSize;
-
         dsp::FastFourierTransform fft;
         
         dsp::Delay<std::vector<std::complex<T>>> delay;
@@ -131,6 +136,8 @@ namespace dsp
         std::vector<std::vector<std::complex<T>>> resultMatrix;
         
         std::vector<std::vector<std::complex<T>>> fftKernel;
+        
+        std::vector<T> frame;
     };
     
     
