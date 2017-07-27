@@ -29,6 +29,7 @@
 #define GRIZZLY_CONVOLUTION_HPP
 
 #include <algorithm>
+#include <cassert>
 #include <complex>
 #include <initializer_list>
 #include <iterator>
@@ -108,15 +109,14 @@ namespace dsp
         template <typename Iterator>
         std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
         {
+            // Copy the input into a zero-padded buffer
+            assert(std::distance(frameBegin, frameEnd) == fft.size);
             std::copy(frameBegin, frameEnd, inputFftFrame.begin());
             
-            // Take fft of x
-            ComplexList list(fft.realSpectrumSize);
-            fft.forward(inputFftFrame.data(), list.real.data(), list.imaginary.data());
+            // Take Fourier transform of the input
+            delay.adjust([&](ComplexList& list){ fft.forward(inputFftFrame.data(), list.real.data(), list.imaginary.data()); });
             
-            delay.write(std::move(list));
-            
-            // Convolve
+            // Do the convolution by multiplying in the Fourier domain
             for (auto frame = 0; frame < fftKernel.size(); frame++)
             {
                 for (auto i = 0; i < fft.realSpectrumSize; i++)
@@ -139,7 +139,6 @@ namespace dsp
             
             for (auto frame = 0; frame < resultMatrix.size(); frame++)
             {
-                
                 fft.inverse(resultMatrix[frame].real.data(), resultMatrix[frame].imaginary.data(), outputFftFrame.data());
                 std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
                 std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end() + frameSize, olaBuffer.begin(), olaBuffer.begin(), std::plus<>());

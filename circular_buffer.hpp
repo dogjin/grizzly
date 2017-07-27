@@ -147,6 +147,13 @@ namespace dsp
             increaseIndex();
         }
         
+        //! Write a new value by adjusting the oldest element
+        void adjust(std::function<void(T&)> func)
+        {
+            func(data[front]);
+            increaseIndex();
+        }
+        
         //! Access one of the elements in the buffer
         T& operator[](std::size_t index)
         {
