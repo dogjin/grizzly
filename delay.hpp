@@ -45,8 +45,10 @@ namespace dsp
 
     public:
         //! Construct by feeding the maximal delay size
-        Delay(std::size_t maximalDelayTime) :
-            data(maximalDelayTime + 1)
+        /*! @param args The arguments passed to newly constructed elements in the delay buffer */
+        template <typename... Args>
+        Delay(std::size_t maximalDelayTime, Args&&... args) :
+            data(maximalDelayTime + 1, std::forward<Args&&>(args)...)
         {
             
         }
@@ -73,9 +75,11 @@ namespace dsp
         }
         
         //! Set the maximal delay
-        void setMaximalDelayTime(std::size_t maximalDelayTime)
+        /*! @param args The arguments passed to newly constructed elements in the delay buffer */
+        template <typename... Args>
+        void setMaximalDelayTime(std::size_t maximalDelayTime, Args&&... args)
         {
-            data.resize_front(maximalDelayTime + 1);
+            data.resize_front(maximalDelayTime + 1, std::forward<Args&&>(args)...);
         }
         
         //! Return the maximal number of delay samples

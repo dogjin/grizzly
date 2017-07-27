@@ -34,6 +34,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace dsp
@@ -113,8 +114,10 @@ namespace dsp
         
     public:
         //! Construct the circular buffer with a given size
-        CircularBuffer(std::size_t size) :
-            data(size)
+        /*! @param args The arguments passed to newly constructed elements in the buffer */
+        template <typename... Args>
+        CircularBuffer(std::size_t size, Args&&... args) :
+            data(size, std::forward<Args&&>(args)...)
         {
             
         }
@@ -127,8 +130,10 @@ namespace dsp
         }
         
         //! Construct the buffer from an iterator range
-        template <typename Iterator>
-            CircularBuffer(Iterator begin, Iterator end) :
+        template <typename InputIt,
+        typename = typename std::enable_if_t<std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<InputIt>::iterator_category>::value, InputIt>>
+        CircularBuffer(InputIt begin,
+                       InputIt end) :
             data(begin, end)
         {
             
@@ -139,7 +144,7 @@ namespace dsp
         void write(Args&&... args)
         {
             data[front] = T(std::forward<Args&&>(args)...);
-            front = math::wrap<std::size_t>(front + 1, 0, data.size());
+            increaseIndex();
         }
         
         //! Access one of the elements in the buffer
@@ -161,18 +166,22 @@ namespace dsp
         }
         
         //! Resize the buffer
-        void resize_back(std::size_t newSize)
+        /*! @param args The arguments passed to newly constructed elements in the buffer */
+        template <typename... Args>
+        void resize_back(std::size_t newSize, Args&&... args)
         {
             std::vector<T> newData(begin(), end());
-            newData.resize(newSize);
+            newData.resize(newSize, std::forward<Args&&>(args)...);
             data = newData;
         }
         
         //! Resize the buffer
-        void resize_front(std::size_t newSize)
+        /*! @param args The arguments passed to newly constructed elements in the buffer */
+        template <typename... Args>
+        void resize_front(std::size_t newSize, Args&&... args)
         {
             std::vector<T> newData(rbegin(), rend());
-            newData.resize(newSize);
+            newData.resize(newSize, std::forward<Args&&>(args)...);
             std::reverse(newData.begin(), newData.end());
             data = newData;
         }
@@ -196,6 +205,12 @@ namespace dsp
         reverse_iterator rend() { return std::reverse_iterator<iterator>(begin()); }
         reverse_const_iterator rend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
         reverse_const_iterator crend() const { return std::reverse_iterator<const_iterator>(cbegin()); }
+        
+    private:
+        void increaseIndex()
+        {
+            front = math::wrap<std::size_t>(front + 1, 0, data.size());
+        }
         
     private:
         //! The actual buffer

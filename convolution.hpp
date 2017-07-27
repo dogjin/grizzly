@@ -49,7 +49,7 @@ namespace dsp
             frameSize(frameSize),
             doubleFrameSize(2 * frameSize),
             fft(doubleFrameSize),
-            delay(0),
+            delay(0, fft.realSpectrumSize),
             inputFftFrame(doubleFrameSize),
             outputFftFrame(doubleFrameSize),
             output(frameSize),
@@ -62,7 +62,7 @@ namespace dsp
             const auto numberOfKernelFrames = kernelSize / frameSize + 1;
             
             fftKernel.reserve(numberOfKernelFrames);
-            delay.setMaximalDelayTime(numberOfKernelFrames - 1);
+            delay.setMaximalDelayTime(numberOfKernelFrames - 1, fft.realSpectrumSize);
             resultMatrix.resize(numberOfKernelFrames, fft.realSpectrumSize);
             
             // Fill fftKernel
@@ -85,9 +85,6 @@ namespace dsp
                 // Place the result of the fft in the fftKernel
                 fftKernel.emplace_back(std::move(list));
                 
-                // Need this to init the size of the delay element. Kan anders right?
-                delay.write(fft.realSpectrumSize);
-                
                 // Set frameBegin to be the frameEnd for next iteration
                 frameBegin = frameEnd;
             }
@@ -105,9 +102,6 @@ namespace dsp
                 
                 // Place the result of the fft in the fftKernel
                 fftKernel.emplace_back(std::move(list));
-                
-                // Need this to init the size of the delay element. Kan anders right?
-                delay.write(fft.realSpectrumSize);
             }
         }
         
