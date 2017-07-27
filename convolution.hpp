@@ -141,7 +141,7 @@ namespace dsp
             {
                 fft.inverse(resultMatrix[frame].real.data(), resultMatrix[frame].imaginary.data(), outputFftFrame.data());
                 std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
-                std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end() + frameSize, olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
+                std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end(), olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
             }
             
             return output;
