@@ -71,8 +71,7 @@ namespace dsp
                   typename = std::enable_if_t<std::is_integral<Index>::value>>
         const T& read(Index index) const
         {
-            const T& y = math::clampAccess(begin(), end(), index);
-            return y;
+            return math::clampAccess(begin(), end(), index);
         }
         
         //! Read from the delay line with a fractional index

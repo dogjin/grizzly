@@ -119,18 +119,21 @@ namespace dsp
             // Do the convolution by multiplying in the Fourier domain
             for (auto frame = 0; frame < fftKernel.size(); frame++)
             {
+                const auto& k = fftKernel[frame];
+                const auto& d = delay.read(frame);
+                
                 for (auto i = 0; i < fft.realSpectrumSize; i++)
                 {
-                    auto& x = fftKernel[frame].real[i];
-                    auto& yi = fftKernel[frame].imaginary[i];
-                    auto& u = delay.read(frame).real[i];
-                    auto& vi = delay.read(frame).imaginary[i];
+                    auto& x = k.real[i];
+                    auto& yi = k.imaginary[i];
+                    auto& u = d.real[i];
+                    auto& vi = d.imaginary[i];
                     
                     resultMatrix[frame].real[i] = x * u - yi * vi;
                     resultMatrix[frame].imaginary[i] = x * vi + yi * u;
                 }
             }
-            
+
             // Set the output with the ola buffer
             output = olaBuffer;
             
