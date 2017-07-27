@@ -86,9 +86,17 @@ namespace dsp
         const_iterator begin() const { return data.rbegin(); }
         const_iterator cbegin() const { return data.crbegin(); }
         
+        iterator rbegin() { return data.begin(); }
+        const_iterator rbegin() const { return data.begin(); }
+        const_iterator crbegin() const { return data.cbegin(); }
+        
         iterator end() { return data.rend(); }
         const_iterator end() const { return data.rend(); }
         const_iterator cend() const { return data.crend(); }
+        
+        iterator rend() { return data.end(); }
+        const_iterator rend() const { return data.end(); }
+        const_iterator crend() const { return data.cend(); }
         
     private:
         //! The data in the delay line
