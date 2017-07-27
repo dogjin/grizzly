@@ -40,7 +40,9 @@ namespace dsp
         evenFloat(size / 2),
         oddFloat(size / 2),
         evenDouble(size / 2),
-        oddDouble(size / 2)
+        oddDouble(size / 2),
+        imaginaryFloat(size / 2),
+        imaginaryDouble(size / 2)
     {
         floatSetup.forward = vDSP_DFT_zrop_CreateSetup(nullptr, size, vDSP_DFT_FORWARD);
         floatSetup.inverse = vDSP_DFT_zrop_CreateSetup(nullptr, size, vDSP_DFT_INVERSE);
@@ -115,19 +117,16 @@ namespace dsp
     {
         // Copy the input reals and imaginaries, so that we can change the format around to
         // the way vDSP accepts it
-        vector<float> real_(real, real + realSpectrumSize);
-        vector<float> imaginary_(imaginary, imaginary + realSpectrumSize);
+        std::copy_n(imaginary, realSpectrumSize - 1, imaginaryFloat.begin());
 
         // Re[Nyquist] is supposed to be stored in Im[0] for vDSP
-        imaginary_[0] = real[size / 2];
+        imaginaryFloat[0] = real[size / 2];
 
         // Do the transform
-        vector<float> outReal(size / 2);
-        vector<float> outImaginary(size / 2);
-        vDSP_DFT_Execute(floatSetup.inverse, real_.data(), imaginary_.data(), outReal.data(), outImaginary.data());
+        vDSP_DFT_Execute(floatSetup.inverse, real, imaginaryFloat.data(), evenFloat.data(), oddFloat.data());
 
         // Combine the even and odd output signals into one interleaved output signal
-        math::interleave(outReal.begin(), outReal.end(), outImaginary.begin(), output);
+        math::interleave(evenFloat.begin(), evenFloat.end(), oddFloat.begin(), output);
 
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
         const float factor = 1.0f / size;
@@ -138,19 +137,16 @@ namespace dsp
     {
         // Copy the input reals and imaginaries, so that we can change the format around to
         // the way vDSP accepts it
-        vector<double> real_(real, real + realSpectrumSize);
-        vector<double> imaginary_(imaginary, imaginary + realSpectrumSize);
+        std::copy_n(imaginary, realSpectrumSize - 1, imaginaryDouble.begin());
         
         // Re[Nyquist] is supposed to be stored in Im[0] for vDSP
-        imaginary_[0] = real[size / 2];
+        imaginaryDouble[0] = real[size / 2];
         
         // Do the transform
-        vector<double> outReal(size / 2);
-        vector<double> outImaginary(size / 2);
-        vDSP_DFT_ExecuteD(doubleSetup.inverse, real_.data(), imaginary_.data(), outReal.data(), outImaginary.data());
+        vDSP_DFT_ExecuteD(doubleSetup.inverse, real, imaginaryDouble.data(), evenDouble.data(), oddDouble.data());
         
         // Combine the even and odd output signals into one interleaved output signal
-        math::interleave(outReal.begin(), outReal.end(), outImaginary.begin(), output);
+        math::interleave(evenDouble.begin(), evenDouble.end(), oddDouble.begin(), output);
         
         // For inverse DFT, the scaling is Size, so scale back by multiplying with its reciprocal
         const double factor = 1.0 / size;

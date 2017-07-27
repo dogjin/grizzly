@@ -60,12 +60,6 @@ namespace dsp
         void inverseComplex(const double* inReal, const double* inImaginary, double* outReal, double* outImaginary) override final;
         
     private:
-        std::vector<float> evenFloat;
-        std::vector<float> oddFloat;
-        
-        std::vector<double> evenDouble;
-        std::vector<double> oddDouble;
-        
         struct SetupFloat
         {
             ~SetupFloat()
@@ -95,6 +89,16 @@ namespace dsp
             vDSP_DFT_SetupD forward = nullptr;
             vDSP_DFT_SetupD inverse = nullptr;
         } doubleSetup, doubleComplexSetup;
+        
+    private:
+        std::vector<float> evenFloat;
+        std::vector<float> oddFloat;
+        
+        std::vector<double> evenDouble;
+        std::vector<double> oddDouble;
+        
+        std::vector<float> imaginaryFloat;
+        std::vector<double> imaginaryDouble;
     };
 }
 
