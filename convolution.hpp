@@ -46,16 +46,14 @@ namespace dsp
     public:
         template <typename Iterator>
         ConvolutionFFT(std::size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
-        frameSize(frameSize),
-        doubleFrameSize(2 * frameSize),
-        fft(doubleFrameSize),
-        delay(0),
-        inputFftFrame(doubleFrameSize),
-        outputFftFrame(doubleFrameSize),
-        output(frameSize),
-        olaBuffer(frameSize),
-        real(fft.realSpectrumSize),
-        imag(fft.realSpectrumSize)
+            frameSize(frameSize),
+            doubleFrameSize(2 * frameSize),
+            fft(doubleFrameSize),
+            delay(0),
+            inputFftFrame(doubleFrameSize),
+            outputFftFrame(doubleFrameSize),
+            output(frameSize),
+            olaBuffer(frameSize)
         {
             if (frameSize == 0)
                 throw std::invalid_argument("convolution can't be created with a frame size of 0");
@@ -65,7 +63,7 @@ namespace dsp
             
             fftKernel.reserve(numberOfKernelFrames);
             delay.setMaximalDelayTime(numberOfKernelFrames - 1);
-            resultMatrix.resize(numberOfKernelFrames, std::pair<std::vector<T>, std::vector<T>>(std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize))));
+            resultMatrix.resize(numberOfKernelFrames, fft.realSpectrumSize);
             
             // Fill fftKernel
             auto frameBegin = kernelBegin;
@@ -81,14 +79,14 @@ namespace dsp
                 frame.resize(doubleFrameSize, 0);
                 
                 // Take fft
-                fft.forward(frame.data(), real.data(), imag.data());
+                ComplexList list(fft.realSpectrumSize);
+                fft.forward(frame.data(), list.real.data(), list.imaginary.data());
                 
                 // Place the result of the fft in the fftKernel
-                fftKernel.emplace_back(std::make_pair(real, imag));
+                fftKernel.emplace_back(std::move(list));
                 
                 // Need this to init the size of the delay element. Kan anders right?
-                auto pp = std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize));
-                delay.write(pp);
+                delay.write(fft.realSpectrumSize);
                 
                 // Set frameBegin to be the frameEnd for next iteration
                 frameBegin = frameEnd;
@@ -102,14 +100,14 @@ namespace dsp
                 lastFrame.resize(doubleFrameSize, 0);
                 
                 // Take fft
-                fft.forward(lastFrame.data(), real.data(), imag.data());
+                ComplexList list(fft.realSpectrumSize);
+                fft.forward(lastFrame.data(), list.real.data(), list.imaginary.data());
                 
                 // Place the result of the fft in the fftKernel
-                fftKernel.emplace_back(std::make_pair(real, imag));
+                fftKernel.emplace_back(std::move(list));
                 
                 // Need this to init the size of the delay element. Kan anders right?
-                auto pp = std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize));
-                delay.write(pp);
+                delay.write(fft.realSpectrumSize);
             }
         }
         
@@ -119,22 +117,23 @@ namespace dsp
             std::copy(frameBegin, frameEnd, inputFftFrame.begin());
             
             // Take fft of x
-            fft.forward(inputFftFrame.data(), real.data(), imag.data());
+            ComplexList list(fft.realSpectrumSize);
+            fft.forward(inputFftFrame.data(), list.real.data(), list.imaginary.data());
             
-            delay.write(std::make_pair(real, imag));
+            delay.write(std::move(list));
             
             // Convolve
             for (auto frame = 0; frame < fftKernel.size(); frame++)
             {
-                for (auto i = 0; i < fftKernel[frame].first.size(); i++)
+                for (auto i = 0; i < fft.realSpectrumSize; i++)
                 {
-                    auto x = fftKernel[frame].first[i];
-                    auto yi = fftKernel[frame].second[i];
-                    auto u = delay.read(frame).first[i];
-                    auto vi = delay.read(frame).second[i];
+                    auto& x = fftKernel[frame].real[i];
+                    auto& yi = fftKernel[frame].imaginary[i];
+                    auto& u = delay.read(frame).real[i];
+                    auto& vi = delay.read(frame).imaginary[i];
                     
-                    resultMatrix[frame].first[i] = x * u - yi * vi;
-                    resultMatrix[frame].second[i] = x * vi + yi * u;
+                    resultMatrix[frame].real[i] = x * u - yi * vi;
+                    resultMatrix[frame].imaginary[i] = x * vi + yi * u;
                 }
             }
             
@@ -147,7 +146,7 @@ namespace dsp
             for (auto frame = 0; frame < resultMatrix.size(); frame++)
             {
                 
-                fft.inverse(resultMatrix[frame].first.data(), resultMatrix[frame].second.data(), outputFftFrame.data());
+                fft.inverse(resultMatrix[frame].real.data(), resultMatrix[frame].imaginary.data(), outputFftFrame.data());
                 std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
                 std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end() + frameSize, olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
             }
@@ -160,19 +159,28 @@ namespace dsp
         const std::size_t doubleFrameSize = 0;
         
     private:
+        struct ComplexList
+        {
+        public:
+            ComplexList() = default;
+            ComplexList(std::size_t size) : real(size), imaginary(size) { }
+            
+        public:
+            std::vector<T> real;
+            std::vector<T> imaginary;
+        };
+        
+    private:
         dsp::FastFourierTransform fft; // double frame size
         
-        dsp::Delay<std::pair<std::vector<T>, std::vector<T>>> delay;
-        std::vector<std::pair<std::vector<T>, std::vector<T>>> resultMatrix;
-        std::vector<std::pair<std::vector<T>, std::vector<T>>> fftKernel;
+        dsp::Delay<ComplexList> delay;
+        std::vector<ComplexList> resultMatrix;
+        std::vector<ComplexList> fftKernel;
         
         std::vector<T> inputFftFrame; // double frame size
         std::vector<T> outputFftFrame; // double frame size
         std::vector<T> output; // frame size
         std::vector<T> olaBuffer; // frame size
-        
-        std::vector<T> real; // real spectrum size
-        std::vector<T> imag; // real spectrum size
     };
     
     
@@ -183,7 +191,7 @@ namespace dsp
     public:
         //! Construct with a kernel
         Convolution(std::initializer_list<T> kernel) :
-        Convolution(kernel.begin(), kernel.end())
+            Convolution(kernel.begin(), kernel.end())
         {
             
         }
