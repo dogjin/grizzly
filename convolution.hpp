@@ -33,6 +33,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <vector>
+#include <utility>
 
 #include "delay.hpp"
 #include "fast_fourier_transform.hpp"
@@ -45,11 +46,16 @@ namespace dsp
     public:
         template <typename Iterator>
         ConvolutionFFT(std::size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
-            frameSize(frameSize),
-            doubleFrameSize(2 * frameSize),
-            fft(doubleFrameSize),
-            delay(0),
-            olaBuffer(frameSize)
+        frameSize(frameSize),
+        doubleFrameSize(2 * frameSize),
+        fft(doubleFrameSize),
+        delay(0),
+        inputFftFrame(doubleFrameSize),
+        outputFftFrame(doubleFrameSize),
+        output(frameSize),
+        olaBuffer(frameSize),
+        real(fft.realSpectrumSize),
+        imag(fft.realSpectrumSize)
         {
             if (frameSize == 0)
                 throw std::invalid_argument("convolution can't be created with a frame size of 0");
@@ -59,67 +65,94 @@ namespace dsp
             
             fftKernel.reserve(numberOfKernelFrames);
             delay.setMaximalDelayTime(numberOfKernelFrames - 1);
-            resultMatrix.resize(numberOfKernelFrames, std::vector<std::complex<T>>(fft.realSpectrumSize));
+            resultMatrix.resize(numberOfKernelFrames, std::pair<std::vector<T>, std::vector<T>>(std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize))));
             
             // Fill fftKernel
             auto frameBegin = kernelBegin;
             while (std::distance(frameBegin, kernelEnd) >= frameSize)
             {
+                // Set frameEnd next to frameBegin with frameSize as distance
                 auto frameEnd = std::next(frameBegin, frameSize);
+                
+                // Init a frame with the data from frameBegin to frameEnd
                 std::vector<T> frame(frameBegin, frameEnd);
+                
+                // Zero padd to doubble the frame size to avoid circular convolution
                 frame.resize(doubleFrameSize, 0);
                 
-                fftKernel.emplace_back(fft.forward(frame.data()));
-                delay.write(std::vector<std::complex<T>>(fft.realSpectrumSize));
+                // Take fft
+                fft.forward(frame.data(), real.data(), imag.data());
                 
+                // Place the result of the fft in the fftKernel
+                fftKernel.emplace_back(std::make_pair(real, imag));
+                
+                // Need this to init the size of the delay element. Kan anders right?
+                auto pp = std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize));
+                delay.write(pp);
+                
+                // Set frameBegin to be the frameEnd for next iteration
                 frameBegin = frameEnd;
             }
             
-            // Last frame
+            // Init a last frame with the left-over samples to kernelEnd
             std::vector<float> lastFrame(frameBegin, kernelEnd);
             if (!lastFrame.empty())
             {
+                // Zero padd to dubble the frame size to avoid circular convolution
                 lastFrame.resize(doubleFrameSize, 0);
                 
-                fftKernel.emplace_back(fft.forward(lastFrame.data()));
-                delay.write(std::vector<std::complex<T>>(fft.realSpectrumSize));
+                // Take fft
+                fft.forward(lastFrame.data(), real.data(), imag.data());
+                
+                // Place the result of the fft in the fftKernel
+                fftKernel.emplace_back(std::make_pair(real, imag));
+                
+                // Need this to init the size of the delay element. Kan anders right?
+                auto pp = std::make_pair(std::vector<T>(fft.realSpectrumSize), std::vector<T>(fft.realSpectrumSize));
+                delay.write(pp);
             }
         }
         
         template <typename Iterator>
         std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
         {
-            frame.clear();
-            frame.resize(doubleFrameSize, T(0));
-            std::copy(frameBegin, frameEnd, frame.begin());
-
+            std::copy(frameBegin, frameEnd, inputFftFrame.begin());
+            
             // Take fft of x
-            delay.write(fft.forward(frame.data()));
+            fft.forward(inputFftFrame.data(), real.data(), imag.data());
+            
+            delay.write(std::make_pair(real, imag));
             
             // Convolve
             for (auto frame = 0; frame < fftKernel.size(); frame++)
             {
-                for (auto i = 0; i < fftKernel[frame].size(); i++)
-                    resultMatrix[frame][i] = fftKernel[frame][i] * delay.read(frame)[i];
+                for (auto i = 0; i < fftKernel[frame].first.size(); i++)
+                {
+                    auto x = fftKernel[frame].first[i];
+                    auto yi = fftKernel[frame].second[i];
+                    auto u = delay.read(frame).first[i];
+                    auto vi = delay.read(frame).second[i];
+                    
+                    resultMatrix[frame].first[i] = x * u - yi * vi;
+                    resultMatrix[frame].second[i] = x * vi + yi * u;
+                }
             }
             
-            // Initialse the output with the ola buffer
-            std::vector<T> y = olaBuffer;
+            // Set the output with the ola buffer
+            output = olaBuffer;
             
             // Reset ola buffer with zeros
             std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
             
             for (auto frame = 0; frame < resultMatrix.size(); frame++)
             {
-                auto inv = fft.inverse(resultMatrix[frame]);
-                for (auto i = 0; i < frameSize; i ++)
-                {
-                    y[i] += inv[i];
-                    olaBuffer[i] += inv[i + frameSize];
-                }
+                
+                fft.inverse(resultMatrix[frame].first.data(), resultMatrix[frame].second.data(), outputFftFrame.data());
+                std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
+                std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end() + frameSize, olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
             }
             
-            return y;
+            return output;
         }
         
     public:
@@ -127,17 +160,19 @@ namespace dsp
         const std::size_t doubleFrameSize = 0;
         
     private:
-        dsp::FastFourierTransform fft;
+        dsp::FastFourierTransform fft; // double frame size
         
-        dsp::Delay<std::vector<std::complex<T>>> delay;
+        dsp::Delay<std::pair<std::vector<T>, std::vector<T>>> delay;
+        std::vector<std::pair<std::vector<T>, std::vector<T>>> resultMatrix;
+        std::vector<std::pair<std::vector<T>, std::vector<T>>> fftKernel;
         
-        std::vector<T> olaBuffer;
+        std::vector<T> inputFftFrame; // double frame size
+        std::vector<T> outputFftFrame; // double frame size
+        std::vector<T> output; // frame size
+        std::vector<T> olaBuffer; // frame size
         
-        std::vector<std::vector<std::complex<T>>> resultMatrix;
-        
-        std::vector<std::vector<std::complex<T>>> fftKernel;
-        
-        std::vector<T> frame;
+        std::vector<T> real; // real spectrum size
+        std::vector<T> imag; // real spectrum size
     };
     
     
@@ -148,7 +183,7 @@ namespace dsp
     public:
         //! Construct with a kernel
         Convolution(std::initializer_list<T> kernel) :
-            Convolution(kernel.begin(), kernel.end())
+        Convolution(kernel.begin(), kernel.end())
         {
             
         }
@@ -156,8 +191,8 @@ namespace dsp
         //! Construct with a kernel
         template <typename Iterator>
         Convolution(Iterator begin, Iterator end) :
-            delay(std::distance(begin, end)),
-            kernel(begin, end)
+        delay(std::distance(begin, end)),
+        kernel(begin, end)
         {
             
         }
