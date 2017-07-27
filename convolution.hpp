@@ -110,7 +110,7 @@ namespace dsp
         std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
         {
             // Copy the input into a zero-padded buffer
-            assert(std::distance(frameBegin, frameEnd) == fft.size);
+            assert(std::distance(frameBegin, frameEnd) == frameSize);
             std::copy(frameBegin, frameEnd, inputFftFrame.begin());
             
             // Take Fourier transform of the input
