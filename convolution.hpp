@@ -121,6 +121,7 @@ namespace dsp
             {
                 const auto& k = fftKernel[frame];
                 const auto& d = delay.read(frame);
+                auto& r = resultMatrix[frame];
                 
                 for (auto i = 0; i < fft.realSpectrumSize; i++)
                 {
@@ -129,8 +130,8 @@ namespace dsp
                     auto& u = d.real[i];
                     auto& vi = d.imaginary[i];
                     
-                    resultMatrix[frame].real[i] = x * u - yi * vi;
-                    resultMatrix[frame].imaginary[i] = x * vi + yi * u;
+                    r.real[i] = x * u - yi * vi;
+                    r.imaginary[i] = x * vi + yi * u;
                 }
             }
 
