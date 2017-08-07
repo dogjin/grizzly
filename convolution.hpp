@@ -57,7 +57,6 @@ namespace dsp
             stride(fft.realSpectrumSize * 2),
             inputFftFrame(doubleFrameSize),
             outputFftFrame(doubleFrameSize),
-            output(frameSize),
             olaBuffer(frameSize)
         {
             if (frameSize == 0)
@@ -106,8 +105,8 @@ namespace dsp
             assert(kernelPtr + stride == &*fftKernel.end());
         }
         
-        template <typename Iterator>
-        std::vector<T> process(Iterator frameBegin, Iterator frameEnd)
+        template <typename Iterator, typename Iterator2>
+        void process(Iterator frameBegin, Iterator frameEnd, Iterator2 outputBegin)
         {
             // Copy the input into a zero-padded buffer
             assert(std::distance(frameBegin, frameEnd) == frameSize);
@@ -136,9 +135,9 @@ namespace dsp
                 scr.realp += stride;
                 scr.imagp += stride;
             }
-
+            
             // Set the output with the ola buffer
-            output = olaBuffer;
+            std::copy(olaBuffer.begin(), olaBuffer.end(), outputBegin);
             
             // Reset ola buffer with zeros
             std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
@@ -146,11 +145,9 @@ namespace dsp
             for (auto frame = 0; frame < numberOfKernelFrames; frame++)
             {
                 fft.inverse(&resultMatrix[frame * stride], &resultMatrix[frame * stride + fft.realSpectrumSize], outputFftFrame.data());
-                std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
+                std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, outputBegin, outputBegin, std::plus<>());
                 std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end(), olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
             }
-            
-            return output;
         }
         
     public:
@@ -181,7 +178,6 @@ namespace dsp
         
         std::vector<T> inputFftFrame; // double frame size
         std::vector<T> outputFftFrame; // double frame size
-        std::vector<T> output; // frame size
         std::vector<T> olaBuffer; // frame size
     };
     
