@@ -34,13 +34,17 @@
 #include <initializer_list>
 #include <iterator>
 #include <vector>
-#include <utility>
+
+#ifdef __APPLE__
+#include <Accelerate/Accelerate.h>
+#endif
 
 #include "delay.hpp"
 #include "fast_fourier_transform.hpp"
 
 namespace dsp
 {
+    //! Convolution using the Fast-Fourier transform to gain speed
     template <class T>
     class ConvolutionFFT
     {
@@ -50,7 +54,7 @@ namespace dsp
             frameSize(frameSize),
             doubleFrameSize(2 * frameSize),
             fft(doubleFrameSize),
-            delay(0, fft.realSpectrumSize),
+            stride(fft.realSpectrumSize * 2),
             inputFftFrame(doubleFrameSize),
             outputFftFrame(doubleFrameSize),
             output(frameSize),
@@ -60,14 +64,15 @@ namespace dsp
                 throw std::invalid_argument("convolution can't be created with a frame size of 0");
             
             const auto kernelSize = std::distance(kernelBegin, kernelEnd);
-            const auto numberOfKernelFrames = kernelSize / frameSize + 1;
+            numberOfKernelFrames = kernelSize / frameSize + 1;
             
-            fftKernel.reserve(numberOfKernelFrames);
-            delay.setMaximalDelayTime(numberOfKernelFrames - 1, fft.realSpectrumSize);
-            resultMatrix.resize(numberOfKernelFrames, fft.realSpectrumSize);
+            fftKernel.resize(numberOfKernelFrames * stride);
+            delay.resize(numberOfKernelFrames * stride);
+            resultMatrix.resize(delay.size());
             
             // Fill fftKernel
             auto frameBegin = kernelBegin;
+            auto kernelPtr = fftKernel.data();
             while (std::distance(frameBegin, kernelEnd) >= frameSize)
             {
                 // Set frameEnd next to frameBegin with frameSize as distance
@@ -80,11 +85,8 @@ namespace dsp
                 frame.resize(doubleFrameSize, 0);
                 
                 // Take fft
-                ComplexList list(fft.realSpectrumSize);
-                fft.forward(frame.data(), list.real.data(), list.imaginary.data());
-                
-                // Place the result of the fft in the fftKernel
-                fftKernel.emplace_back(std::move(list));
+                fft.forward(frame.data(), kernelPtr, kernelPtr + fft.realSpectrumSize);
+                kernelPtr += stride;
                 
                 // Set frameBegin to be the frameEnd for next iteration
                 frameBegin = frameEnd;
@@ -98,12 +100,10 @@ namespace dsp
                 lastFrame.resize(doubleFrameSize, 0);
                 
                 // Take fft
-                ComplexList list(fft.realSpectrumSize);
-                fft.forward(lastFrame.data(), list.real.data(), list.imaginary.data());
-                
-                // Place the result of the fft in the fftKernel
-                fftKernel.emplace_back(std::move(list));
+                fft.forward(lastFrame.data(), kernelPtr, kernelPtr + fft.realSpectrumSize);
             }
+            
+            assert(kernelPtr + stride == &*fftKernel.end());
         }
         
         template <typename Iterator>
@@ -114,25 +114,27 @@ namespace dsp
             std::copy(frameBegin, frameEnd, inputFftFrame.begin());
             
             // Take Fourier transform of the input
-            delay.adjust([&](ComplexList& list){ fft.forward(inputFftFrame.data(), list.real.data(), list.imaginary.data()); });
+            delay.erase(delay.begin(), delay.begin() + stride);
+            auto i = delay.size();
+            delay.resize(numberOfKernelFrames * stride);
+            fft.forward(inputFftFrame.data(), &delay[i], &delay[i + fft.realSpectrumSize]);
             
             // Do the convolution by multiplying in the Fourier domain
-            for (auto frame = 0; frame < fftKernel.size(); frame++)
+            const auto d = delay.data() + delay.size() - stride;
+            DSPSplitComplex scd{d, d + fft.realSpectrumSize};
+            DSPSplitComplex sck{fftKernel.data(), fftKernel.data() + fft.realSpectrumSize};
+            DSPSplitComplex scr{resultMatrix.data(), resultMatrix.data() + fft.realSpectrumSize};
+            
+            for (int frame = 0; frame < numberOfKernelFrames; frame++)
             {
-                const auto& k = fftKernel[frame];
-                const auto& d = delay.read(frame);
-                auto& r = resultMatrix[frame];
+                vDSP_zvmul(&sck, 1, &scd, 1, &scr, 1, fft.realSpectrumSize, 1);
                 
-                for (auto i = 0; i < fft.realSpectrumSize; i++)
-                {
-                    auto& x = k.real[i];
-                    auto& yi = k.imaginary[i];
-                    auto& u = d.real[i];
-                    auto& vi = d.imaginary[i];
-                    
-                    r.real[i] = x * u - yi * vi;
-                    r.imaginary[i] = x * vi + yi * u;
-                }
+                sck.realp += stride;
+                sck.imagp += stride;
+                scd.realp -= stride;
+                scd.imagp -= stride;
+                scr.realp += stride;
+                scr.imagp += stride;
             }
 
             // Set the output with the ola buffer
@@ -141,9 +143,9 @@ namespace dsp
             // Reset ola buffer with zeros
             std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
             
-            for (auto frame = 0; frame < resultMatrix.size(); frame++)
+            for (auto frame = 0; frame < numberOfKernelFrames; frame++)
             {
-                fft.inverse(resultMatrix[frame].real.data(), resultMatrix[frame].imaginary.data(), outputFftFrame.data());
+                fft.inverse(&resultMatrix[frame * stride], &resultMatrix[frame * stride + fft.realSpectrumSize], outputFftFrame.data());
                 std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, output.begin(), output.begin(), std::plus<>());
                 std::transform(outputFftFrame.begin() + frameSize, outputFftFrame.end(), olaBuffer.begin(), olaBuffer.begin(), std::plus<>());
             }
@@ -170,9 +172,12 @@ namespace dsp
     private:
         dsp::FastFourierTransform fft; // double frame size
         
-        dsp::Delay<ComplexList> delay;
-        std::vector<ComplexList> resultMatrix;
-        std::vector<ComplexList> fftKernel;
+        std::size_t numberOfKernelFrames = 0;
+        const std::size_t stride = 0;
+        
+        std::vector<float> fftKernel;
+        std::vector<float> delay;
+        std::vector<float> resultMatrix;
         
         std::vector<T> inputFftFrame; // double frame size
         std::vector<T> outputFftFrame; // double frame size
