@@ -53,6 +53,7 @@ namespace dsp
         ConvolutionFFT(std::size_t frameSize, Iterator kernelBegin, Iterator kernelEnd) :
             frameSize(frameSize),
             doubleFrameSize(2 * frameSize),
+            frameCount(std::distance(kernelBegin, kernelEnd) / frameSize + 1),
             fft(doubleFrameSize),
             stride(fft.realSpectrumSize * 2),
             inputFftFrame(doubleFrameSize),
@@ -62,11 +63,8 @@ namespace dsp
             if (frameSize == 0)
                 throw std::invalid_argument("convolution can't be created with a frame size of 0");
             
-            const auto kernelSize = std::distance(kernelBegin, kernelEnd);
-            numberOfKernelFrames = kernelSize / frameSize + 1;
-            
-            fftKernel.resize(numberOfKernelFrames * stride);
-            delay.resize(numberOfKernelFrames * stride);
+            fftKernel.resize(frameCount * stride);
+            delay.resize(frameCount * stride);
             resultMatrix.resize(delay.size());
             
             // Fill fftKernel
@@ -115,7 +113,7 @@ namespace dsp
             // Take Fourier transform of the input
             delay.erase(delay.begin(), delay.begin() + stride);
             auto i = delay.size();
-            delay.resize(numberOfKernelFrames * stride);
+            delay.resize(frameCount * stride);
             fft.forward(inputFftFrame.data(), &delay[i], &delay[i + fft.realSpectrumSize]);
             
             // Do the convolution by multiplying in the Fourier domain
@@ -124,7 +122,7 @@ namespace dsp
             DSPSplitComplex sck{fftKernel.data(), fftKernel.data() + fft.realSpectrumSize};
             DSPSplitComplex scr{resultMatrix.data(), resultMatrix.data() + fft.realSpectrumSize};
             
-            for (int frame = 0; frame < numberOfKernelFrames; frame++)
+            for (int frame = 0; frame < frameCount; frame++)
             {
                 vDSP_zvmul(&sck, 1, &scd, 1, &scr, 1, fft.realSpectrumSize, 1);
                 
@@ -142,7 +140,7 @@ namespace dsp
             // Reset ola buffer with zeros
             std::fill(olaBuffer.begin(), olaBuffer.end(), 0);
             
-            for (auto frame = 0; frame < numberOfKernelFrames; frame++)
+            for (auto frame = 0; frame < frameCount; frame++)
             {
                 fft.inverse(&resultMatrix[frame * stride], &resultMatrix[frame * stride + fft.realSpectrumSize], outputFftFrame.data());
                 std::transform(outputFftFrame.begin(), outputFftFrame.begin() + frameSize, outputBegin, outputBegin, std::plus<>());
@@ -153,6 +151,7 @@ namespace dsp
     public:
         const std::size_t frameSize = 0;
         const std::size_t doubleFrameSize = 0;
+        const std::size_t frameCount = 0;
         
     private:
         struct ComplexList
@@ -168,8 +167,7 @@ namespace dsp
         
     private:
         dsp::FastFourierTransform fft; // double frame size
-        
-        std::size_t numberOfKernelFrames = 0;
+
         const std::size_t stride = 0;
         
         std::vector<float> fftKernel;
