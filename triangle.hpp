@@ -28,6 +28,9 @@
 #ifndef GRIZZLY_TRIANGLE_HPP
 #define GRIZZLY_TRIANGLE_HPP
 
+#include <cmath>
+#include <dsperados/math/wrap.hpp>
+
 #include "poly_blamp.hpp"
 #include "phase_generator.hpp"
 

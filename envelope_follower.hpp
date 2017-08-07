@@ -29,7 +29,6 @@
 #define GRIZZLY_ENVELOPE_FOLLOWER_HPP
 
 #include <cmath>
-#include <dsperados/math/utility.hpp>
 #include <stdexcept>
 
 #include "biquad.hpp"

@@ -28,6 +28,8 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
+#include <dsperados/math/wrap.hpp>
+
 #include "phase_generator.hpp"
 #include "poly_blep.hpp"
 

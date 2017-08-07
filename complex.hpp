@@ -36,7 +36,7 @@
 #include <vector>
 
 #include <dsperados/math/constants.hpp>
-#include <dsperados/math/utility.hpp>
+#include <dsperados/math/wrap.hpp>
 #include <unit/radian.hpp>
 
 namespace dsp

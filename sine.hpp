@@ -29,6 +29,7 @@
 #define GRIZZLY_SINE_HPP
 
 #include <cmath>
+#include <dsperados/math/constants.hpp>
 
 #include "phase_generator.hpp"
 

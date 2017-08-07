@@ -30,7 +30,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <dsperados/math/utility.hpp>
 #include <dsperados/math/ease.hpp>
 #include <dsperados/math/interpolation.hpp>
 #include <functional>

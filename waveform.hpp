@@ -29,7 +29,6 @@
 #define GRIZZLY_WAVEFORM_HPP
 
 #include <cmath>
-#include <dsperados/math/utility.hpp>
 
 #include "saw.hpp"
 #include "sine.hpp"

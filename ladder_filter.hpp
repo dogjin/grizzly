@@ -30,7 +30,6 @@
 
 #include <cmath>
 #include <dsperados/math/constants.hpp>
-#include <dsperados/math/utility.hpp>
 #include <functional>
 #include <stdexcept>
 #include <unit/hertz.hpp>

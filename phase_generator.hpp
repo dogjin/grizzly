@@ -30,7 +30,7 @@
 
 #include <functional>
 
-#include <dsperados/math/utility.hpp>
+#include <dsperados/math/wrap.hpp>
 #include <unit/hertz.hpp>
 
 namespace dsp

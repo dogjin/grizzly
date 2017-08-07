@@ -31,7 +31,6 @@
 #include <cmath>
 #include <cstddef>
 #include <dsperados/math/random.hpp>
-#include <dsperados/math/utility.hpp>
 #include <stdexcept>
 #include <vector>
 

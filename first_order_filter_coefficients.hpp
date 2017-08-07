@@ -34,7 +34,7 @@
 #include <unit/time.hpp>
 
 #include <dsperados/math/constants.hpp>
-#include <dsperados/math/utility.hpp>
+#include <dsperados/math/clamp.hpp>
 
 namespace dsp
 {
