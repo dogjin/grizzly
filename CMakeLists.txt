@@ -45,8 +45,9 @@ install(TARGETS Grizzly DESTINATION lib)
 if(WIN32)
 
 	add_definitions(/std:latest /Wall /WX-)
-	include_directories("C:/Program Files (x86)/dsperados/dsperados")
-	include_directories("C:/Program Files (x86)/dsperados")
+	include_directories("C:/Program Files/dsperados/dsperados")
+	include_directories("C:/Program Files/dsperados")
+	include_directories("C:/Program Files")
 
 	install (FILES ${HEADERS} DESTINATION dsperados/grizzly)
 	install (FILES ${OOURA_HEADERS} DESTINATION dsperados/grizzly/Ooura)
