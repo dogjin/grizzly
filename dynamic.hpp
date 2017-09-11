@@ -32,7 +32,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
-#include <unit/amplitude.hpp>
+#include <moditone/unit/amplitude.hpp>
 
 namespace dsp
 {

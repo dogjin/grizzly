@@ -31,7 +31,7 @@
 #include <functional>
 
 #include <moditone/math/wrap.hpp>
-#include <unit/hertz.hpp>
+#include <moditone/unit/hertz.hpp>
 
 namespace dsp
 {

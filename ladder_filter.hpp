@@ -32,7 +32,7 @@
 #include <moditone/math/constants.hpp>
 #include <functional>
 #include <stdexcept>
-#include <unit/hertz.hpp>
+#include <moditone/unit/hertz.hpp>
 
 #include "analog_one_pole_filter.hpp"
 

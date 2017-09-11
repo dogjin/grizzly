@@ -45,8 +45,6 @@ install(TARGETS Grizzly DESTINATION lib)
 if(WIN32)
 
 	add_definitions(/std:latest /Wall /WX-)
-	include_directories("C:/Program Files/moditone")
-	include_directories("C:/Program Files/moditone")
 	include_directories("C:/Program Files")
 
 	install (FILES ${HEADERS} DESTINATION moditone/grizzly)

@@ -29,8 +29,8 @@
 #define GRIZZLY_GORDON_SMITH_OSCILLATOR_HPP
 
 #include <cmath>
-#include <unit/hertz.hpp>
-#include <unit/radian.hpp>
+#include <moditone/unit/hertz.hpp>
+#include <moditone/unit/radian.hpp>
 
 #include <moditone/math/constants.hpp>
 

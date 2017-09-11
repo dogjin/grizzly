@@ -32,9 +32,9 @@
 #include <moditone/math/constants.hpp>
 #include <functional>
 #include <stdexcept>
-#include <unit/amplitude.hpp>
-#include <unit/hertz.hpp>
-#include <unit/time.hpp>
+#include <moditone/unit/amplitude.hpp>
+#include <moditone/unit/hertz.hpp>
+#include <moditone/unit/time.hpp>
 
 namespace dsp
 {

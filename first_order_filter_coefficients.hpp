@@ -30,8 +30,8 @@
 
 #include <cmath>
 #include <stdexcept>
-#include <unit/hertz.hpp>
-#include <unit/time.hpp>
+#include <moditone/unit/hertz.hpp>
+#include <moditone/unit/time.hpp>
 
 #include <moditone/math/constants.hpp>
 #include <moditone/math/clamp.hpp>

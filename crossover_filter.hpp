@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <moditone/math/constants.hpp>
 #include <functional>
-#include <unit/hertz.hpp>
+#include <moditone/unit/hertz.hpp>
 #include <vector>
 
 #include "biquad.hpp"

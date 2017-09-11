@@ -30,8 +30,8 @@
 
 #include <cmath>
 #include <stdexcept>
-#include <unit/amplitude.hpp>
-#include <unit/hertz.hpp>
+#include <moditone/unit/amplitude.hpp>
+#include <moditone/unit/hertz.hpp>
 
 #include <moditone/math/constants.hpp>
 
