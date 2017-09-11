@@ -30,7 +30,7 @@
 
 #include <functional>
 
-#include <dsperados/math/wrap.hpp>
+#include <moditone/math/wrap.hpp>
 #include <unit/hertz.hpp>
 
 namespace dsp

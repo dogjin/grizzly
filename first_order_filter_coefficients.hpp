@@ -33,8 +33,8 @@
 #include <unit/hertz.hpp>
 #include <unit/time.hpp>
 
-#include <dsperados/math/constants.hpp>
-#include <dsperados/math/clamp.hpp>
+#include <moditone/math/constants.hpp>
+#include <moditone/math/clamp.hpp>
 
 namespace dsp
 {

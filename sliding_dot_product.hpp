@@ -9,7 +9,7 @@
 #ifndef GRIZZLY_SLIDING_DOT_PRODUCT_HPP
 #define GRIZZLY_SLIDING_DOT_PRODUCT_HPP
 
-#include <dsperados/math/linear/dot.hpp>
+#include <moditone/math/linear/dot.hpp>
 #include <iterator>
 #include <vector>
 

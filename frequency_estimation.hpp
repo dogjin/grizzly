@@ -31,8 +31,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <dsperados/math/analysis.hpp>
-#include <dsperados/math/interpolation.hpp>
+#include <moditone/math/analysis.hpp>
+#include <moditone/math/interpolation.hpp>
 #include <iterator>
 #include <cstddef>
 #include <stdexcept>

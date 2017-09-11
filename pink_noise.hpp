@@ -30,7 +30,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <dsperados/math/random.hpp>
+#include <moditone/math/random.hpp>
 #include <stdexcept>
 #include <vector>
 

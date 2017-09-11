@@ -29,7 +29,7 @@
 #define GRIZZLY_CIRCULAR_BUFFER_HPP
 
 #include <cstddef>
-#include <dsperados/math/wrap.hpp>
+#include <moditone/math/wrap.hpp>
 #include <initializer_list>
 #include <iterator>
 #include <stdexcept>

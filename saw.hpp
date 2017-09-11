@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
-#include <dsperados/math/interpolation.hpp>
+#include <moditone/math/interpolation.hpp>
 #include <type_traits>
 
 #include "phase_generator.hpp"

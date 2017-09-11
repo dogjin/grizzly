@@ -29,7 +29,7 @@
 #define GRIZZLY_CROSSOVER_FILTER_HPP
 
 #include <cstddef>
-#include <dsperados/math/constants.hpp>
+#include <moditone/math/constants.hpp>
 #include <functional>
 #include <unit/hertz.hpp>
 #include <vector>

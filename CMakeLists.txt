@@ -20,20 +20,20 @@ list(APPEND SOURCES ${OOURA_SOURCES})
 
 # Apple
 if (APPLE)
-
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 	add_definitions(-std=c++14 -Wall -Werror -Wconversion)
 	include_directories(/usr/local/include)
 
+	install (FILES ${HEADERS} DESTINATION include/moditone/grizzly)
+    install (FILES ${OOURA_HEADERS} DESTINATION include/moditone/grizzly/ooura)
+
     set(APPLE_HEADERS apple/fast_fourier_transform_accelerate.hpp)
 	set(APPLE_SOURCES apple/fast_fourier_transform_accelerate.cpp)
     source_group(\\Apple FILES ${APPLE_HEADERS} ${APPLE_SOURCES})
-    install (FILES ${APPLE_HEADERS} DESTINATION include/grizzly/apple)
+    install (FILES ${APPLE_HEADERS} DESTINATION include/moditone/grizzly/apple)
 
     list(APPEND HEADERS ${APPLE_HEADERS})
     list(APPEND SOURCES ${APPLE_SOURCES})
-    install (FILES ${HEADERS} DESTINATION include/grizzly)
-    install (FILES ${OOURA_HEADERS} DESTINATION include/grizzly/ooura)
 
     add_subdirectory(test)
 endif()
@@ -45,12 +45,12 @@ install(TARGETS Grizzly DESTINATION lib)
 if(WIN32)
 
 	add_definitions(/std:latest /Wall /WX-)
-	include_directories("C:/Program Files/dsperados/dsperados")
-	include_directories("C:/Program Files/dsperados")
+	include_directories("C:/Program Files/moditone")
+	include_directories("C:/Program Files/moditone")
 	include_directories("C:/Program Files")
 
-	install (FILES ${HEADERS} DESTINATION dsperados/grizzly)
-	install (FILES ${OOURA_HEADERS} DESTINATION dsperados/grizzly/Ooura)
+	install (FILES ${HEADERS} DESTINATION moditone/grizzly)
+	install (FILES ${OOURA_HEADERS} DESTINATION moditone/grizzly/Ooura)
 
 endif(WIN32)
 

@@ -35,8 +35,8 @@
 #include <limits>
 #include <vector>
 
-#include <dsperados/math/constants.hpp>
-#include <dsperados/math/wrap.hpp>
+#include <moditone/math/constants.hpp>
+#include <moditone/math/wrap.hpp>
 #include <unit/radian.hpp>
 
 namespace dsp

@@ -30,8 +30,8 @@
 
 #include <algorithm>
 #include <complex>
-#include <dsperados/math/statistics.hpp>
-#include <dsperados/math/spline.hpp>
+#include <moditone/math/statistics.hpp>
+#include <moditone/math/spline.hpp>
 #include <iterator>
 #include <vector>
 

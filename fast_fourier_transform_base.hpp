@@ -30,7 +30,7 @@
 
 #include <cstddef>
 #include <complex>
-#include <dsperados/math/interleave.hpp>
+#include <moditone/math/interleave.hpp>
 #include <vector>
 
 #include "complex.hpp"

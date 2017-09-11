@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_ALL_PASS_FILTER_HPP
 #define GRIZZLY_ALL_PASS_FILTER_HPP
 
-#include <dsperados/math/constants.hpp>
+#include <moditone/math/constants.hpp>
 #include <stdexcept>
 #include <vector>
 

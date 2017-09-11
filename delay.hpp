@@ -28,7 +28,7 @@
 #ifndef GRIZZLY_DELAY_HPP
 #define GRIZZLY_DELAY_HPP
 
-#include <dsperados/math/interpolation.hpp>
+#include <moditone/math/interpolation.hpp>
 
 #include "circular_buffer.hpp"
 

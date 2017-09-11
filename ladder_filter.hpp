@@ -29,7 +29,7 @@
 #define GRIZZLY_LADDER_FILTER_HPP
 
 #include <cmath>
-#include <dsperados/math/constants.hpp>
+#include <moditone/math/constants.hpp>
 #include <functional>
 #include <stdexcept>
 #include <unit/hertz.hpp>

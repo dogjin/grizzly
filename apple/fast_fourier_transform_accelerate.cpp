@@ -25,7 +25,7 @@
  
  */
 
-#include <dsperados/math/interleave.hpp>
+#include <moditone/math/interleave.hpp>
 #include <stdexcept>
 
 #include "fast_fourier_transform_accelerate.hpp"

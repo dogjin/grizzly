@@ -32,7 +32,7 @@
 #include <unit/hertz.hpp>
 #include <unit/radian.hpp>
 
-#include <dsperados/math/constants.hpp>
+#include <moditone/math/constants.hpp>
 
 namespace dsp
 {

@@ -30,8 +30,8 @@
 
 #include <cassert>
 #include <cstddef>
-#include <dsperados/math/ease.hpp>
-#include <dsperados/math/interpolation.hpp>
+#include <moditone/math/ease.hpp>
+#include <moditone/math/interpolation.hpp>
 #include <functional>
 #include <initializer_list>
 #include <mutex>

@@ -31,7 +31,7 @@
 #include <cmath>
 #include <utility>
 
-#include <dsperados/math/ease.hpp>
+#include <moditone/math/ease.hpp>
 
 #include "mid_side.hpp"
 

@@ -29,7 +29,7 @@
 #define GRIZZLY_WINDOW_HPP
 
 #include <cmath>
-#include <dsperados/math/constants.hpp>
+#include <moditone/math/constants.hpp>
 #include <limits>
 #include <unit/radian.hpp>
 #include <vector>
