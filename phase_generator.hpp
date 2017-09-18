@@ -43,21 +43,20 @@ namespace dsp
         //! Virtual destructor
         virtual ~PhaseGenerator() = default;
         
-        //! Increment the generator
-        void increment(long double increment)
-        {            
-            phase += increment;
-            if (end && phase >= 1)
-                end();
-            
-            phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
+        virtual void increment()
+        {
+            phase = math::wrap<long double>(phase += increment_, 0, 1);
+            y = convertPhaseToY();
         }
         
-        //! Increment the phase, given a frequency
-        void increment(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
+        void setIncrement(long double increment)
         {
-            increment(frequency.value / sampleRate.value);
+            this->increment_ = increment;
+        }
+        
+        void setIncrement(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
+        {
+            setIncrement(frequency.value / sampleRate.value);
         }
         
         //! Read the most recently computed output
@@ -70,7 +69,7 @@ namespace dsp
         void setPhase(long double phase)
         {
             this->phase = math::wrap<long double>(phase, 0, 1);
-            recomputeY();
+            y = convertPhaseToY();
         }
         
         //! Return the current phase between 0 and 1
@@ -79,24 +78,93 @@ namespace dsp
             return phase;
         }
         
-    public:
-        //! End function when ramp gets wrapped
-        std::function<void(void)> end;
+        long double getIncrement() const
+        {
+            return increment_;
+        }
+        
+        void setPhaseOffset(long double offset)
+        {
+            phaseOffset = offset;
+        }
+        
+        long double getPhaseOffset() const
+        {
+            return phaseOffset;
+        }
         
     protected:
-        //! Recompute the y to be returned
-        void recomputeY() { y = convertPhaseToY(phase); }
+        //! The current phase of the saw (ranged from 0 to 1)
+        long double phase = 0;
+        
+        long double increment_ = 0;
+        
+        long double phaseOffset = 0;
+        
+        //! The to be returned value from read
+        T y = 0;
         
     private:
         //! Recompute the most recently computed value
-        virtual T convertPhaseToY(long double phase) = 0;
+        virtual T convertPhaseToY() = 0;
+    };
+    
+    
+    
+    template <typename T>
+    class BlepSlave : public PhaseGenerator<T>
+    {
+    public:
+        //! Virtual destructor
+        virtual ~BlepSlave() = default;
+        
+    public:
+        T adjustValue = 0;
+        
+        virtual void afterReset(long double masterPhase, long double masterIncrement) = 0;
+        virtual void beforeReset(long double masterPhase, long double masterIncrement) = 0;
+    };
+    
+    
+    
+    template <typename T>
+    class BlepMaster : public PhaseGenerator<T>
+    {
+    public:
+        //! Virtual destructor
+        virtual ~BlepMaster() = default;
+        
+        //! Increment the generator
+        void increment()
+        {
+            // increment the master
+            this->phase = math::wrap<long double>(this->phase += this->increment_, 0, 1);
+            
+            this->y = convertPhaseToY();
+            
+            // if there're no slaves, return
+            if (slavess.empty())
+                return;
+            
+            // increment the slaves
+            for (auto& slave : slavess)
+            {
+                // Check if we are before or after a reset
+                if (this->phase < this->increment_)
+                    slave->afterReset(this->phase, this->increment_);
+                else if (this->phase > 1.0l - this->increment_)
+                    slave->beforeReset(this->phase, this->increment_);
+                
+                slave->increment();
+            }
+        }
+        
+    public:
+        std::vector<std::unique_ptr<BlepSlave<T>>> slavess;
         
     private:
-        //! The to be returned value from read
-        T y;
-        
-        //! The current phase of the saw (ranged from 0 to 1)
-        long double phase = 0;
+        //! Recompute the most recently computed value
+        virtual T convertPhaseToY() = 0;
     };
 }
 
