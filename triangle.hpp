@@ -57,7 +57,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarTriangle<T>(phase); }
+        T convertPhaseToY(long double phase) final { return dsp::generateBipolarTriangle<T>(phase); }
     };
     
     //! Generates a unipolar triangle wave
@@ -66,7 +66,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarTriangle<T>(phase); }
+        T convertPhaseToY(long double phase) final { return dsp::generateUnipolarTriangle<T>(phase); }
     };
     
     //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
@@ -75,7 +75,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override
+        T convertPhaseToY(long double phase) final
         {
             // Compute the non-bandlimited triangle
             auto y = dsp::generateBipolarTriangle<T>(phase);
