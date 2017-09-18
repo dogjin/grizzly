@@ -38,16 +38,16 @@ namespace dsp
 {
     //! Generate a bipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarSaw(Phase phase)
+    constexpr T generateBipolarSaw(Phase phase, Phase phaseOffset)
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase + 0.5, 0, 1) * 2 - 1;
+        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1) * 2 - 1;
     }
     
     //! Generate a unipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarSaw(Phase phase)
+    constexpr T generateUnipolarSaw(Phase phase, Phase phaseOffset)
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase, 0, 1);
+        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1);
     }
     
     //! Generates a bipolar saw wave
@@ -56,7 +56,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarSaw<T>(phase); }
+        T convertPhaseToY() final override { return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a unipolar saw wave
@@ -65,7 +65,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarSaw<T>(phase); }
+        T convertPhaseToY() final override { return dsp::generateUnipolarSaw<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
@@ -74,22 +74,95 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override
+        T convertPhaseToY() final override
         {
             // Compute the y without any anti aliasing
-            auto y = dsp::generateBipolarSaw<T>(phase);
+            auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
             
             // Compute the increment (phase - previous) and adjust y using polyBLEP
-            y -= polyBlep<long double>(math::wrap<T>(this->getPhase() + 0.5, 0.0, 1.0), phase - previousPhase);
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
             
-            // Update the previous phase
-            previousPhase = phase;
+            return y;
+        }
+    };
+    
+    template <typename T>
+    class BiploarSawBlepSlave : public BlepSlave<T>
+    {
+    public:
+        void beforeReset(long double masterPhase, long double masterIncrement) final
+        {
+            auto r = this->increment_ / masterIncrement;
+            
+            // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
+            long double phaseDiffMasterToEnd = 1 - masterPhase;
+            
+            // gebruik dit verschil om bij de slave op te tellen
+            // vermenigvuldig met de ratio want slave gaat sneller
+            // dit is de phase waar de slave exact zou resetten
+            long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * r);
+            
+            
+            long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
+            
+            // bereken de hoogte door de slave phase end in te vullen in de saw generator
+            peak = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
+            
+            long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            
+            this->adjustValue = math::scale<long double>(x, -1.l, 1.l, generateBipolarSaw<long double>(0.l, this->phaseOffset), peak);
+            
+        }
+        
+        void afterReset(long double masterPhase, long double masterIncrement) final
+        {
+            auto r = this->increment_ / masterIncrement;
+            
+            this->setPhase(masterPhase * r);
+            
+            auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
+            
+            this->adjustValue = math::scale<long double>(x, -1.l, 1.l, generateBipolarSaw<long double>(0.l, this->phaseOffset), peak);
+        }
+        
+    private:
+        //! Recompute the most recently computed value
+        T convertPhaseToY() final
+        {
+            // Compute the y without any anti aliasing
+            auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
+            
+            // Compute the increment (phase - previous) and adjust y using polyBLEP
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
+            
+            if (this->adjustValue != 0)
+            {
+                y -= this->adjustValue;
+                this->adjustValue = 0;
+            }
             
             return y;
         }
         
     private:
-        long double previousPhase = 0;
+        long double peak = 0;
+    };
+    
+    template <typename T>
+    class BipolarSawBlepMaster : public BlepMaster<T>
+    {
+    private:
+        //! Recompute the most recently computed value
+        T convertPhaseToY() final
+        {
+            // Compute the y without any anti aliasing
+            auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
+            
+            // Compute the increment (phase - previous) and adjust y using polyBLEP
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
+            
+            return y;
+        }
     };
 }
 
