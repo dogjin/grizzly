@@ -47,6 +47,9 @@ namespace dsp
         {
             phase = math::wrap<long double>(phase += increment_, 0, 1);
             y = convertPhaseToY();
+            
+            for (auto& slave : slaves)
+                slave->increment();
         }
         
         void setIncrement(long double increment)
@@ -57,6 +60,11 @@ namespace dsp
         void setIncrement(unit::hertz<float> frequency, unit::hertz<float> sampleRate)
         {
             setIncrement(frequency.value / sampleRate.value);
+        }
+        
+        long double getIncrement() const
+        {
+            return increment_;
         }
         
         //! Read the most recently computed output
@@ -78,11 +86,6 @@ namespace dsp
             return phase;
         }
         
-        long double getIncrement() const
-        {
-            return increment_;
-        }
-        
         void setPhaseOffset(long double offset)
         {
             phaseOffset = offset;
@@ -92,6 +95,14 @@ namespace dsp
         {
             return phaseOffset;
         }
+        
+        void addSlave(std::unique_ptr<PhaseGenerator> slave)
+        {
+            slave->master = this;
+            slaves.emplace_back(std::move(slave));
+        }
+        
+        const PhaseGenerator* getMaster() const { return master; }
         
     protected:
         //! The current phase of the saw (ranged from 0 to 1)
@@ -107,65 +118,69 @@ namespace dsp
     private:
         //! Recompute the most recently computed value
         virtual T convertPhaseToY() = 0;
-    };
-    
-    
-    
-    template <typename T>
-    class BlepSlave : public PhaseGenerator<T>
-    {
-    public:
-        //! Virtual destructor
-        virtual ~BlepSlave() = default;
-        
-    public:
-        T adjustValue = 0;
-        
-        virtual void afterReset(long double masterPhase, long double masterIncrement) = 0;
-        virtual void beforeReset(long double masterPhase, long double masterIncrement) = 0;
-    };
-    
-    
-    
-    template <typename T>
-    class BlepMaster : public PhaseGenerator<T>
-    {
-    public:
-        //! Virtual destructor
-        virtual ~BlepMaster() = default;
-        
-        //! Increment the generator
-        void increment()
-        {
-            // increment the master
-            this->phase = math::wrap<long double>(this->phase += this->increment_, 0, 1);
-            
-            this->y = convertPhaseToY();
-            
-            // if there're no slaves, return
-            if (slavess.empty())
-                return;
-            
-            // increment the slaves
-            for (auto& slave : slavess)
-            {
-                // Check if we are before or after a reset
-                if (this->phase < this->increment_)
-                    slave->afterReset(this->phase, this->increment_);
-                else if (this->phase > 1.0l - this->increment_)
-                    slave->beforeReset(this->phase, this->increment_);
-                
-                slave->increment();
-            }
-        }
-        
-    public:
-        std::vector<std::unique_ptr<BlepSlave<T>>> slavess;
         
     private:
-        //! Recompute the most recently computed value
-        virtual T convertPhaseToY() = 0;
+        PhaseGenerator* master = nullptr;
+        std::vector<std::unique_ptr<PhaseGenerator>> slaves;
     };
+    
+    
+    
+//    template <typename T>
+//    class BlepSlave : public PhaseGenerator<T>
+//    {
+//    public:
+//        //! Virtual destructor
+//        virtual ~BlepSlave() = default;
+//        
+//    public:
+//        T adjustValue = 0;
+//        
+//        virtual void afterReset(long double masterPhase, long double masterIncrement) = 0;
+//        virtual void beforeReset(long double masterPhase, long double masterIncrement) = 0;
+//    };
+    
+    
+    
+//    template <typename T>
+//    class BlepMaster : public PhaseGenerator<T>
+//    {
+//    public:
+//        //! Virtual destructor
+//        virtual ~BlepMaster() = default;
+//        
+//        //! Increment the generator
+//        void increment()
+//        {
+//            // increment the master
+//            this->phase = math::wrap<long double>(this->phase += this->increment_, 0, 1);
+//            
+//            this->y = convertPhaseToY();
+//            
+//            // if there're no slaves, return
+//            if (slavess.empty())
+//                return;
+//            
+//            // increment the slaves
+//            for (auto& slave : slavess)
+//            {
+//                // Check if we are before or after a reset
+//                if (this->phase < this->increment_)
+//                    slave->afterReset(this->phase, this->increment_);
+//                else if (this->phase > 1.0l - this->increment_)
+//                    slave->beforeReset(this->phase, this->increment_);
+//                
+//                slave->increment();
+//            }
+//        }
+//        
+//    public:
+//        std::vector<std::unique_ptr<BlepSlave<T>>> slavess;
+//        
+//    private:
+//        //! Recompute the most recently computed value
+//        virtual T convertPhaseToY() = 0;
+//    };
 }
 
 #endif /* GRIZZLY_PHASE_GENERATOR_HPP */
