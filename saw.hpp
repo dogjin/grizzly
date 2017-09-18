@@ -92,37 +92,44 @@ namespace dsp
     public:
         void beforeReset(long double masterPhase, long double masterIncrement) final
         {
-            auto r = this->increment_ / masterIncrement;
+            const auto ratio = this->increment_ / masterIncrement;
             
             // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
-            long double phaseDiffMasterToEnd = 1 - masterPhase;
+            const long double phaseDiffMasterToEnd = 1 - masterPhase;
             
             // gebruik dit verschil om bij de slave op te tellen
             // vermenigvuldig met de ratio want slave gaat sneller
             // dit is de phase waar de slave exact zou resetten
-            long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * r);
+            const long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * ratio);
             
-            
-            long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
+            // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
+            const long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
             
             // bereken de hoogte door de slave phase end in te vullen in de saw generator
-            peak = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
+            const auto begin = generateBipolarSaw<T>(0.0l, this->phaseOffset);
+            const auto end = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
             
-            long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            // Bereken de scaling relatief tot de master
+            // Je deelt omdat je normaliter van -1 tot 1 gaat
+            blepScale = (end - begin) / 2;
             
-            this->adjustValue = math::scale<long double>(x, -1.l, 1.l, generateBipolarSaw<long double>(0.l, this->phaseOffset), peak);
+            // Doe een echte blep step, alsof van -1 naar 1...
+            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            
+            // ...end scale dat met de zojuist berekende scale
+            this->adjustValue = x * blepScale;
             
         }
         
         void afterReset(long double masterPhase, long double masterIncrement) final
         {
-            auto r = this->increment_ / masterIncrement;
+            const auto ratio = this->increment_ / masterIncrement;
             
-            this->setPhase(masterPhase * r);
+            this->setPhase(masterPhase * ratio);
             
             auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
             
-            this->adjustValue = math::scale<long double>(x, -1.l, 1.l, generateBipolarSaw<long double>(0.l, this->phaseOffset), peak);
+            this->adjustValue = x * blepScale;
         }
         
     private:
@@ -145,7 +152,7 @@ namespace dsp
         }
         
     private:
-        long double peak = 0;
+        long double blepScale = 0;
     };
     
     template <typename T>
