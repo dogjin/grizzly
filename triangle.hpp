@@ -28,7 +28,9 @@
 #ifndef GRIZZLY_TRIANGLE_HPP
 #define GRIZZLY_TRIANGLE_HPP
 
+#include <cassert>
 #include <cmath>
+#include <memory>
 #include <moditone/math/wrap.hpp>
 
 #include "poly_blamp.hpp"
@@ -38,16 +40,16 @@ namespace dsp
 {
     //! Generate a bipolar triangle wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarTriangle(Phase phase)
+    constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset)
     {
-        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase - 0.25, 0, 1) - 1) - 1;
+        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
     }
     
     //! Generate a unipolar triangle wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarTriangle(Phase phase)
+    constexpr T generateUnipolarTriangle(Phase phase, Phase phaseOffset)
     {
-        phase = math::wrap<Phase>(phase, 0, 1);
+        phase = math::wrap<Phase>(phase + phaseOffset, 0, 1);
         return phase < 0.5 ? phase * 2 : (0.5 - (phase - 0.5)) * 2;
     }
     
@@ -57,7 +59,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateBipolarTriangle<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a unipolar triangle wave
@@ -66,42 +68,108 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateUnipolarTriangle<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateUnipolarTriangle<T>(this->phase, this->phaseOffset); }
     };
     
-    //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
+    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
     class BipolarTriangleBlamp : public PhaseGenerator<T>
     {
     private:
+        void preIncrement() final
+        {
+            const auto master = this->getMaster();
+            if (master != nullptr)
+            {
+                const auto masterPhase = master->getPhase();
+                const auto masterIncrement = master->getIncrement();
+                
+                if (masterPhase < masterIncrement)
+                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+                else if (masterPhase > 1.0l - masterIncrement)
+                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
+                else
+                    syncAdjust.reset();
+            }
+        }
+        
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final
+        T convertPhaseToY() final
         {
             // Compute the non-bandlimited triangle
-            auto y = dsp::generateBipolarTriangle<T>(phase);
+            auto y = dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset);
             
-            auto increment = phase - previousPhase;
+            // There's a hard sync going on
+            if (syncAdjust != nullptr)
+            {
+                y -= *syncAdjust;
+                return y;
+            }
+            
+            // If there's a syncAdjust value, it shoud never perform a 'normal' blamp
+            assert(syncAdjust == nullptr);
             
             // Downward
-            auto scale = 4 * increment;
-            auto modifiedPhase = phase + 0.25;
+            auto scale = 4 * this->increment_;
+            auto modifiedPhase = this->phase + 0.25;
             modifiedPhase -= floor(modifiedPhase);
-            y += scale * polyBlamp(modifiedPhase, increment);
+            y += scale * polyBlamp(modifiedPhase, this->increment_);
             
             // Upward
             modifiedPhase += 0.5;
             modifiedPhase -= floor(modifiedPhase);
-            y -= scale * polyBlamp(modifiedPhase, increment);
-            
-            // Update the previous phase
-            previousPhase = phase;
+            y -= scale * polyBlamp(modifiedPhase, this->increment_);
             
             return y;
         }
         
+        T beforeReset(long double masterPhase, long double masterIncrement)
+        {
+            const auto ratio = this->increment_ / masterIncrement;
+            
+            // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
+            const long double phaseDiffMasterToEnd = 1 - masterPhase;
+            
+            // gebruik dit verschil om bij de slave op te tellen
+            // vermenigvuldig met de ratio want slave gaat sneller
+            // dit is de phase waar de slave exact zou resetten
+            const long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * ratio);
+            
+            // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
+            const long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
+            
+            // bereken de hoogte door de slave phase end in te vullen in de saw generator
+            const auto begin = generateBipolarTriangle<T>(0.0l, this->phaseOffset);
+            const auto end = generateBipolarTriangle<T>(phaseEndOfSlave, this->phaseOffset);
+            
+            // Bereken de scaling relatief tot de master
+            // Je deelt omdat je normaliter van -1 tot 1 gaat
+            blepScale = (end - begin) / 2;
+            
+            // Doe een echte blep step, alsof van -1 naar 1...
+            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            
+            // ...end scale dat met de zojuist berekende scale
+            return x * blepScale;
+        }
+        
+        T afterReset(long double masterPhase, long double masterIncrement)
+        {
+            const auto ratio = this->increment_ / masterIncrement;
+            
+            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
+            
+            auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
+            
+            return x * blepScale;
+        }
+        
     private:
-        long double previousPhase = 0;
+        std::unique_ptr<T> syncAdjust;
+        
+        long double blepScale = 0;
     };
 }
 
 #endif /* GRIZZLY_TRIANGLE_HPP */
+

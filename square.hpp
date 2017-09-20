@@ -28,6 +28,9 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
+#include <cassert>
+#include <cmath>
+#include <memory>
 #include <moditone/math/wrap.hpp>
 
 #include "phase_generator.hpp"
@@ -107,57 +110,6 @@ namespace dsp
         float pulseWidth = 0.5f;
     };
     
-    //    //! Generates a bipolar square wave
-    //    template <typename T>
-    //    class BipolarSquareBlep : public PhaseGenerator<T>
-    //    {
-    //    public:
-    //        BipolarSquareBlep(float pulseWidth = 0.5f) :
-    //            pulseWidth(pulseWidth)
-    //        {
-    //        }
-    //
-    //        //! Change the pulse width
-    //        /*! @param recompute Recompute the y to return from read() */
-    //        void setPulseWidth(float pulseWidth, bool recompute)
-    //        {
-    //            if (pulseWidth == this->pulseWidth)
-    //                return;
-    //
-    //            this->pulseWidth = pulseWidth;
-    //
-    //            if (recompute)
-    //                this->recomputeY();
-    //        }
-    //
-    //    private:
-    //        //! Recompute the most recently computed value
-    //        T convertPhaseToY(long double phase) final
-    //        {
-    //            // Compute the y without any anti aliasing
-    //            auto y = dsp::generateSquare<T>(phase, pulseWidth, -1, 1);
-    //
-    //            // Compute the increment (phase - previous) and adjust y using polyBLEP
-    //            const auto increment = phase - previousPhase;
-    //            y += polyBlep<long double>(phase, increment);
-    //            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + (1 - pulseWidth), 0, 1), increment);
-    //
-    //            // Update the previous phase
-    //            previousPhase = phase;
-    //
-    //            return y;
-    //        }
-    //
-    //    private:
-    //        //! The pulse width used to generate the square
-    //        float pulseWidth = 0.5f;
-    //
-    //        long double previousPhase = 0;
-    //    };
-    
-    
-    
-    
     
     //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
@@ -193,11 +145,11 @@ namespace dsp
                 const auto masterIncrement = master->getIncrement();
                 
                 if (masterPhase < masterIncrement)
-                    adjustValue = afterReset(masterPhase, masterIncrement);
+                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
                 else if (masterPhase > 1.0l - masterIncrement)
-                    adjustValue = beforeReset(masterPhase, masterIncrement);
+                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
                 else
-                    adjustValue = 0;
+                    syncAdjust.reset();
             }
         }
         
@@ -207,25 +159,15 @@ namespace dsp
             // Compute the y without any anti aliasing
             auto y = dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1);
             
-            if (adjustValue != 0)
+            if (syncAdjust != nullptr)
             {
-                if (adjustValue > 0)
-                {
-                    // does the slave become 1 or -1 at phase 0?
-                    source = y;
-                    destination = dsp::generateSquare<T>(0.0l, this->phaseOffset, pulseWidth, -1, 1);
-                }
+                y -= *syncAdjust;
                 
-                if (destination == source)
-                    return y;
-                
-                if (source < destination)
-                    y += adjustValue;
-                else
-                    y -= adjustValue;
-                        
                 return y;
             }
+            
+            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
+            assert(syncAdjust == nullptr);
             
             // Compute the increment (phase - previous) and adjust y using polyBLEP
             y += polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
@@ -249,8 +191,19 @@ namespace dsp
             // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
             const long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
             
+            // bereken de hoogte door de slave phase end in te vullen in de saw generator
+            const auto begin = generateSquare<T>(0.0l, this->phaseOffset, pulseWidth, -1, 1);
+            const auto end = generateSquare<T>(phaseEndOfSlave, this->phaseOffset, pulseWidth, -1, 1);
+            
+            // Bereken de scaling relatief tot de master
+            // Je deelt omdat je normaliter van -1 tot 1 gaat
+            blepScale = (end - begin) / 2;
+            
             // Doe een echte blep step, alsof van -1 naar 1...
-            return insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            
+            // ...end scale dat met de zojuist berekende scale
+            return x * blepScale;
         }
         
         T afterReset(long double masterPhase, long double masterIncrement)
@@ -259,14 +212,15 @@ namespace dsp
             
             this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
             
-            return insertPolyBlepAfterReset(this->phase, this->increment_);
+            auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
+            
+            return x * blepScale;
         }
         
     private:
-        T adjustValue = 0;
+        std::unique_ptr<T> syncAdjust = nullptr;
         
-        T source = 0;
-        T destination = 0;
+        long double blepScale = 0;
         
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
@@ -274,3 +228,4 @@ namespace dsp
 }
 
 #endif /* GRIZZLY_SQUARE_HPP */
+

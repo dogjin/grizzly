@@ -53,7 +53,7 @@ namespace dsp
         auto increment = 1.l / size;
         
         for (auto i = 0; i < size; ++i)
-            window[i] = generateUnipolarTriangle<T>(increment * i);
+            window[i] = generateUnipolarTriangle<T>(increment * i, 0.0l);
         
         return window;
     }
@@ -66,7 +66,7 @@ namespace dsp
         auto increment = 1.l / (size-1);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = generateUnipolarTriangle<T>(increment * i);
+            window[i] = generateUnipolarTriangle<T>(increment * i, 0.0l);
         
         return window;
     }

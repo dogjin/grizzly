@@ -28,6 +28,9 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
+#include <cassert>
+#include <cmath>
+#include <memory>
 #include <moditone/math/interpolation.hpp>
 #include <type_traits>
 
@@ -82,11 +85,11 @@ namespace dsp
                 const auto masterIncrement = master->getIncrement();
                 
                 if (masterPhase < masterIncrement)
-                    adjustValue = afterReset(masterPhase, masterIncrement);
+                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
                 else if (masterPhase > 1.0l - masterIncrement)
-                    adjustValue = beforeReset(masterPhase, masterIncrement);
+                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
                 else
-                    adjustValue = 0;
+                    syncAdjust.reset();
             }
         }
         
@@ -97,11 +100,14 @@ namespace dsp
             auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
             
             // There's a hard sync going on
-            if (adjustValue != 0)
+            if (syncAdjust != nullptr)
             {
-                y -= adjustValue;
+                y -= *syncAdjust;
                 return y;
             }
+            
+            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
+            assert(syncAdjust == nullptr);
             
             // Compute the increment (phase - previous) and adjust y using polyBLEP
             y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
@@ -151,9 +157,11 @@ namespace dsp
         }
         
     private:
-        T adjustValue = 0;
+        std::unique_ptr<T> syncAdjust;
+        
         long double blepScale = 0;
     };
 }
 
 #endif /* GRIZZLY_SAW_HPP */
+
