@@ -28,6 +28,7 @@
 #ifndef GRIZZLY_ENVELOPE_FOLLOWER_HPP
 #define GRIZZLY_ENVELOPE_FOLLOWER_HPP
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 

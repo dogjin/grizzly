@@ -28,9 +28,11 @@
 #ifndef GRIZZLY_PINK_NOISE_HPP
 #define GRIZZLY_PINK_NOISE_HPP
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <moditone/math/random.hpp>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
