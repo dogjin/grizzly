@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "fast_fourier_transform.hpp"
-#include "spectrum.hpp"
 
 namespace dsp
 {
