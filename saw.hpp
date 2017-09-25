@@ -78,18 +78,23 @@ namespace dsp
     private:
         void adjustForSync() final
         {
-            const auto master = this->getMaster();
-            if (master != nullptr)
+            syncAdjust.reset();
+            
+            for (PhaseGenerator<T> const* ptr = this->master; ptr != nullptr; ptr = ptr->getMaster())
             {
-                const auto masterPhase = master->getPhase();
-                const auto masterIncrement = master->getIncrement();
+                const auto masterPhase = ptr->getPhase();
+                const auto masterIncrement = ptr->getIncrement();
                 
                 if (masterPhase < masterIncrement)
+                {
                     syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+                    break;
+                }
                 else if (masterPhase > 1.0l - masterIncrement)
+                {
                     syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
-                else
-                    syncAdjust.reset();
+                    break;
+                }
             }
         }
         

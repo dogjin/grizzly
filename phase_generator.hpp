@@ -47,23 +47,22 @@ namespace dsp
         {
             unwrappedPhase = phase + increment_;
             
+            phase = math::wrap<long double>(unwrappedPhase, 0, 1);
+            
             // if true, then slaves must sync
-            if (hasMaster() && master->unwrappedPhase >= 1.0l)
+            if (unwrappedPhase >= 1.0l)
             {
-                const auto ratio = this->increment_ / master->getIncrement();
-                phase = master->getPhase() * ratio;
+                resetForSync(this);
             }
             else
             {
-                phase = math::wrap<long double>(unwrappedPhase, 0, 1);
+                for (auto& slave : slaves)
+                    slave->increment();
             }
             
             adjustForSync();
             
             y = convertPhaseToY();
-
-            for (auto& slave : slaves)
-                slave->increment();
         }
         
         void setIncrement(long double increment)
@@ -131,6 +130,8 @@ namespace dsp
         bool hasMaster() const { return master == nullptr ? false : true; }
         
     protected:
+        PhaseGenerator* master = nullptr;
+
         //! The current phase of the saw (ranged from 0 to 1)
         long double phase = 0;
         
@@ -149,8 +150,17 @@ namespace dsp
         //! Recompute the most recently computed value
         virtual T convertPhaseToY() = 0;
         
+        void resetForSync(PhaseGenerator* master)
+        {
+            for (auto& slave : slaves)
+            {
+                const auto ratio = slave->getIncrement() / master->getIncrement();
+                slave->setPhase(master->getPhase() * ratio);
+                slave->resetForSync(master);
+            }
+        }
+        
     private:
-        PhaseGenerator* master = nullptr;
         std::vector<std::unique_ptr<PhaseGenerator>> slaves;
         
     };
