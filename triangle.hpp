@@ -76,7 +76,7 @@ namespace dsp
     class BipolarTriangleBlamp : public PhaseGenerator<T>
     {
     private:
-        void preIncrement() final
+        void adjustForSync() final
         {
             const auto master = this->getMaster();
             if (master != nullptr)
@@ -155,10 +155,6 @@ namespace dsp
         
         T afterReset(long double masterPhase, long double masterIncrement)
         {
-            const auto ratio = this->increment_ / masterIncrement;
-            
-            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
-            
             auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
             
             return x * blepScale;
