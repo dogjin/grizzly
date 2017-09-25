@@ -71,7 +71,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateSquare<T>(phase, pulseWidth, -1, 1); }
+        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1); }
         
     private:
         //! The pulse width used to generate the square
@@ -103,7 +103,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateSquare<T>(phase, pulseWidth, 0, 1); }
+        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, 0, 1); }
         
     private:
         //! The pulse width used to generate the square
