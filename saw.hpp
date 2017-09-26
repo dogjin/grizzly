@@ -137,7 +137,16 @@ namespace dsp
             
             // bereken de hoogte door de slave phase end in te vullen in de saw generator
             const auto begin = generateBipolarSaw<T>(0.0l, this->phaseOffset);
-            const auto end = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
+            
+            // Bereken het eind punt van de slave
+            long double end = 1;
+
+            // als dit precies 0 is dan is er exact gewrapped en zou de generateBipolarSaw me weer -1 geven, dit moet echter wel 1 zijn jo
+            auto wrappedPhaseEndOfSlaveWithOffset = math::wrap<long double>(phaseEndOfSlave + this->phaseOffset, 0.0l, 1.0l);
+            
+            // Als ie dus precies 0 is, dan hou ik de end op 1. anders bereken ik m wel
+            if (wrappedPhaseEndOfSlaveWithOffset > 0)
+                end = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
             
             // Bereken de scaling relatief tot de master
             // Je deelt omdat je normaliter van -1 tot 1 gaat
@@ -152,6 +161,13 @@ namespace dsp
         
         T afterReset(long double masterPhase, long double masterIncrement)
         {
+            //////// we need these lines for the slave of the slave.
+            // Should the phase not already be set correctly in the increment call???
+//            const auto ratio = this->increment_ / masterIncrement;
+//            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
+            ////////
+            
+            
             auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
             
             return x * blepScale;

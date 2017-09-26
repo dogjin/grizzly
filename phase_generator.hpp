@@ -57,13 +57,14 @@ namespace dsp
             for (auto& slave : slaves)
                 slave->increment();
             
-            // if true, then slaves must sync
-            if (master && master->unwrappedPhase >= 1.0l)
+            if (master)
             {
-                resetForSync(master);
+                if (master->unwrappedPhase >= 1.0l)
+                    resetForSync(master);
+                
+                adjustForSync();
             }
             
-            adjustForSync();
             y = convertPhaseToY();
             
             index++;
