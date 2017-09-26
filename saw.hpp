@@ -80,7 +80,7 @@ namespace dsp
         {
             syncAdjust.reset();
             
-            for (PhaseGenerator<T> const* ptr = this->master; ptr != nullptr; ptr = ptr->getMaster())
+            for (PhaseGenerator<T> const* ptr = this->getMaster(); ptr != nullptr; ptr = ptr->getMaster())
             {
                 const auto masterPhase = ptr->getPhase();
                 const auto masterIncrement = ptr->getIncrement();

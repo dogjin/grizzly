@@ -33,6 +33,10 @@
 #include <moditone/math/wrap.hpp>
 #include <moditone/unit/hertz.hpp>
 
+#include <iostream>
+using namespace std;
+
+
 namespace dsp
 {
     //! Generates a waveform using an incrementable phase
@@ -45,24 +49,24 @@ namespace dsp
         
         virtual void increment()
         {
+            cout << id << "  " << index << endl;
             unwrappedPhase = phase + increment_;
             
             phase = math::wrap<long double>(unwrappedPhase, 0, 1);
             
+            for (auto& slave : slaves)
+                slave->increment();
+            
             // if true, then slaves must sync
-            if (unwrappedPhase >= 1.0l)
+            if (master && master->unwrappedPhase >= 1.0l)
             {
-                resetForSync(this);
-            }
-            else
-            {
-                for (auto& slave : slaves)
-                    slave->increment();
+                resetForSync(master);
             }
             
             adjustForSync();
-            
             y = convertPhaseToY();
+            
+            index++;
         }
         
         void setIncrement(long double increment)
@@ -129,9 +133,9 @@ namespace dsp
         
         bool hasMaster() const { return master == nullptr ? false : true; }
         
+        //        long double getUnwrappedPhase() const { return unwrappedPhase; }
+        
     protected:
-        PhaseGenerator* master = nullptr;
-
         //! The current phase of the saw (ranged from 0 to 1)
         long double phase = 0;
         
@@ -152,18 +156,23 @@ namespace dsp
         
         void resetForSync(PhaseGenerator* master)
         {
+            const auto ratio = increment_ / master->getIncrement();
+            setPhase(master->getPhase() * ratio);
+            
             for (auto& slave : slaves)
-            {
-                const auto ratio = slave->getIncrement() / master->getIncrement();
-                slave->setPhase(master->getPhase() * ratio);
                 slave->resetForSync(master);
-            }
         }
         
     private:
+        PhaseGenerator* master = nullptr;
+        
         std::vector<std::unique_ptr<PhaseGenerator>> slaves;
         
+    public:
+        std::string id;
+        int index = 0;
     };
 }
 
 #endif /* GRIZZLY_PHASE_GENERATOR_HPP */
+
