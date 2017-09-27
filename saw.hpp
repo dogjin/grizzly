@@ -80,22 +80,22 @@ namespace dsp
         {
             syncAdjust.reset();
             
-            for (PhaseGenerator<T> const* ptr = this->getMaster(); ptr != nullptr; ptr = ptr->getMaster())
-            {
-                const auto masterPhase = ptr->getPhase();
-                const auto masterIncrement = ptr->getIncrement();
-                
-                if (masterPhase < masterIncrement)
-                {
-                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
-                    break;
-                }
-                else if (masterPhase > 1.0l - masterIncrement)
-                {
-                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
-                    break;
-                }
-            }
+            //            for (PhaseGenerator<T> const* ptr = this->getMaster(); ptr != nullptr; ptr = ptr->getMaster())
+            //            {
+            //                const auto masterPhase = ptr->getPhase();
+            //                const auto masterIncrement = ptr->getIncrement();
+            //
+            //                if (masterPhase < masterIncrement)
+            //                {
+            //                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+            ////                    break;
+            //                }
+            //                else if (masterPhase > 1.0l - masterIncrement)
+            //                {
+            //                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
+            ////                    break;
+            //                }
+            //            }
         }
         
         //! Recompute the most recently computed value
@@ -140,7 +140,7 @@ namespace dsp
             
             // Bereken het eind punt van de slave
             long double end = 1;
-
+            
             // als dit precies 0 is dan is er exact gewrapped en zou de generateBipolarSaw me weer -1 geven, dit moet echter wel 1 zijn jo
             auto wrappedPhaseEndOfSlaveWithOffset = math::wrap<long double>(phaseEndOfSlave + this->phaseOffset, 0.0l, 1.0l);
             
@@ -161,10 +161,11 @@ namespace dsp
         
         T afterReset(long double masterPhase, long double masterIncrement)
         {
+            cout << this->index << "\t" << this->id << " after reset" << "\t" << this->phase << endl;
             //////// we need these lines for the slave of the slave.
             // Should the phase not already be set correctly in the increment call???
-//            const auto ratio = this->increment_ / masterIncrement;
-//            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
+            //            const auto ratio = this->increment_ / masterIncrement;
+            //            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
             ////////
             
             

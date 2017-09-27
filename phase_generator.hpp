@@ -49,23 +49,11 @@ namespace dsp
         
         virtual void increment()
         {
-            cout << id << "  " << index << endl;
-            unwrappedPhase = phase + increment_;
+            incrementUnwrappedPhases();
             
-            phase = math::wrap<long double>(unwrappedPhase, 0, 1);
+            computeNewPhases();
             
-            for (auto& slave : slaves)
-                slave->increment();
-            
-            if (master)
-            {
-                if (master->unwrappedPhase >= 1.0l)
-                    resetForSync(master);
-                
-                adjustForSync();
-            }
-            
-            y = convertPhaseToY();
+            convertPhasesToYs();
             
             index++;
         }
@@ -92,10 +80,12 @@ namespace dsp
         }
         
         //! Change the phase manually
-        void setPhase(long double phase)
+        void setPhase(long double phase, bool recomputeY)
         {
             this->phase = math::wrap<long double>(phase, 0, 1);
-            y = convertPhaseToY();
+            
+            if (recomputeY)
+                y = convertPhaseToY();
         }
         
         //! Return the current phase between 0 and 1
@@ -134,13 +124,9 @@ namespace dsp
         
         bool hasMaster() const { return master == nullptr ? false : true; }
         
-        //        long double getUnwrappedPhase() const { return unwrappedPhase; }
-        
     protected:
         //! The current phase of the saw (ranged from 0 to 1)
         long double phase = 0;
-        
-        long double unwrappedPhase = phase;
         
         long double increment_ = 0;
         
@@ -155,16 +141,53 @@ namespace dsp
         //! Recompute the most recently computed value
         virtual T convertPhaseToY() = 0;
         
-        void resetForSync(PhaseGenerator* master)
+        
+        void incrementUnwrappedPhases()
         {
-            const auto ratio = increment_ / master->getIncrement();
-            setPhase(master->getPhase() * ratio);
+            unwrappedPhase = phase + increment_;
             
             for (auto& slave : slaves)
-                slave->resetForSync(master);
+                slave->incrementUnwrappedPhases();
+        }
+        
+        void computeNewPhases()
+        {
+            phase = math::wrap<long double>(unwrappedPhase, 0, 1);
+            
+            if (unwrappedPhase >= 1.0l)
+            {
+                resetSlaves(this);
+            }
+            else
+            {
+                for (auto& slave : slaves)
+                    slave->computeNewPhases();
+            }
+        }
+        
+        void convertPhasesToYs()
+        {
+            y = convertPhaseToY();
+            
+            for (auto& slave : slaves)
+            {
+                slave->convertPhasesToYs();
+            }
+        }
+        
+        void resetSlaves(PhaseGenerator* m)
+        {
+            for (auto& slave : slaves)
+            {
+                const auto ratio = slave->getIncrement() / m->getIncrement();
+                slave->setPhase(m->getPhase() * ratio, false);
+                slave->resetSlaves(m);
+            }
         }
         
     private:
+        long double unwrappedPhase = phase;
+
         PhaseGenerator* master = nullptr;
         
         std::vector<std::unique_ptr<PhaseGenerator>> slaves;
