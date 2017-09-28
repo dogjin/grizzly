@@ -47,7 +47,7 @@ namespace dsp
     
     //! Generates a bipolar square wave
     template <typename T>
-    class BipolarSquare : public PhaseGenerator<T>
+    class BipolarSquare : public Phasor<T>
     {
     public:
         BipolarSquare(float pulseWidth = 0.5f) :
@@ -80,7 +80,7 @@ namespace dsp
     
     //! Generates a bipolar square wave
     template <typename T>
-    class UnipolarSquare : public PhaseGenerator<T>
+    class UnipolarSquare : public Phasor<T>
     {
     public:
         UnipolarSquare(float pulseWidth = 0.5f) :
@@ -113,7 +113,7 @@ namespace dsp
     
     //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
-    class BipolarSquareBlep : public PhaseGenerator<T>
+    class BipolarSquareBlep : public PhasorBlep<T>
     {
     public:
         BipolarSquareBlep() = default;
@@ -136,38 +136,22 @@ namespace dsp
         }
         
     private:
-        void adjustForSync() final
-        {
-            const auto master = this->getMaster();
-            if (master != nullptr)
-            {
-                const auto masterPhase = master->getPhase();
-                const auto masterIncrement = master->getIncrement();
-                
-                if (masterPhase < masterIncrement)
-                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
-                else if (masterPhase > 1.0l - masterIncrement)
-                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
-                else
-                    syncAdjust.reset();
-            }
-        }
-        
         //! Recompute the most recently computed value
         T convertPhaseToY() final
         {
             // Compute the y without any anti aliasing
             auto y = dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1);
             
-            if (syncAdjust != nullptr)
+            // There's a hard sync going on
+            this->syncAdjust.reset();
+            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && this->syncAdjust != nullptr)
             {
-                y -= *syncAdjust;
-                
+                y -= *this->syncAdjust;
                 return y;
             }
             
             // If there's a syncAdjust value, it shoud never perform a 'normal' blep
-            assert(syncAdjust == nullptr);
+            assert(this->syncAdjust == nullptr);
             
             // Compute the increment (phase - previous) and adjust y using polyBLEP
             y += polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
@@ -176,48 +160,17 @@ namespace dsp
             return y;
         }
         
-        T beforeReset(long double masterPhase, long double masterIncrement)
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
         {
-            const auto ratio = this->increment_ / masterIncrement;
-            
-            // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
-            const long double phaseDiffMasterToEnd = 1 - masterPhase;
-            
-            // gebruik dit verschil om bij de slave op te tellen
-            // vermenigvuldig met de ratio want slave gaat sneller
-            // dit is de phase waar de slave exact zou resetten
-            const long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * ratio);
-            
-            // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
-            const long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
-            
-            // bereken de hoogte door de slave phase end in te vullen in de saw generator
-            const auto begin = generateSquare<T>(0.0l, this->phaseOffset, pulseWidth, -1, 1);
-            const auto end = generateSquare<T>(phaseEndOfSlave, this->phaseOffset, pulseWidth, -1, 1);
-            
-            // Bereken de scaling relatief tot de master
-            // Je deelt omdat je normaliter van -1 tot 1 gaat
-            blepScale = (end - begin) / 2;
-            
-            // Doe een echte blep step, alsof van -1 naar 1...
-            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
-            
-            // ...end scale dat met de zojuist berekende scale
-            return x * blepScale;
+            return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }
         
-        T afterReset(long double masterPhase, long double masterIncrement)
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
         {
-            auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
-            
-            return x * blepScale;
+            return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }
         
     private:
-        std::unique_ptr<T> syncAdjust = nullptr;
-        
-        long double blepScale = 0;
-        
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
     };

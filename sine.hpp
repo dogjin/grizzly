@@ -52,7 +52,7 @@ namespace dsp
     //! Generates a bipolar sine wave
     /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class BipolarSine : public PhaseGenerator<T>
+    class BipolarSine : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
@@ -61,7 +61,7 @@ namespace dsp
     
     //! Generates a unipolar sine wave
     template <typename T>
-    class UnipolarSine : public PhaseGenerator<T>
+    class UnipolarSine : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value

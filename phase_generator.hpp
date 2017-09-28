@@ -25,27 +25,23 @@
  
  */
 
-#ifndef GRIZZLY_PHASE_GENERATOR_HPP
-#define GRIZZLY_PHASE_GENERATOR_HPP
+#pragma once
 
-#include <functional>
-
+#include <memory>
 #include <moditone/math/wrap.hpp>
 #include <moditone/unit/hertz.hpp>
 
-#include <iostream>
-using namespace std;
-
+#include "poly_blep.hpp"
 
 namespace dsp
 {
     //! Generates a waveform using an incrementable phase
     template <typename T>
-    class PhaseGenerator
+    class Phasor
     {
     public:
         //! Virtual destructor
-        virtual ~PhaseGenerator() = default;
+        virtual ~Phasor() = default;
         
         virtual void increment()
         {
@@ -54,8 +50,6 @@ namespace dsp
             computeNewPhases();
             
             convertPhasesToYs();
-            
-            index++;
         }
         
         void setIncrement(long double increment)
@@ -110,7 +104,7 @@ namespace dsp
             return dynamic_cast<Slave&>(addSlave(std::make_unique<Slave>(std::forward<Args&&>(args)...)));
         }
         
-        PhaseGenerator& addSlave(std::unique_ptr<PhaseGenerator> slave)
+        Phasor& addSlave(std::unique_ptr<Phasor> slave)
         {
             if (slave->master != nullptr)
                 throw std::runtime_error("slave already has a master!");
@@ -120,7 +114,7 @@ namespace dsp
             return *slaves.back();
         }
         
-        const PhaseGenerator* getMaster() const { return master; }
+        const Phasor* getMaster() const { return master; }
         
         bool hasMaster() const { return master == nullptr ? false : true; }
         
@@ -135,7 +129,7 @@ namespace dsp
         //! The to be returned value from read
         T y = 0;
         
-        PhaseGenerator* master = nullptr;
+        Phasor* master = nullptr;
         
     private:
         //! Recompute the most recently computed value
@@ -169,7 +163,7 @@ namespace dsp
                 slave->convertPhasesToYs();
         }
         
-        void resetSlaves(PhaseGenerator* m)
+        void resetSlaves(Phasor* m)
         {
             for (auto& slave : slaves)
             {
@@ -182,13 +176,84 @@ namespace dsp
     private:
         long double unwrappedPhase = phase;
         
-        std::vector<std::unique_ptr<PhaseGenerator>> slaves;
-        
-    public:
-        std::string id;
-        int index = 0;
+        std::vector<std::unique_ptr<Phasor>> slaves;
     };
+    
+    template <typename T>
+    class PhasorBlep : public Phasor<T>
+    {
+    protected:
+        bool adjustForSync(const Phasor<T>& master)
+        {
+            if (master.hasMaster() && adjustForSync(*master.getMaster()))
+                return true;
+            
+            const auto masterPhase = master.getPhase();
+            const auto masterIncrement = master.getIncrement();
+            
+            if (masterPhase > 1.0l - masterIncrement)
+            {
+                syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
+                return true;
+            }
+            else if (masterPhase < masterIncrement)
+            {
+                syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+                return true;
+            }
+            
+            return false;
+        }
+        
+        T beforeReset(long double masterPhase, long double masterIncrement)
+        {
+            const long double ratio = this->increment_ / masterIncrement;
+            
+            // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
+            const long double phaseDiffMasterToEnd = 1 - masterPhase;
+            
+            // gebruik dit verschil om bij de slave op te tellen
+            // vermenigvuldig met de ratio want slave gaat sneller
+            // dit is de phase waar de slave exact zou resetten
+            const long double phaseEndOfSlave = this->phase + (phaseDiffMasterToEnd * ratio);
+            
+            // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
+            const long double phaseDifffSlaveToEnd = phaseEndOfSlave - this->phase;
+            
+            // bereken de 'on-geblepte' eind positie van de golf
+            const auto slaveYAtEnd = computeAliasedYBeforeReset(this->phase, this->phaseOffset);
+            
+            // bereken de 'on-geblepte' begin positie van de golf
+            // we incrementen de phase door increment erbij op te tellen.
+            // Maaaar, we moeten doen alsof de phaseEndOfSlave het eindpunt was en dus hiermee wrappen (aftrekken)
+            const auto slaveYatBegin = computeAliasedYAfterReset(this->phase + this->increment_ - phaseEndOfSlave, this->phaseOffset);
+            //            const auto slaveYatBegin = computeAliasedYAfterReset(0, this->phaseOffset); // minder accuraat maar werkt wel, je moet iets verder zijn dan phase 0
+            
+            // Bereken de scaling relatief tot de master
+            // Je deelt omdat je normaliter van -1 tot 1 gaat
+            blepScale = (slaveYAtEnd - slaveYatBegin) / 2;
+            
+            // Doe een echte blep step, alsof van -1 naar 1...
+            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, this->increment_);
+            
+            // ...end scale dat met de zojuist berekende scale
+            return x * blepScale;
+        }
+        
+        T afterReset(long double masterPhase, long double masterIncrement)
+        {
+            auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
+            
+            return x * blepScale;
+        }
+        
+        virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) = 0;
+        virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) = 0;
+        
+    protected:
+        std::unique_ptr<T> syncAdjust;
+        
+        long double blepScale = 0;
+    };
+    
 }
-
-#endif /* GRIZZLY_PHASE_GENERATOR_HPP */
-
