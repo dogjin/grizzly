@@ -76,24 +76,14 @@ namespace dsp
     template <typename T>
     class BipolarTriangleBlamp : public PhasorBlep<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final
+    private:        
+        T computeAliasedY() final
         {
-            // Compute the non-bandlimited triangle
-            auto y = dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset);
-            
-            // There's a hard sync going on
-            this->syncAdjust.reset();
-            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && this->syncAdjust != nullptr)
-            {
-                y -= *this->syncAdjust;
-                return y;
-            }
-            
-            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
-            assert(this->syncAdjust == nullptr);
-            
+            return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset);
+        }
+        
+        void applyRegularBandLimiting(T& y) final
+        {
             // Downward
             auto scale = 4 * this->increment_;
             auto modifiedPhase = this->phase;//this->phase + 0.25;
@@ -104,8 +94,6 @@ namespace dsp
             modifiedPhase += 0.5;
             modifiedPhase -= floor(modifiedPhase);
             y -= scale * polyBlamp(modifiedPhase, this->increment_);
-            
-            return y;
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final

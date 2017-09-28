@@ -75,28 +75,15 @@ namespace dsp
     template <typename T>
     class BipolarSawBlep : public PhasorBlep<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final
+    private:        
+        T computeAliasedY() final
         {
-            // Compute the y without any anti aliasing
-            auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
-            
-            // There's a hard sync going on
-            this->syncAdjust.reset();
-            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && this->syncAdjust != nullptr)
-            {
-                y -= *this->syncAdjust;
-                return y;
-            }
-            
-            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
-            assert(this->syncAdjust == nullptr);
-            
-            // Compute the increment (phase - previous) and adjust y using polyBLEP
+            return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
+        }
+        
+        void applyRegularBandLimiting(T& y) final
+        {
             y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
-            
-            return y;
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final

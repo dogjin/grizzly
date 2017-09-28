@@ -183,6 +183,28 @@ namespace dsp
     class PhasorBlep : public Phasor<T>
     {
     protected:
+        //! Recompute the most recently computed value
+        T convertPhaseToY() final
+        {
+            // Compute the y without any anti aliasing
+            auto y = computeAliasedY();
+            
+            // There's a hard sync going on
+            this->syncAdjust.reset();
+            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && this->syncAdjust != nullptr)
+            {
+                y -= *this->syncAdjust;
+                return y;
+            }
+            
+            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
+            assert(this->syncAdjust == nullptr);
+            
+            applyRegularBandLimiting(y);
+            
+            return y;
+        }
+        
         bool adjustForSync(const Phasor<T>& master)
         {
             if (master.hasMaster() && adjustForSync(*master.getMaster()))
@@ -247,6 +269,8 @@ namespace dsp
             return x * blepScale;
         }
         
+        virtual T computeAliasedY() = 0;
+        virtual void applyRegularBandLimiting(T& y) = 0;
         virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) = 0;
         virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) = 0;
         
