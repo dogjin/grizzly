@@ -135,9 +135,9 @@ namespace dsp
         //! The to be returned value from read
         T y = 0;
         
-    private:
-        virtual void adjustForSync() { }
+        PhaseGenerator* master = nullptr;
         
+    private:
         //! Recompute the most recently computed value
         virtual T convertPhaseToY() = 0;
         
@@ -155,14 +155,10 @@ namespace dsp
             phase = math::wrap<long double>(unwrappedPhase, 0, 1);
             
             if (unwrappedPhase >= 1.0l)
-            {
                 resetSlaves(this);
-            }
             else
-            {
                 for (auto& slave : slaves)
                     slave->computeNewPhases();
-            }
         }
         
         void convertPhasesToYs()
@@ -170,9 +166,7 @@ namespace dsp
             y = convertPhaseToY();
             
             for (auto& slave : slaves)
-            {
                 slave->convertPhasesToYs();
-            }
         }
         
         void resetSlaves(PhaseGenerator* m)
@@ -187,8 +181,6 @@ namespace dsp
         
     private:
         long double unwrappedPhase = phase;
-
-        PhaseGenerator* master = nullptr;
         
         std::vector<std::unique_ptr<PhaseGenerator>> slaves;
         

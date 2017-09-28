@@ -76,26 +76,26 @@ namespace dsp
     class BipolarSawBlep : public PhaseGenerator<T>
     {
     private:
-        void adjustForSync() final
+        bool adjustForSync(const PhaseGenerator<T>& master)
         {
-            syncAdjust.reset();
+            if (master.hasMaster() && adjustForSync(*master.getMaster()))
+                return true;
             
-            //            for (PhaseGenerator<T> const* ptr = this->getMaster(); ptr != nullptr; ptr = ptr->getMaster())
-            //            {
-            //                const auto masterPhase = ptr->getPhase();
-            //                const auto masterIncrement = ptr->getIncrement();
-            //
-            //                if (masterPhase < masterIncrement)
-            //                {
-            //                    syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
-            ////                    break;
-            //                }
-            //                else if (masterPhase > 1.0l - masterIncrement)
-            //                {
-            //                    syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
-            ////                    break;
-            //                }
-            //            }
+            const auto masterPhase = master.getPhase();
+            const auto masterIncrement = master.getIncrement();
+            
+            if (masterPhase > 1.0l - masterIncrement)
+            {
+                syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
+                return true;
+            }
+            else if (masterPhase < masterIncrement)
+            {
+                syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+                return true;
+            }
+            
+            return false;
         }
         
         //! Recompute the most recently computed value
@@ -105,7 +105,8 @@ namespace dsp
             auto y = dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
             
             // There's a hard sync going on
-            if (syncAdjust != nullptr)
+            syncAdjust.reset();
+            if (this->hasMaster() && adjustForSync(*this->getMaster()) && syncAdjust != nullptr)
             {
                 y -= *syncAdjust;
                 return y;
@@ -122,7 +123,7 @@ namespace dsp
         
         T beforeReset(long double masterPhase, long double masterIncrement)
         {
-            const auto ratio = this->increment_ / masterIncrement;
+            const long double ratio = this->increment_ / masterIncrement;
             
             // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
             const long double phaseDiffMasterToEnd = 1 - masterPhase;
@@ -138,15 +139,8 @@ namespace dsp
             // bereken de hoogte door de slave phase end in te vullen in de saw generator
             const auto begin = generateBipolarSaw<T>(0.0l, this->phaseOffset);
             
-            // Bereken het eind punt van de slave
-            long double end = 1;
-            
-            // als dit precies 0 is dan is er exact gewrapped en zou de generateBipolarSaw me weer -1 geven, dit moet echter wel 1 zijn jo
-            auto wrappedPhaseEndOfSlaveWithOffset = math::wrap<long double>(phaseEndOfSlave + this->phaseOffset, 0.0l, 1.0l);
-            
-            // Als ie dus precies 0 is, dan hou ik de end op 1. anders bereken ik m wel
-            if (wrappedPhaseEndOfSlaveWithOffset > 0)
-                end = generateBipolarSaw<T>(phaseEndOfSlave, this->phaseOffset);
+            // bereken de 'on-geblepte' eind positie van de golf
+            const auto end = generateBipolarSaw<T>(this->phase, this->phaseOffset);
             
             // Bereken de scaling relatief tot de master
             // Je deelt omdat je normaliter van -1 tot 1 gaat
@@ -162,12 +156,6 @@ namespace dsp
         T afterReset(long double masterPhase, long double masterIncrement)
         {
             cout << this->index << "\t" << this->id << " after reset" << "\t" << this->phase << endl;
-            //////// we need these lines for the slave of the slave.
-            // Should the phase not already be set correctly in the increment call???
-            //            const auto ratio = this->increment_ / masterIncrement;
-            //            this->phase = math::wrap<long double>(masterPhase * ratio, 0, 1);
-            ////////
-            
             
             auto x = insertPolyBlepAfterReset(this->phase, this->increment_);
             
