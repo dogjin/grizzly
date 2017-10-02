@@ -43,7 +43,13 @@ namespace dsp
         //! Virtual destructor
         virtual ~Phasor() = default;
         
-        virtual void increment()
+        T incrementAndRead()
+        {
+            increment();
+            return read();
+        }
+        
+        void increment()
         {
             incrementUnwrappedPhases();
             
