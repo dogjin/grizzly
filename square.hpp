@@ -66,7 +66,7 @@ namespace dsp
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                this->recomputeY();
+                this->convertPhaseToY();
         }
         
     private:
@@ -98,7 +98,7 @@ namespace dsp
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                this->recomputeY();
+                this->convertPhaseToY();
         }
         
     private:
