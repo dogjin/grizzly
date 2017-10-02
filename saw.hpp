@@ -95,7 +95,6 @@ namespace dsp
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
-        
     };
 }
 

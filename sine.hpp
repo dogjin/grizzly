@@ -37,16 +37,16 @@ namespace dsp
 {
     //! Generate a bipolar sine wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarSine(Phase phase)
+    constexpr T generateBipolarSine(Phase phase, Phase phaseOffset)
     {
-        return std::sin(math::TWO_PI<T> * phase);
+        return std::sin(math::TWO_PI<T> * (phase + phaseOffset));
     }
     
     //! Generate a unipolar sine wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarSine(Phase phase)
+    constexpr T generateUnipolarSine(Phase phase, Phase phaseOffset)
     {
-        return generateBipolarSine<T>(phase - 0.25f) * 0.5 + 0.5;
+        return generateBipolarSine<T>(phase - 0.25f + phaseOffset) * 0.5 + 0.5;
     }
     
     //! Generates a bipolar sine wave
@@ -56,7 +56,7 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateBipolarSine<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateBipolarSine<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a unipolar sine wave
@@ -65,8 +65,34 @@ namespace dsp
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final { return dsp::generateUnipolarSine<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateUnipolarSine<T>(this->phase, this->phaseOffset); }
+    };
+    
+    //! Generates a bipolar sine wave using the polyBLEP algorithm for anti aliasing when synced
+    template <typename T>
+    class BipolarSineBlep : public PhasorBlep<T>
+    {
+    private:
+        T computeAliasedY() final
+        {
+            return dsp::generateBipolarSine<T>(this->phase, this->phaseOffset);
+        }
+        
+        void applyRegularBandLimiting(T& y) final
+        {
+        }
+        
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarSine<T>(phase, phaseOffset);
+        }
+        
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarSine<T>(phase, phaseOffset);
+        }
     };
 }
 
 #endif /* GRIZZLY_SINE_HPP */
+

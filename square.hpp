@@ -111,7 +111,7 @@ namespace dsp
     };
     
     
-    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
+    //! Generates a bipolar square wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
     class BipolarSquareBlep : public PhasorBlep<T>
     {

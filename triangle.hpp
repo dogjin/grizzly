@@ -72,7 +72,7 @@ namespace dsp
         T convertPhaseToY() final { return dsp::generateUnipolarTriangle<T>(this->phase, this->phaseOffset); }
     };
     
-    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
+    //! Generates a bipolar triangle wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
     class BipolarTriangleBlamp : public PhasorBlep<T>
     {
