@@ -149,19 +149,19 @@ namespace dsp
         using AttackReleaseEnvelopeFollower<T, CoeffType>::AttackReleaseEnvelopeFollower;
         
         //! Write the new input to the follower
-        void write(const T& x) final override
+        void write(const T& x) final
         {
             this->y = static_cast<T>(-this->releaseCoefficients.b1 * this->y + this->attackCoefficients.a0 * std::max<T>(x - this->y, 0));
         }
         
         //! Read the last computed value
-        T read() const final override
+        T read() const final
         {
             return this->y;
         }
         
         //! Set the envelope state
-        void setState(const T& y) final override
+        void setState(const T& y) final
         {
             this->y = y;
         }
@@ -180,20 +180,20 @@ namespace dsp
         using AttackReleaseEnvelopeFollower<T, CoeffType>::AttackReleaseEnvelopeFollower;
         
         //! Write the new input to the follower
-        void write(const T& x) final override
+        void write(const T& x) final
         {
             yRelease = std::max<T>(x, yRelease - this->releaseCoefficients.a0 * yRelease);
             this->y += this->attackCoefficients.a0 * (yRelease - this->y);
         }
         
         //! Read the last computed value
-        T read() const final override
+        T read() const final
         {
             return this->y;
         }
         
         //! Set the envelope state
-        void setState(const T& y) final override
+        void setState(const T& y) final
         {
             this->y = y;
         }
@@ -217,7 +217,7 @@ namespace dsp
         }
         
         //! Write the new input to the follower
-        void write(const T& x) final override
+        void write(const T& x) final
         {
             if (x > lowPassFilter.read())
             {
@@ -232,13 +232,13 @@ namespace dsp
         }
         
         //! Read the last computed value
-        T read() const final override
+        T read() const final
         {
             return lowPassFilter.read();
         }
         
         //! Set the envelope state
-        void setState(const T& y) final override
+        void setState(const T& y) final
         {
             lowPassFilter.setState(y);
         }
@@ -267,7 +267,7 @@ namespace dsp
         }
         
         //! Write the new input to the follower
-        void write(const T& x) final override
+        void write(const T& x) final
         {
             if (x > lowPassFilter.read())
             {
@@ -282,13 +282,13 @@ namespace dsp
         }
         
         //! Read the last computed value
-        T read() const final override
+        T read() const final
         {
             return lowPassFilter.read();
         }
         
         //! Set the envelope state
-        void setState(const T& y) final override
+        void setState(const T& y) final
         {
             lowPassFilter.setState(y);
         }

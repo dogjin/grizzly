@@ -30,7 +30,6 @@
 
 namespace dsp
 {
-    
     template <typename T>
     inline T insertPolyBlepAfterReset(const T& phase, const T& increment)
     {

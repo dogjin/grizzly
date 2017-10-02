@@ -52,20 +52,20 @@ namespace dsp
     //! Generates a bipolar sine wave
     /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class BipolarSine : public PhaseGenerator<T>
+    class BipolarSine : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarSine<T>(phase); }
+        T convertPhaseToY(long double phase) final { return dsp::generateBipolarSine<T>(phase); }
     };
     
     //! Generates a unipolar sine wave
     template <typename T>
-    class UnipolarSine : public PhaseGenerator<T>
+    class UnipolarSine : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarSine<T>(phase); }
+        T convertPhaseToY(long double phase) final { return dsp::generateUnipolarSine<T>(phase); }
     };
 }
 

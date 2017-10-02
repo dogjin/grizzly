@@ -28,6 +28,9 @@
 #ifndef GRIZZLY_SAW_HPP
 #define GRIZZLY_SAW_HPP
 
+#include <cassert>
+#include <cmath>
+#include <memory>
 #include <moditone/math/interpolation.hpp>
 #include <type_traits>
 
@@ -38,59 +41,63 @@ namespace dsp
 {
     //! Generate a bipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarSaw(Phase phase)
+    constexpr T generateBipolarSaw(Phase phase, Phase phaseOffset)
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase + 0.5, 0, 1) * 2 - 1;
+        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1) * 2 - 1;
     }
     
     //! Generate a unipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarSaw(Phase phase)
+    constexpr T generateUnipolarSaw(Phase phase, Phase phaseOffset)
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase, 0, 1);
+        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1);
     }
     
     //! Generates a bipolar saw wave
     template <typename T>
-    class BipolarSaw : public PhaseGenerator<T>
+    class BipolarSaw : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarSaw<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a unipolar saw wave
     template <typename T>
-    class UnipolarSaw : public PhaseGenerator<T>
+    class UnipolarSaw : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarSaw<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateUnipolarSaw<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
-    class BipolarSawBlep : public PhaseGenerator<T>
+    class BipolarSawBlep : public PhasorBlep<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override
+    private:        
+        T computeAliasedY() final
         {
-            // Compute the y without any anti aliasing
-            auto y = dsp::generateBipolarSaw<T>(phase);
-            
-            // Compute the increment (phase - previous) and adjust y using polyBLEP
-            y -= polyBlep<long double>(math::wrap<T>(this->getPhase() + 0.5, 0.0, 1.0), phase - previousPhase);
-            
-            // Update the previous phase
-            previousPhase = phase;
-            
-            return y;
+            return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
         }
         
-    private:
-        long double previousPhase = 0;
+        void applyRegularBandLimiting(T& y) final
+        {
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
+        }
+        
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarSaw<T>(phase, phaseOffset);
+        }
+        
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarSaw<T>(phase, phaseOffset);
+        }
+        
     };
 }
 
 #endif /* GRIZZLY_SAW_HPP */
+

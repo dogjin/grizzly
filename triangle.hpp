@@ -28,7 +28,9 @@
 #ifndef GRIZZLY_TRIANGLE_HPP
 #define GRIZZLY_TRIANGLE_HPP
 
+#include <cassert>
 #include <cmath>
+#include <memory>
 #include <moditone/math/wrap.hpp>
 
 #include "poly_blamp.hpp"
@@ -36,71 +38,73 @@
 
 namespace dsp
 {
-    //! Generate a bipolar triangle wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateBipolarTriangle(Phase phase)
-    {
-        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase - 0.25, 0, 1) - 1) - 1;
-    }
-    
     //! Generate a unipolar triangle wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarTriangle(Phase phase)
+    constexpr T generateUnipolarTriangle(Phase phase, Phase phaseOffset)
     {
-        phase = math::wrap<Phase>(phase, 0, 1);
+        phase = math::wrap<Phase>(phase + phaseOffset, 0, 1);
         return phase < 0.5 ? phase * 2 : (0.5 - (phase - 0.5)) * 2;
+    }
+    
+    //! Generate a bipolar triangle wave given a normalized phase
+    template <typename T, typename Phase>
+    constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset)
+    {
+        return generateUnipolarTriangle<T>(phase, phaseOffset) * 2 - 1;
+        //        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
     }
     
     //! Generates a bipolar triangle wave
     template <typename T>
-    class BipolarTriangle : public PhaseGenerator<T>
+    class BipolarTriangle : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateBipolarTriangle<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset); }
     };
     
     //! Generates a unipolar triangle wave
     template <typename T>
-    class UnipolarTriangle : public PhaseGenerator<T>
+    class UnipolarTriangle : public Phasor<T>
     {
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateUnipolarTriangle<T>(phase); }
+        T convertPhaseToY() final { return dsp::generateUnipolarTriangle<T>(this->phase, this->phaseOffset); }
     };
     
-    //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
+    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
-    class BipolarTriangleBlamp : public PhaseGenerator<T>
+    class BipolarTriangleBlamp : public PhasorBlep<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override
+    private:        
+        T computeAliasedY() final
         {
-            // Compute the non-bandlimited triangle
-            auto y = dsp::generateBipolarTriangle<T>(phase);
-            
-            auto increment = phase - previousPhase;
-            
+            return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset);
+        }
+        
+        void applyRegularBandLimiting(T& y) final
+        {
             // Downward
-            auto scale = 4 * increment;
-            auto modifiedPhase = phase + 0.25;
+            auto scale = 4 * this->increment_;
+            auto modifiedPhase = this->phase;//this->phase + 0.25;
             modifiedPhase -= floor(modifiedPhase);
-            y += scale * polyBlamp(modifiedPhase, increment);
+            y += scale * polyBlamp(modifiedPhase, this->increment_);
             
             // Upward
             modifiedPhase += 0.5;
             modifiedPhase -= floor(modifiedPhase);
-            y -= scale * polyBlamp(modifiedPhase, increment);
-            
-            // Update the previous phase
-            previousPhase = phase;
-            
-            return y;
+            y -= scale * polyBlamp(modifiedPhase, this->increment_);
         }
         
-    private:
-        long double previousPhase = 0;
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarTriangle<T>(phase, phaseOffset);
+        }
+        
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        {
+            return generateBipolarTriangle<T>(phase, phaseOffset);
+        }
     };
 }
 

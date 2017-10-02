@@ -28,6 +28,9 @@
 #ifndef GRIZZLY_SQUARE_HPP
 #define GRIZZLY_SQUARE_HPP
 
+#include <cassert>
+#include <cmath>
+#include <memory>
 #include <moditone/math/wrap.hpp>
 
 #include "phase_generator.hpp"
@@ -37,18 +40,18 @@ namespace dsp
 {
     //! Generate a square wave given a normalized phase
     template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, PulseWidth pulseWidth, const T& low, const T& high)
+    constexpr T generateSquare(Phase phase, Phase phaseOffset, PulseWidth pulseWidth, const T& low, const T& high)
     {
-        return math::wrap<Phase>(phase, 0, 1) < pulseWidth ? high : low;
+        return math::wrap<Phase>(phase + phaseOffset, 0, 1) < pulseWidth ? high : low;
     }
     
     //! Generates a bipolar square wave
     template <typename T>
-    class BipolarSquare : public PhaseGenerator<T>
+    class BipolarSquare : public Phasor<T>
     {
     public:
         BipolarSquare(float pulseWidth = 0.5f) :
-            pulseWidth(pulseWidth)
+        pulseWidth(pulseWidth)
         {
             
         }
@@ -68,7 +71,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateSquare<T>(phase, pulseWidth, -1, 1); }
+        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1); }
         
     private:
         //! The pulse width used to generate the square
@@ -77,11 +80,11 @@ namespace dsp
     
     //! Generates a bipolar square wave
     template <typename T>
-    class UnipolarSquare : public PhaseGenerator<T>
+    class UnipolarSquare : public Phasor<T>
     {
     public:
         UnipolarSquare(float pulseWidth = 0.5f) :
-            pulseWidth(pulseWidth)
+        pulseWidth(pulseWidth)
         {
         }
         
@@ -100,20 +103,22 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override { return dsp::generateSquare<T>(phase, pulseWidth, 0, 1); }
+        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, 0, 1); }
         
     private:
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
     };
     
-    //! Generates a bipolar square wave
+    
+    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
-    class BipolarSquareBlep : public PhaseGenerator<T>
+    class BipolarSquareBlep : public PhasorBlep<T>
     {
     public:
-        BipolarSquareBlep(float pulseWidth = 0.5f) :
-            pulseWidth(pulseWidth)
+        BipolarSquareBlep() = default;
+        
+        BipolarSquareBlep(float pulseWidth) : pulseWidth(pulseWidth)
         {
         }
         
@@ -127,33 +132,36 @@ namespace dsp
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                this->recomputeY();
+                this->convertPhaseToY();
         }
         
     private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY(long double phase) final override
+        T computeAliasedY() final
         {
-            // Compute the y without any anti aliasing
-            auto y = dsp::generateSquare<T>(phase, pulseWidth, -1, 1);
-            
-            // Compute the increment (phase - previous) and adjust y using polyBLEP
-            const auto increment = phase - previousPhase;
-            y += polyBlep<long double>(phase, increment);
-            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + (1 - pulseWidth), 0, 1), increment);
-            
-            // Update the previous phase
-            previousPhase = phase;
-            
-            return y;
+            return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1);
+        }
+        
+        void applyRegularBandLimiting(T& y) final
+        {
+            y += polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset + (1 - pulseWidth), 0, 1), this->increment_);
+        }
+        
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        {
+            return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
+        }
+        
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        {
+            return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }
         
     private:
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
-        
-        long double previousPhase = 0;
     };
 }
 
 #endif /* GRIZZLY_SQUARE_HPP */
+
