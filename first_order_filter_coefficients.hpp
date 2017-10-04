@@ -29,7 +29,6 @@
 #define GRIZZLY_FIRST_ORDER_COEFFICIENTS_HPP
 
 #include <cmath>
-#include <stdexcept>
 #include <moditone/unit/hertz.hpp>
 #include <moditone/unit/time.hpp>
 
@@ -51,38 +50,13 @@ namespace dsp
         //! The b1 feed-back coefficient
         T b1 = 0;
         
-        //! Check if sample rate is valid
-        static void checkSampleRate(unit::hertz<float> sampleRate)
+        static bool isStable(const FirstOrderCoefficients& coefficients)
         {
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sampling rate <= 0");
-        }
-        
-        //! Check arguments for frequency filters
-        static void check(unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
-        {
-            // check sample rate
-            checkSampleRate(sampleRate);
+            if (coefficients.b1 > -1 && coefficients.b1 < 1)
+                return true;
             
-            // check cut-off
-            const auto nyquist = sampleRate.value / 2;
-            if (cutOff.value <= 0 || cutOff.value >= nyquist)
-                throw std::invalid_argument("cut-off <= 0 or >= nyquist");
-        }
-        
-        //! Check arguments for timed filters
-        static void check(unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor)
-        {
-            // check sample rate
-            checkSampleRate(sampleRate);
-            
-            // check time
-            if (time.value <= 0)
-                throw std::invalid_argument("time <= 0");
-            
-            // check time-constant-filter
-            if (timeConstantFactor < 0)
-                throw std::invalid_argument("time constant factor < 0");
+            else
+                return false;
         }
     };
     
@@ -117,13 +91,10 @@ namespace dsp
     template <typename T>
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
+        const T b1 = -std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
         
-        const T b1 = std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
-        
-        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
-        coefficients.a0 = 1.0f - b1;
+        coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0f + b1;
         coefficients.a1 = 0.f;
     }
     
@@ -132,13 +103,10 @@ namespace dsp
     template <typename T>
     void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
+        const T b1 = -std::exp(-timeConstantFactor / (time.value * sampleRate.value));
         
-        const T b1 = std::exp(-timeConstantFactor / (time.value * sampleRate.value));
-        
-        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
-        coefficients.a0 = 1.0f - b1;
+        coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0f + b1;
         coefficients.a1 = 0.f;
     }
     
@@ -146,9 +114,6 @@ namespace dsp
     template <typename T>
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
-        
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const T s = (z - 1) / (z + 1);
         
@@ -162,9 +127,6 @@ namespace dsp
     template <typename T>
     void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, time, timeConstantFactor);
-                
         const auto z = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
         const T s = (z - 1) / (z + 1);
         
@@ -177,13 +139,10 @@ namespace dsp
     template <typename T>
     void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
+        const T b1 = 1 - std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
         
-        const T b1 = std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value)) - 1;
-        
-        coefficients.b1 = -b1; // invert to fit the conventional -b notation in the direct form I
-        coefficients.a0 = 1.0 + b1;
+        coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
+        coefficients.a0 = 1.0 - b1;
         coefficients.a1 = 0;
     }
     
@@ -191,9 +150,6 @@ namespace dsp
     template <typename T>
     void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, cutOff);
-        
         const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
         const T s = (1 - z) / (z + 1);
         
@@ -206,9 +162,6 @@ namespace dsp
     template <typename T>
     void allPass(FirstOrderCoefficients<T>& coefficients, float shape)
     {
-        if (shape < -1 || shape > 1)
-            throw std::invalid_argument("shape < -1 or > 1");
-        
         coefficients.b1 = shape;
         coefficients.a0 = shape;
         coefficients.a1 = 1;
@@ -218,9 +171,6 @@ namespace dsp
     template <typename T>
     void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
     {
-        // safety check
-        FirstOrderCoefficients<T>::check(sampleRate, centerFrequency);
-        
         const auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
         const T s = (z - 1) / (z + 1);
         

@@ -34,6 +34,17 @@
 
 namespace dsp
 {
+    //! Apply z-transform on a first order filter difference equation
+    // Needs more testing
+    auto poleZeroFilter(float a0, float a1, float b1)
+    {
+        return [=](float angularFrequency)
+        {
+            return a0 * (1.f + (a1 / a0) * std::polar<float>(1, -angularFrequency)) / (1.f + b1 * std::polar<float>(1, -angularFrequency));
+        };
+    }
+    
+    
     //! Apply z-transform on a input sequence and return the transfer function
     /*! The transfer function can be used to retrieve the spectrum bin of your input sequence
         at a specific frequency. The magnitude and angle of the returned complex give provide

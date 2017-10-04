@@ -29,6 +29,7 @@
 #define GRIZZLY_BIQUAD_COEFFICIENTS_HPP
 
 #include <cmath>
+#include <complex>
 #include <stdexcept>
 #include <moditone/unit/amplitude.hpp>
 #include <moditone/unit/hertz.hpp>
@@ -58,41 +59,24 @@ namespace dsp
         //! The b2 feed-back coefficient
         T b2 = 0;
         
-        //! Check filter arguments
-        static void check(unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+        // Check the pole magnitude of b2 assuming the poles are conjugate (do not set coefficients randomly)
+        static bool isStable(BiquadCoefficients<float> coefficients)
         {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sampling rate <= 0");
+            auto b1 = coefficients.b1;
+            auto b2 = coefficients.b2;
             
-            // check cut-off
-            const auto nyquist = sampleRate.value / 2;
-            if (cutOff.value <= 0 || cutOff.value >= nyquist)
-                throw std::invalid_argument("cut-off <= 0 or >= nyquist");
+            // a = 1, b = b1, c = b2
+            // solve for ax^2 + bx + c
+            std::complex<float> discriminant(b1 * b1 - 4 * b2, 0);
+            auto sqrtDiscriminant = sqrt(discriminant);
             
-            // check q
-            if (q <= 0)
-                throw std::invalid_argument("q <= 0");
-        }
-        
-        //! Check filter arguments
-        static void check(unit::hertz<float> sampleRate, unit::second<float> time, float q, float timeConstantFactor)
-        {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sampling rate <= 0");
+            auto x1 = (-b1 + sqrtDiscriminant) / 2.f;
+            auto x2 = (-b1 - sqrtDiscriminant) / 2.f;
             
-            // check time
-            if (time.value <= 0)
-                throw std::invalid_argument("time <= 0");
-            
-            // check q
-            if (q <= 0)
-                throw std::invalid_argument("q <= 0");
-            
-            // check time-constant-filter
-            if (timeConstantFactor < 0)
-                throw std::invalid_argument("time constant factor < 0");
+            if (abs(x1) < 1 && abs(x2) < 1)
+                return true;
+            else
+                return false;
         }
     };
     
@@ -122,9 +106,6 @@ namespace dsp
     template <class T>
     void lowPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -147,9 +128,6 @@ namespace dsp
         // correct time for two-pole timed filtering
         float t = time.value *= math::SQRT_HALF<float>;
         
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, t, q, timeConstantFactor);
-        
         const auto w = timeConstantFactor / (t * sampleRate.value);
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -169,9 +147,6 @@ namespace dsp
     template <class T>
     void highPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -191,9 +166,6 @@ namespace dsp
     template <class T>
     void bandPassConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -213,9 +185,6 @@ namespace dsp
     template <class T>
     void bandPassConstantPeak(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -235,9 +204,6 @@ namespace dsp
     template <class T>
     void peakConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -258,9 +224,6 @@ namespace dsp
     template <class T>
     void peakConstantQ(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -295,9 +258,6 @@ namespace dsp
     template <class T>
     void lowShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -318,9 +278,6 @@ namespace dsp
     template <class T>
     void highShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -341,9 +298,6 @@ namespace dsp
     template <class T>
     void notch(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
@@ -362,9 +316,6 @@ namespace dsp
     template <class T>
     void allPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
     {
-        // safety check
-        BiquadCoefficients<T>::check(sampleRate, cutOff, q);
-        
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
         const auto cosw = cos(w);
