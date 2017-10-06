@@ -50,11 +50,11 @@ namespace dsp
         //! The b1 feed-back coefficient
         T b1 = 0;
         
-        static bool isStable(const FirstOrderCoefficients& coefficients)
+        //! Check if the pole z (-b1) stays within the unit bounds -1, 1
+        bool isStable() const
         {
-            if (coefficients.b1 > -1 && coefficients.b1 < 1)
+            if (b1 > -1 && b1 < 1)
                 return true;
-            
             else
                 return false;
         }

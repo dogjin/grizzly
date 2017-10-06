@@ -59,12 +59,8 @@ namespace dsp
         //! The b2 feed-back coefficient
         T b2 = 0;
         
-        // Check the pole magnitude of b2 assuming the poles are conjugate (do not set coefficients randomly)
-        static bool isStable(BiquadCoefficients<float> coefficients)
+        bool isStable()
         {
-            auto b1 = coefficients.b1;
-            auto b2 = coefficients.b2;
-            
             // a = 1, b = b1, c = b2
             // solve for ax^2 + bx + c
             std::complex<float> discriminant(b1 * b1 - 4 * b2, 0);
