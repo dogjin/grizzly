@@ -34,7 +34,7 @@
 #include <moditone/math/wrap.hpp>
 
 #include "poly_blamp.hpp"
-#include "phase_generator.hpp"
+#include "phasor.hpp"
 
 namespace dsp
 {

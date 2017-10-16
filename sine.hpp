@@ -31,7 +31,7 @@
 #include <cmath>
 #include <moditone/math/constants.hpp>
 
-#include "phase_generator.hpp"
+#include "phasor.hpp"
 
 namespace dsp
 {

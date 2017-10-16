@@ -34,7 +34,7 @@
 #include <moditone/math/interpolation.hpp>
 #include <type_traits>
 
-#include "phase_generator.hpp"
+#include "phasor.hpp"
 #include "poly_blep.hpp"
 
 namespace dsp

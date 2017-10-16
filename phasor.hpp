@@ -30,6 +30,7 @@
 #include <memory>
 #include <moditone/math/wrap.hpp>
 #include <moditone/unit/hertz.hpp>
+#include <vector>
 
 #include "poly_blep.hpp"
 
