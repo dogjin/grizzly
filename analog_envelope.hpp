@@ -157,21 +157,45 @@ namespace dsp
                         state = State::DECAY;
                         updateFilterCoefficients();
                         
-                        // Figure out where the attack exactly intersects the maximalCharge value
-                        // Set the previousY value as x = 0 (y-axis intersept)
-                        // Solve x for attack curve 1 - e^(-x * TCF / attackTime * sampleRate) + previousY = maximalCharge
-                        // Value x should be between 0 and 1
+                        // Figure out at what x the attack exactly intersects the maximalCharge value with the current settings
                         double tc = attackStage.time.value * sampleRate;
-                        double tmp = (y - previousY - 1) * -1;
-                        tmp = log(tmp) * tc;
-                        double x = tmp / -attackStage.timeConstantFactor;
+                        double tmp = (maximumCharge - 1) * -1;
+                        tmp = log(tmp);
+                        tmp *= tc;
+                        double xIntercept = tmp / -attackStage.timeConstantFactor;
+                        
+                        // Figure out at what x the attack exactly intersects the previous Y value
+                        tmp = (previousY - 1) * -1;
+                        tmp = log(tmp);
+                        tmp *= tc;
+                        double previousX = tmp / -attackStage.timeConstantFactor;
+                        
+                        // Compute the difference in x
+                        auto xDiff = xIntercept - previousX;
                         
                         // at the maximalCharge intersept, the true y value = 1
-                        // The x can be plugged in the decay curve e^(-x * TCF / attackTime * sampleRate)
+                        // We have to 'travel' 1 - xDiff in our decay curve to reach to the current sample Y value
+                        // The 1-x can be plugged in the decay curve e^(-(1-x) * TCF / attackTime * sampleRate)
                         // We should now have the exact y value
-                        y = std::exp( (-x * decayStage.timeConstantFactor) / (decayStage.time.value * sampleRate));
+                        y = std::exp( (-(1 - xDiff) * decayStage.timeConstantFactor) / (decayStage.time.value * sampleRate));
                         lowPassFilter.setState(y);
                         break;
+                        
+//                        // Figure out where the attack exactly intersects the maximalCharge value
+//                        // Set the previousY value as x = 0 (y-axis intersept)
+//                        // Solve x for attack curve 1 - e^(-x * TCF / attackTime * sampleRate) + previousY = maximalCharge
+//                        // Value x should be between 0 and 1
+//                        double tc = attackStage.time.value * sampleRate;
+//                        double tmp = (y - previousY - 1) * -1;
+//                        tmp = log(tmp) * tc;
+//                        double x = tmp / -attackStage.timeConstantFactor;
+//
+//                        // at the maximalCharge intersept, the true y value = 1
+//                        // The x can be plugged in the decay curve e^(-x * TCF / attackTime * sampleRate)
+//                        // We should now have the exact y value
+//                        y = std::exp( (-x * decayStage.timeConstantFactor) / (decayStage.time.value * sampleRate));
+//                        lowPassFilter.setState(y);
+//                        break;
                     }
                     
                     y *= normalizeFactor;
@@ -288,3 +312,4 @@ namespace dsp
         const float gateOff = -0.0001;
     };
 }
+
