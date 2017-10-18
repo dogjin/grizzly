@@ -77,71 +77,62 @@ namespace dsp
         //! Set coefficients given a cut-off, feedback factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
         {
-            // check cut-off
-            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
-                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
-            
-            
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
             this->feedbackFactor = feedbackFactor;
             g = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
             auto gainFactorOnePole = g / (1.0 + g);
-            
+
             // set one pole gain factor (G = g/(1+g))
             stage1.filter.setCutOffGain(gainFactorOnePole);
             stage2.filter.setCutOffGain(gainFactorOnePole);
             stage3.filter.setCutOffGain(gainFactorOnePole);
             stage4.filter.setCutOffGain(gainFactorOnePole);
-            
-            
+
+
             // global G's
             G4 = (0.5 * g) / (1 + g);
             G3 = (0.5 * g) / (1 + g - 0.5 * g * G4);
             G2 = (0.5 * g) / (1 + g - 0.5 * g * G3);
             G1 = g / (1 + g - g * G2);
-            
-            
+
+
             //// set stage factors
-            
+
             // a0
             stage1.a0 = 1;
             stage2.a0 = 0.5;
             stage3.a0 = 0.5;
             stage4.a0 = 0.5;
-            
+
             // gamma
             stage1.gamma = 1 + G1 * G2;
             stage2.gamma = 1 + G2 * G3;
             stage3.gamma = 1 + G3 * G4;
             stage4.gamma = 1;
-            
+
             // epsilon
             stage1.epsilon = G2;
             stage2.epsilon = G3;
             stage3.epsilon = G4;
             stage4.epsilon = 0; // comment this out later
-            
+
             // beta, denominators same at the G's... ja man doe hier iets mee ofzo
             stage1.beta = 1 / (1 + g - g * G2);
             stage2.beta = 1 / (1 + g - 0.5 * g * G3);
             stage3.beta = 1 / (1 + g - 0.5 * g * G4);
             stage4.beta = 1 / (1 + g);
-            
+
             // delta
             stage1.delta = g;
             stage2.delta = 0.5 * g;
             stage3.delta = 0.5 * g;
             stage4.delta = 0; // comment this out later
-            
+
             // feedback-factor
             stage1.feedbackFactor = G4 * G3 * G2;
             stage2.feedbackFactor = G4 * G3;
             stage3.feedbackFactor = G4;
             stage4.feedbackFactor = 1;
-            
+
             cutOffGain = 1.0 / (1.0 + feedbackFactor * G4 * G3 * G2 * G1);
         }
         
@@ -170,8 +161,8 @@ namespace dsp
             ladderInput = (x - feedbackFactor * feedbackSum) * cutOffGain;
             
             // Optional non-linear processing
-            if (nonLinear)
-                ladderInput = nonLinear(ladderInput);
+            if (globalNonLinear)
+                ladderInput = globalNonLinear(ladderInput);
             
             double x1 = ladderInput * stage1.gamma + addBefore1;
             stage1(x1 * stage1.a0);
@@ -264,12 +255,12 @@ namespace dsp
             return readSecondOrderHighPass();
         }
         
-        //! Set a function for non-linear processing (or nullptr for linear)
+        //! Set a function for non-linear processing (or nullptr for linear) within the filter stage
         /*! Add colour to the filter with a saturating function to shape the feedback.
-         Use with caution as this migth blow up the filter */
-        void setNonLinear(std::function<T(const T&)> nonLinear)
+         Use with caution as this migth blow up the filter.
+         See globalNonLinear for a non-linear component before the first stage */
+        void setNonLinearStage(std::function<T(const T&)> nonLinear)
         {
-            this->nonLinear = nonLinear;
             stage1.filter.nonLinear = nonLinear;
             stage2.filter.nonLinear = nonLinear;
             stage3.filter.nonLinear = nonLinear;
@@ -277,9 +268,9 @@ namespace dsp
         }
         
     public:
-        //! Pass-band gain compensation
-        /*! Compensate for the loss of gain when the feedback factor increases, used in ARP filter models */
-        bool passBandGain = false;
+        //! Function for global non-linear processing
+        //! A non-linear can be placed just before the first stage
+        std::function<T(const T&)> globalNonLinear;
         
     private:
         //! The filter stage
@@ -343,9 +334,6 @@ namespace dsp
         double G2 = 0;
         double G3 = 0;
         double G4 = 0;
-        
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
     };
 }
 
