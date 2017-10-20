@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.5.1)
 
+if (APPLE)
+	# NEEDS TO BE DONE BEFORE project()
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+endif (APPLE)
+
 # Create the project
 project(Grizzly CXX)
 
@@ -20,7 +25,6 @@ list(APPEND SOURCES ${OOURA_SOURCES})
 
 # Apple
 if (APPLE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 	add_definitions(-std=c++14 -Wall -Werror -Wconversion)
 	include_directories(/usr/local/include)
 
