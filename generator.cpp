@@ -6,29 +6,49 @@
 //  Copyright © 2017 Stijn Frishert. All rights reserved.
 //
 
+#include <stdexcept>
+
 #include "generator.hpp"
 
 namespace dsp
 {
     GeneratorBase::GeneratorBase(Phasor& phasor) :
-        phasor(phasor)
+        phasor(&phasor)
     {
         phasor.generators.emplace(this);
     }
     
     GeneratorBase::~GeneratorBase()
     {
-        phasor.generators.erase(this);
+        if (phasor)
+            phasor->generators.erase(this);
+    }
+    
+    void GeneratorBase::setPhasor(Phasor* phasor)
+    {
+        if (this->phasor)
+            this->phasor->generators.erase(this);
+        
+        this->phasor = phasor;
+        
+        if (this->phasor)
+            phasor->generators.emplace(this);
     }
     
     long double GeneratorBase::getPhase() const
     {
-        return phasor.getPhase();
+        if (!phasor)
+            throw std::runtime_error("generator is not attached to a phasor");
+        
+        return phasor->getPhase();
     }
     
     long double GeneratorBase::getIncrement() const
     {
-        return phasor.getIncrement();
+        if (!phasor)
+            throw std::runtime_error("generator is not attached to a phasor");
+        
+        return phasor->getIncrement();
     }
     
     void GeneratorBase::setPhaseOffset(long double offset)
@@ -43,11 +63,17 @@ namespace dsp
     
     const Phasor* GeneratorBase::getMaster() const
     {
-        return phasor.getMaster();
+        if (!phasor)
+            throw std::runtime_error("generator is not attached to a phasor");
+        
+        return phasor->getMaster();
     }
     
     bool GeneratorBase::hasMaster() const
     {
-        return phasor.hasMaster();
+        if (!phasor)
+            throw std::runtime_error("generator is not attached to a phasor");
+        
+        return phasor->hasMaster();
     }
 }

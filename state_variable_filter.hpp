@@ -58,7 +58,7 @@ namespace dsp
         
         //! Construct the filter with a time and sample rate
         StateVariableFilter(unit::second<float> time, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f) :
-        sampleRate(sampleRate)
+            sampleRate(sampleRate)
         {
             // check sample rate
             if (sampleRate.value <= 0)

@@ -18,8 +18,12 @@ namespace dsp
     class GeneratorBase
     {
     public:
+        GeneratorBase() = default;
         GeneratorBase(Phasor& phasor);
+        
         virtual ~GeneratorBase();
+        
+        void setPhasor(Phasor* phasor);
         
         long double getPhase() const;
         long double getIncrement() const;
@@ -33,7 +37,7 @@ namespace dsp
         virtual void recompute() = 0;
         
     private:
-        Phasor& phasor;
+        Phasor* phasor = nullptr;
         long double phaseOffset = 0;
     };
     
