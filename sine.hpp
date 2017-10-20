@@ -31,7 +31,7 @@
 #include <cmath>
 #include <moditone/math/constants.hpp>
 
-#include "phasor.hpp"
+#include "generator.hpp"
 
 namespace dsp
 {
@@ -49,37 +49,36 @@ namespace dsp
         return generateBipolarSine<T>(phase - 0.25f + phaseOffset) * 0.5 + 0.5;
     }
     
-    //! Generates a bipolar sine wave
-    /*! For fast sine wave approximation, use the Gordon-Smith oscillator */
     template <typename T>
-    class BipolarSine : public Phasor<T>
+    class Sine :
+        public Generator<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateBipolarSine<T>(this->phase, this->phaseOffset); }
-    };
-    
-    //! Generates a unipolar sine wave
-    template <typename T>
-    class UnipolarSine : public Phasor<T>
-    {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateUnipolarSine<T>(this->phase, this->phaseOffset); }
+    public:
+        using Generator<T>::Generator;
+        
+        T convert() final
+        {
+            return generateBipolarSine<T>(this->getPhase(), this->getPhaseOffset());
+        }
     };
     
     //! Generates a bipolar sine wave using the polyBLEP algorithm for anti aliasing when synced
     template <typename T>
-    class BipolarSineBlep : public PhasorBlep<T>
+    class BandLimitedSine :
+        public BandLimitedGenerator<T>
     {
+    public:
+        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        
     private:
         T computeAliasedY() final
         {
-            return dsp::generateBipolarSine<T>(this->phase, this->phaseOffset);
+            return dsp::generateBipolarSine<T>(this->getPhase(), this->getPhaseOffset());
         }
         
         void applyRegularBandLimiting(T& y) final
         {
+            
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
