@@ -34,7 +34,7 @@
 #include <moditone/math/interpolation.hpp>
 #include <type_traits>
 
-#include "phasor.hpp"
+#include "generator.hpp"
 #include "poly_blep.hpp"
 
 namespace dsp
@@ -53,37 +53,35 @@ namespace dsp
         return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1);
     }
     
-    //! Generates a bipolar saw wave
     template <typename T>
-    class BipolarSaw : public Phasor<T>
+    class Saw :
+        public Generator<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset); }
+    public:
+        using Generator<T>::Generator;
+        
+        T convert() final
+        {
+            return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
+        }
     };
     
-    //! Generates a unipolar saw wave
     template <typename T>
-    class UnipolarSaw : public Phasor<T>
+    class BandLimitedSaw :
+        public BandLimitedGenerator<T>
     {
+    public:
+        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        
     private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateUnipolarSaw<T>(this->phase, this->phaseOffset); }
-    };
-    
-    //! Generates a bipolar saw wave using the polyBLEP algorithm for anti aliasing
-    template <typename T>
-    class BipolarSawBlep : public PhasorBlep<T>
-    {
-    private:        
         T computeAliasedY() final
         {
-            return dsp::generateBipolarSaw<T>(this->phase, this->phaseOffset);
+            return dsp::generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
         }
         
         void applyRegularBandLimiting(T& y) final
         {
-            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final

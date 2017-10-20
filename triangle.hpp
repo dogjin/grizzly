@@ -33,8 +33,8 @@
 #include <memory>
 #include <moditone/math/wrap.hpp>
 
+#include "generator.hpp"
 #include "poly_blamp.hpp"
-#include "phasor.hpp"
 
 namespace dsp
 {
@@ -51,49 +51,52 @@ namespace dsp
     constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset)
     {
         return generateUnipolarTriangle<T>(phase, phaseOffset) * 2 - 1;
-        //        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
+//        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
     }
     
-    //! Generates a bipolar triangle wave
     template <typename T>
-    class BipolarTriangle : public Phasor<T>
+    class Triangle :
+        public Generator<T>
     {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset); }
+    public:
+        using Generator<T>::Generator;
+        
+        T convert() final
+        {
+            return generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
+        }
     };
     
-    //! Generates a unipolar triangle wave
-    template <typename T>
-    class UnipolarTriangle : public Phasor<T>
-    {
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateUnipolarTriangle<T>(this->phase, this->phaseOffset); }
-    };
     
-    //! Generates a bipolar triangle wave using the polyBLEP algorithm for anti aliasing
+    
+    //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
     template <typename T>
-    class BipolarTriangleBlamp : public PhasorBlep<T>
+    class BandLimitedTriangle :
+        public BandLimitedGenerator<T>
     {
+    public:
+        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        
     private:        
         T computeAliasedY() final
         {
-            return dsp::generateBipolarTriangle<T>(this->phase, this->phaseOffset);
+            return dsp::generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
         }
         
         void applyRegularBandLimiting(T& y) final
         {
+            const auto increment = this->getIncrement();
+            
             // Downward
-            auto scale = 4 * this->increment_;
-            auto modifiedPhase = this->phase;//this->phase + 0.25;
+            auto scale = 4 * increment;
+            auto modifiedPhase = this->getPhase(); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
             modifiedPhase -= floor(modifiedPhase);
-            y += scale * polyBlamp(modifiedPhase, this->increment_);
+            y += scale * polyBlamp(modifiedPhase, increment);
             
             // Upward
             modifiedPhase += 0.5;
             modifiedPhase -= floor(modifiedPhase);
-            y -= scale * polyBlamp(modifiedPhase, this->increment_);
+            y -= scale * polyBlamp(modifiedPhase, increment);
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final

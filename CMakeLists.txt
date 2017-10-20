@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.5.1)
 
+if (APPLE)
+	# NEEDS TO BE DONE BEFORE project()
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+endif (APPLE)
+
 # Create the project
 project(Grizzly CXX)
 
 # Setup the common headers and sources
-set(HEADERS all_pass_filter.hpp analog_envelope.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp cepstrum.hpp circular_buffer.hpp clip.hpp comb_filter.hpp complex.hpp convolution.hpp crossover_filter.hpp delay.hpp diode_ladder_filter.hpp distortion.hpp dynamic.hpp envelope_follower.hpp even_odd.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp frequency_estimation.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp ladder_filter.hpp mid_side.hpp multi_crossover_filter.hpp multi_tap_resonator.hpp newton_solver.hpp pan.hpp parameter_smoother.hpp phasor.hpp pink_noise.hpp poly_blamp.hpp poly_blep.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp slew_limiter.hpp sliding_difference.hpp sliding_dot_product.hpp spectral_centroid.hpp square.hpp state_variable_filter.hpp step_sequencer.hpp triangle.hpp waveform.hpp window.hpp z_transform.hpp)
+set(HEADERS all_pass_filter.hpp analog_envelope.hpp analog_one_pole_filter.hpp analytic_transform.hpp biquad.hpp biquad_coefficients.hpp cascade.hpp cepstrum.hpp circular_buffer.hpp clip.hpp comb_filter.hpp complex.hpp convolution.hpp crossover_filter.hpp delay.hpp diode_ladder_filter.hpp distortion.hpp dynamic.hpp envelope_follower.hpp even_odd.hpp fast_fourier_transform.hpp fast_fourier_transform_base.hpp first_order_filter_coefficients.hpp first_order_filter.hpp frequency_estimation.hpp generator.hpp gordon_smith_oscillator.hpp hilbert_transform.hpp high_frequency_content.hpp impulse_response.hpp ladder_filter.hpp mid_side.hpp multi_crossover_filter.hpp multi_tap_resonator.hpp newton_solver.hpp pan.hpp parameter_smoother.hpp phasor.hpp pink_noise.hpp poly_blamp.hpp poly_blep.hpp saw.hpp segment_envelope.hpp short_time_fourier_transform.hpp sine.hpp slew_limiter.hpp sliding_difference.hpp sliding_dot_product.hpp spectral_centroid.hpp square.hpp state_variable_filter.hpp step_sequencer.hpp triangle.hpp waveform.hpp window.hpp z_transform.hpp)
 
-set(SOURCES fast_fourier_transform_base.cpp)
+set(SOURCES fast_fourier_transform_base.cpp generator.cpp phasor.cpp)
 
 source_group(\\ FILES ${HEADERS} ${SOURCES})
 
@@ -20,7 +25,6 @@ list(APPEND SOURCES ${OOURA_SOURCES})
 
 # Apple
 if (APPLE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 	add_definitions(-std=c++14 -Wall -Werror -Wconversion)
 	include_directories(/usr/local/include)
 

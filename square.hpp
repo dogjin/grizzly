@@ -33,7 +33,7 @@
 #include <memory>
 #include <moditone/math/wrap.hpp>
 
-#include "phasor.hpp"
+#include "generator.hpp"
 #include "poly_blep.hpp"
 
 namespace dsp
@@ -47,15 +47,10 @@ namespace dsp
     
     //! Generates a bipolar square wave
     template <typename T>
-    class BipolarSquare : public Phasor<T>
+    class Square :
+        public Generator<T>
     {
     public:
-        BipolarSquare(float pulseWidth = 0.5f) :
-        pulseWidth(pulseWidth)
-        {
-            
-        }
-        
         //! Change the pulse width
         /*! @param recompute Recompute the y to return from read() */
         void setPulseWidth(float pulseWidth, bool recompute)
@@ -66,61 +61,25 @@ namespace dsp
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                this->convertPhaseToY();
+                this->recompute();
         }
         
     private:
         //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1); }
+        T convert() final { return generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1); }
         
     private:
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
     };
-    
-    //! Generates a bipolar square wave
-    template <typename T>
-    class UnipolarSquare : public Phasor<T>
-    {
-    public:
-        UnipolarSquare(float pulseWidth = 0.5f) :
-        pulseWidth(pulseWidth)
-        {
-        }
-        
-        //! Change the pulse width
-        /*! @param recompute Recompute the y to return from read() */
-        void setPulseWidth(float pulseWidth, bool recompute)
-        {
-            if (pulseWidth == this->pulseWidth)
-                return;
-            
-            this->pulseWidth = pulseWidth;
-            
-            if (recompute)
-                this->convertPhaseToY();
-        }
-        
-    private:
-        //! Recompute the most recently computed value
-        T convertPhaseToY() final { return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, 0, 1); }
-        
-    private:
-        //! The pulse width used to generate the square
-        float pulseWidth = 0.5f;
-    };
-    
     
     //! Generates a bipolar square wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
-    class BipolarSquareBlep : public PhasorBlep<T>
+    class BandLimitedSquare :
+        public BandLimitedGenerator<T>
     {
     public:
-        BipolarSquareBlep() = default;
-        
-        BipolarSquareBlep(float pulseWidth) : pulseWidth(pulseWidth)
-        {
-        }
+        using BandLimitedGenerator<T>::BandLimitedGenerator;
         
         //! Change the pulse width
         /*! @param recompute Recompute the y to return from read() */
@@ -132,19 +91,23 @@ namespace dsp
             this->pulseWidth = pulseWidth;
             
             if (recompute)
-                this->convertPhaseToY();
+                this->recompute();
         }
         
     private:
         T computeAliasedY() final
         {
-            return dsp::generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1);
+            return generateSquare<T>(this->getPhase(), this->getPhaseOffset(), pulseWidth, -1, 1);
         }
         
         void applyRegularBandLimiting(T& y) final
         {
-            y += polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset, 0.0, 1.0), this->increment_);
-            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->phaseOffset + (1 - pulseWidth), 0, 1), this->increment_);
+            const auto phase = this->getPhase();
+            const auto phaseOffset = this->getPhaseOffset();
+            const auto increment = this->getIncrement();
+            
+            y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
+            y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + (1 - pulseWidth), 0, 1), increment);
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
