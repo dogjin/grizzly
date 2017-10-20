@@ -66,7 +66,7 @@ namespace dsp
         
     private:
         //! Recompute the most recently computed value
-        T convert() final { return generateSquare<T>(this->phase, this->phaseOffset, pulseWidth, -1, 1); }
+        T convert() final { return generateSquare<T>(this->getPhase(), this->getPhaseOffset(), pulseWidth, -1, 1); }
         
     private:
         //! The pulse width used to generate the square

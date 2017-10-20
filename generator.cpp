@@ -51,9 +51,12 @@ namespace dsp
         return phasor->getIncrement();
     }
     
-    void GeneratorBase::setPhaseOffset(long double offset)
+    void GeneratorBase::setPhaseOffset(long double offset, bool recompute)
     {
         phaseOffset = offset;
+        
+        if (recompute)
+            this->recompute();
     }
     
     long double GeneratorBase::getPhaseOffset() const

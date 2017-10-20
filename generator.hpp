@@ -28,7 +28,7 @@ namespace dsp
         long double getPhase() const;
         long double getIncrement() const;
         
-        void setPhaseOffset(long double offset);
+        void setPhaseOffset(long double offset, bool recompute);
         long double getPhaseOffset() const;
         
         const Phasor* getMaster() const;
