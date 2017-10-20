@@ -186,6 +186,7 @@ namespace dsp
         std::vector<std::unique_ptr<Phasor>> slaves;
     };
     
+    //! Phasor base class for waveforms with band limited step functions
     template <typename T>
     class PhasorBlep : public Phasor<T>
     {
