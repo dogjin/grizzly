@@ -161,8 +161,8 @@ namespace dsp
             ladderInput = (x - feedbackFactor * feedbackSum) * cutOffGain;
             
             // Optional non-linear processing
-            if (globalNonLinear)
-                ladderInput = globalNonLinear(ladderInput);
+            if (nonLinear)
+                ladderInput = nonLinear(ladderInput);
             
             double x1 = ladderInput * stage1.gamma + addBefore1;
             stage1(x1 * stage1.a0);
@@ -259,18 +259,18 @@ namespace dsp
         /*! Add colour to the filter with a saturating function to shape the feedback.
          Use with caution as this migth blow up the filter.
          See globalNonLinear for a non-linear component before the first stage */
-        void setNonLinearStage(std::function<T(const T&)> nonLinear)
-        {
-            stage1.filter.nonLinear = nonLinear;
-            stage2.filter.nonLinear = nonLinear;
-            stage3.filter.nonLinear = nonLinear;
-            stage4.filter.nonLinear = nonLinear;
-        }
+//        void setNonLinearStage(std::function<T(const T&)> nonLinear)
+//        {
+//            stage1.filter.nonLinear = nonLinear;
+//            stage2.filter.nonLinear = nonLinear;
+//            stage3.filter.nonLinear = nonLinear;
+//            stage4.filter.nonLinear = nonLinear;
+//        }
         
     public:
         //! Function for global non-linear processing
         //! A non-linear can be placed just before the first stage
-        std::function<T(const T&)> globalNonLinear;
+        std::function<T(const T&)> nonLinear;
         
     private:
         //! The filter stage
