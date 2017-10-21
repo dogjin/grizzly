@@ -35,6 +35,22 @@
 
 namespace dsp
 {
+    template <typename T, typename Phase>
+    constexpr T fastSin(Phase x)
+    {
+        //always wrap input angle to -PI..PI
+        if (x < -math::PI<T>)
+            x += math::TWO_PI<T>;
+        else if (x >  math::PI<T>)
+            x -= math::TWO_PI<T>;
+        
+        //compute sine
+        if (x < 0)
+            return 1.27323954 * x + .405284735 * x * x;
+        else
+            return 1.27323954 * x - 0.405284735 * x * x;
+    }
+    
     //! Generate a bipolar sine wave given a normalized phase
     template <typename T, typename Phase>
     constexpr T generateBipolarSine(Phase phase, Phase phaseOffset)
