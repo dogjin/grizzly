@@ -33,20 +33,20 @@ namespace dsp
     template <typename T>
     inline T insertPolyBlepAfterReset(const T& phase, const T& increment)
     {
-        auto x = phase / increment;
+        const auto x = phase / increment;
         return x + x - x * x - T(1);
     }
     
     template <typename T>
     inline T insertPolyBlepBeforeReset(const T& phase, const T& increment)
     {
-        auto x = (phase - 1.0) / increment;
+        const auto x = (phase - 1.0) / increment;
         return x * x + x + x + T(1);
     }
     
     //! Polynomal band limited step function
     template <typename T>
-    T polyBlep(const T& phase, const T& increment)
+    inline T polyBlep(const T& phase, const T& increment)
     {
         if (phase < increment)
             return insertPolyBlepAfterReset(phase, increment);
