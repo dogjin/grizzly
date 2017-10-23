@@ -168,9 +168,9 @@ namespace dsp
         };
         
     private:
-        dsp::FastFourierTransform fft; // double frame size
+        FastFourierTransform fft; // double frame size
         
-        dsp::Delay<ComplexList> delay;
+        Delay<ComplexList> delay;
         std::vector<ComplexList> resultMatrix;
         std::vector<ComplexList> fftKernel;
         

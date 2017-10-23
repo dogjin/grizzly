@@ -119,8 +119,8 @@ namespace dsp
             
             for (size_t i = 0; i < numberOfStagesInCascade; ++i)
             {
-                lowPass.cascade.emplaceBack(&dsp::BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
-                highPass.cascade.emplaceBack(&dsp::BiquadDirectForm1<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
+                lowPass.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
+                highPass.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
             }
             
             setCoefficients();
@@ -147,37 +147,37 @@ namespace dsp
             switch (order)
             {
                 case CrossoverFilterOrder::FIRST:
-                    dsp::lowPassOnePoleZero(lowPass.firstOrderFilter.coefficients, sampleRate, cutOff);
-                    dsp::highPassOnePoleZero(highPass.firstOrderFilter.coefficients, sampleRate, cutOff);
+                    lowPassOnePoleZero(lowPass.firstOrderFilter.coefficients, sampleRate, cutOff);
+                    highPassOnePoleZero(highPass.firstOrderFilter.coefficients, sampleRate, cutOff);
                     break;
                     
                 case CrossoverFilterOrder::SECOND:
-                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
-                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
+                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
+                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
                     break;
                     
                 case CrossoverFilterOrder::FOURTH:
                     // low-pass coefficients
-                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     
                     // high-pass coefficients
-                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     break;
                     
                 case CrossoverFilterOrder::EIGHTH:
                     // low-pass coefficients according to Butterworth filters
-                    dsp::lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    dsp::lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    dsp::lowPass(lowPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    dsp::lowPass(lowPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    lowPass(lowPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    lowPass(lowPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     
                     // high-pass coefficients according to Butterworth filters
-                    dsp::highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    dsp::highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    dsp::highPass(highPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    dsp::highPass(highPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    highPass(highPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    highPass(highPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     break;
             }
         }
@@ -188,13 +188,13 @@ namespace dsp
         {
         public:
             //! First-order filter for order == 1
-            dsp::FirstOrderFilter<T, CoeffType> firstOrderFilter;
+            FirstOrderFilter<T, CoeffType> firstOrderFilter;
             
             //! A vector of biquad filters used for an order >= 1
-            std::vector<dsp::BiquadDirectForm1<T, CoeffType>> biquads;
+            std::vector<BiquadDirectForm1<T, CoeffType>> biquads;
             
             //! A cascade for chaining biquads used for an order >= 1
-            dsp::Cascade<T> cascade;
+            Cascade<T> cascade;
             
         public:
             void eraseFilters()

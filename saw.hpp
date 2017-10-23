@@ -76,7 +76,7 @@ namespace dsp
     private:
         T computeAliasedY() final
         {
-            return dsp::generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
+            return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
         }
         
         void applyRegularBandLimiting(T& y) final

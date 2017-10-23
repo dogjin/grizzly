@@ -32,7 +32,7 @@ namespace dsp
 {
     //! Polynomal band limited ramp function
     template <typename T>
-    auto polyBlamp(const T& phase, const T& increment)
+    inline auto polyBlamp(const T& phase, const T& increment)
     {
         if (phase < increment)
         {

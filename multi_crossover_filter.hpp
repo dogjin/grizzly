@@ -98,7 +98,7 @@ namespace dsp
         //! Emplace back a crossover filter
         void emplaceBack(unit::hertz<float> cutOff)
         {
-            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
+            auto filter = std::make_unique<CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
             cascade.emplaceBack([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); });
             filters.emplace_back(std::move(filter));
         }
@@ -106,7 +106,7 @@ namespace dsp
         //! Emplace a crossover filter at a given position
         void emplace(unit::hertz<float> cutOff, std::size_t position)
         {
-            auto filter = std::make_unique<dsp::CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
+            auto filter = std::make_unique<CrossoverFilter<T, CoeffType>>(cutOff, sampleRate, order);
             cascade.emplace([&, ptr=filter.get()](T input){ ptr->write(input); return ptr->readHigh(); }, position);
             filters.emplace(filters.begin() + position, std::move(filter));
         }
@@ -151,7 +151,7 @@ namespace dsp
         }
         
         //! Return a const crossover filter
-        const dsp::CrossoverFilter<T, CoeffType>& operator[](std::size_t index) const { return *filters[index]; }
+        const CrossoverFilter<T, CoeffType>& operator[](std::size_t index) const { return *filters[index]; }
         
         // Begin and end for ranged for-loops
         auto begin() { return filters.begin(); }
@@ -167,10 +167,10 @@ namespace dsp
         unit::hertz<float> sampleRate = 44100;
         
         //! The cascade
-        dsp::Cascade<T> cascade;
+        Cascade<T> cascade;
         
         //! The crossover filters
-        std::vector<std::unique_ptr<dsp::CrossoverFilter<T, CoeffType>>> filters;
+        std::vector<std::unique_ptr<CrossoverFilter<T, CoeffType>>> filters;
     };
 }
 

@@ -50,7 +50,7 @@ namespace dsp
         {
         public:
             //! Process a single tap in the resonator
-            T processStage (const dsp::Delay<T>& delay) const
+            T processStage (const Delay<T>& delay) const
             {
                 const auto d = delay.read(delayTime, math::linearInterpolation);
                 return feedback * (postDelay ? postDelay(d) : d);
@@ -139,7 +139,7 @@ namespace dsp
         std::vector<Stage> stages;
         
         //! The single delay buffer that will be used for all stages
-        dsp::Delay<T> delay;
+        Delay<T> delay;
     };
 }
 

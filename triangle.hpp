@@ -80,7 +80,7 @@ namespace dsp
     private:        
         T computeAliasedY() final
         {
-            return dsp::generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
+            return generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
         }
         
         void applyRegularBandLimiting(T& y) final
