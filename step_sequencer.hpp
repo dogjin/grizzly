@@ -89,6 +89,33 @@ namespace dsp
             std::sort(steps.begin(), steps.end(), [](const Step& lhs, const Step& rhs){ return lhs.time < rhs.time; });
         }
         
+        void emplaceEqualSteps(size_t numberOfSteps)
+        {
+            const auto stepLength = length / numberOfSteps;
+            for (auto i = 0; i < numberOfSteps; i++)
+                steps.emplace_back(stepLength * i, nullptr);
+        }
+        
+        void remove(size_t index)
+        {
+            steps.erase(steps.begin() + index);
+        }
+        
+        void clear()
+        {
+            steps.clear();
+        }
+        
+        void setSwing(float amount)
+        {
+            amount = amount * 2 - 1;
+            
+            const auto stepLength = length / steps.size();
+            
+            for (auto i = 1; i < steps.size(); i += 2)
+                steps[i].time += stepLength * amount;
+        }
+        
         void setStep(size_t index, bool trigger)
         {
             currentStep = index;
@@ -97,9 +124,40 @@ namespace dsp
                 steps[currentStep].trigger();
         }
         
-        Step& getStep(size_t index) const
+        Step& getStep(size_t index)
         {
             return steps[index];
+        }
+        
+        Step& operator[](size_t index)
+        {
+            getStep(index);
+        }
+        
+        const Step& getStep(size_t index) const
+        {
+            return steps[index];
+        }
+        
+        const Step& operator[](size_t index) const
+        {
+            getStep(index);
+        }
+        
+        auto begin() { return steps.begin(); }
+        auto end() { return steps.end(); }
+        
+        const auto begin() const { return steps.begin(); }
+        const auto end() const { return steps.end(); }
+        
+        T getLength() const
+        {
+            return length;
+        }
+        
+        size_t getNumberOfSteps() const
+        {
+            return steps.size();
         }
         
     private:
