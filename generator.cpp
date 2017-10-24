@@ -33,6 +33,8 @@ namespace dsp
         
         if (this->phasor)
             phasor->generators.emplace(this);
+        
+        recompute();
     }
     
     long double GeneratorBase::getPhase() const
