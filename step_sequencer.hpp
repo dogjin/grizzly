@@ -108,12 +108,16 @@ namespace dsp
         
         void setSwing(float amount)
         {
+            // There must be at least 2 steps
+            if (steps.size() < 2)
+                return;
+            
             amount = amount * 2 - 1;
             
             const auto stepLength = length / steps.size();
             
             for (auto i = 1; i < steps.size(); i += 2)
-                steps[i].time += stepLength * amount;
+                steps[i].time = i * stepLength + stepLength * amount;
         }
         
         void setStep(size_t index, bool trigger)
@@ -131,7 +135,7 @@ namespace dsp
         
         Step& operator[](size_t index)
         {
-            getStep(index);
+            return getStep(index);
         }
         
         const Step& getStep(size_t index) const
@@ -141,7 +145,7 @@ namespace dsp
         
         const Step& operator[](size_t index) const
         {
-            getStep(index);
+            return getStep(index);
         }
         
         auto begin() { return steps.begin(); }
