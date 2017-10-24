@@ -46,134 +46,9 @@ namespace dsp
     {
     public:
         //! Construct the filter with a cut-off and sample rate
-        StateVariableFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
+        StateVariableFilter(unit::hertz<double> sampleRate) :
             sampleRate(sampleRate)
-        {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
-            setCutOff(cutOff);
-        }
-        
-        //! Construct the filter with a time and sample rate
-        StateVariableFilter(unit::second<float> time, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f) :
-            sampleRate(sampleRate)
-        {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
-            setTime(time, timeConstantFactor);
-        }
-        
-        //! Set the coefficients given a cut-off, q factor and sample-rate
-        void setCoefficients(unit::hertz<float> cutOff, float q, unit::hertz<float> sampleRate)
-        {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
-            // check q
-            if (q < 0.01)
-                throw std::invalid_argument("q < 0.01");
-            
-            // check cut-off
-            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
-                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
-            
-            gain = std::tan(math::PI<float> * (cutOff.value / sampleRate.value));
-            damping = 1.0 / (2.0 * q);
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the coefficients given a time, q factor, sample-rate and time constant factor (default 5)
-        /*! Supplied with a time, the filter will reach to the input (smooth) in the given time 
-            using a time constant factor of approximately 5 and a q factor of 0.5 (no damping). */
-        void setCoefficients(unit::second<float> time, float q, unit::hertz<float> sampleRate, float timeConstantFactor = 5.f)
-        {
-            const float t = time.value * math::SQRT_HALF<float>;
-            
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
-            // check q
-            if (q < 0.01)
-                throw std::invalid_argument("q < 0.01");
-            
-            // check time
-            if (t <= 0)
-                throw std::invalid_argument("time <= 0");
-            
-            // check time-constant-filter
-            if (timeConstantFactor < 0)
-                throw std::invalid_argument("time constant factor < 0");
-            
-            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
-            damping = 1.0 / (2.0 * q);
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the cut-off frequency
-        void setCutOff(unit::hertz<float> cutOff)
-        {
-            // check cut-off
-            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
-                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
-            
-            gain = std::tan(math::PI<float> * (cutOff.value / sampleRate.value));
-
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the time and time constant factor (default 5)
-        /*! Supplied with a time, the filter will reach to the input (smooth) in the given time
-            using a time constant factor of approximately 5 and a q factor of 0.5 (no damping). */
-        void setTime(unit::second<float> time, float timeConstantFactor = 5.f)
-        {
-            const float t = time.value * math::SQRT_HALF<float>;
-            
-            // check time
-            if (t <= 0)
-                throw std::invalid_argument("time <= 0");
-            
-            // check time-constant-filter
-            if (timeConstantFactor < 0)
-                throw std::invalid_argument("time constant factor < 0");
-            
-            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
-            
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
-        void setQ(float q)
-        {
-            // check q
-            if (q < 0.01)
-                throw std::invalid_argument("q < 0.01");
-            
-            damping = 1.0 / (2.0 * q);
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
-        {
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
-            this->sampleRate = sampleRate;
-            computeResolvedGain(gain, damping, sampleRate);
-        }
-        
-        //! Set the filter state directly
-        void setState(const T& state)
-        {
-            state1 = state2 = state;
-        }
+        {}
         
         // Write a sample to the filter
         void write(const T& x)
@@ -193,6 +68,81 @@ namespace dsp
             state1 = gain * highPass + bandPass;
             state2 = gain * bandPass + lowPass;
         }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<double> sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            
+            computeResolvedGain(gain, damping);
+        }
+        
+        //! Set the cut-off frequency
+        void setCutOff(unit::hertz<double> cutOff)
+        {
+            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
+            
+            computeResolvedGain(gain, damping);
+        }
+        
+        //! Set the time
+        /*! @param time The time is takes to reach the input value (dependant on timeConstantFactor).
+             @param sampleRate The sampleRate.
+             @param timeConstantFactor The factor that influences the actual time, a factor of ~5 results in a accurate time response. */
+        void setTime(unit::second<double> time, double timeConstantFactor)
+        {
+            const double t = time.value * math::SQRT_HALF<double>;
+            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
+            
+            computeResolvedGain(gain, damping);
+        }
+        
+        //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
+        void setQ(double q)
+        {
+            damping = 1.0 / (2.0 * q);
+            
+            computeResolvedGain(gain, damping);
+        }
+        
+        //! Set the filter state directly
+        /*! The 2nd state is always reaching for the input value, while the first one is reaching towards zero. */
+        void setState(T state1, T state2)
+        {
+            this->state1 = state1;
+            this->state2 = state2;
+        }
+        
+        //! Set the gain (for band-shelf type)
+        void setBandShelfGain(unit::decibel<double> gain)
+        {
+            // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
+            this->bandShelfGain = unit::amplitude<double>(gain).value - 1;
+        }
+        
+        T getState1() const
+        {
+            return state1;
+        }
+        
+        T getState2() const
+        {
+            return state2;
+        }
+        
+        double getGain() const
+        {
+            return gain;
+        }
+        
+        double getResolvedGain() const
+        {
+            return resolvedGain;
+        }
+        
+        //////////////////////////////////////
+        // Write & read methods
+        //////////////////////////////////////
         
         // Read low-pass output
         T readLowPass() const
@@ -298,16 +248,9 @@ namespace dsp
             return readPeak();
         }
         
-        //! Set the gain (for band-shelf type)
-        void setBandShelfGain(unit::decibel<float> gain)
-        {
-            // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
-            this->bandShelfGain = unit::amplitude<float>(gain).value - 1;
-        }
-        
     private:
         //! compute the gain factor with resolved zero delay feedack
-        void computeResolvedGain(float gain, float damping, unit::hertz<float> sampleRate)
+        void computeResolvedGain(float gain, float damping)
         {
             resolvedGain = 1.0 / (1.0 + 2.0 * damping * gain + gain * gain);
         }
@@ -318,10 +261,16 @@ namespace dsp
         
     private:
         //! The sample rate
-        unit::hertz<float> sampleRate = 44100;
+        unit::hertz<double> sampleRate = 44100;
         
         //! Damping factor, related to q
-        T damping = 1;
+        double damping = 1;
+        
+        //! The gain factor
+        double gain = 0;
+        
+        //! The gain factor with resolved zero delay feedback
+        double resolvedGain = 0;
         
         //! Input of last writing call
         T x = 0;
@@ -334,13 +283,7 @@ namespace dsp
         
         //! Low-pass output state
         T lowPass = 0;
-        
-        //! The gain factor before the integration
-        T gain = 0;
-        
-        //! The filter gain factor with resolved zero delay feedback
-        T resolvedGain = 0;
-        
+    
         //! The state of the first integrator
         T state1 = 0;
         
@@ -348,7 +291,7 @@ namespace dsp
         T state2 = 0;
         
         //! Gain (for band-shelf type)
-        unit::amplitude<float> bandShelfGain = 0;
+        unit::amplitude<double> bandShelfGain = 0;
     };
 }
 
