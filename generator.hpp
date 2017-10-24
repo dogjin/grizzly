@@ -26,7 +26,7 @@ namespace dsp
         virtual ~GeneratorBase();
         
         void setPhasor(Phasor* phasor);
-        
+
         long double getPhase() const;
         long double getIncrement() const;
         
@@ -36,10 +36,13 @@ namespace dsp
         const Phasor* getMaster() const;
         bool hasMaster() const;
         
-        virtual void recompute() = 0;
+        void recompute();
         
     public:
         std::function<long double(long double)> phaseDistortion;
+        
+    private:
+        virtual void recomputeRequested() = 0;
         
     private:
         Phasor* phasor = nullptr;
@@ -56,7 +59,7 @@ namespace dsp
         
         const T& read() const { return y; }
         
-        void recompute() final { y = convert(); }
+        void recomputeRequested() final { y = convert(); }
         
     private:
         virtual T convert() = 0;

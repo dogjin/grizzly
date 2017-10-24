@@ -84,4 +84,10 @@ namespace dsp
         
         return phasor->hasMaster();
     }
+    
+    void GeneratorBase::recompute()
+    {
+        if (phasor)
+            recomputeRequested();
+    }
 }
