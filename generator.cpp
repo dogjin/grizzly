@@ -42,7 +42,10 @@ namespace dsp
         if (!phasor)
             throw std::runtime_error("generator is not attached to a phasor");
         
-        return phasor->getPhase();
+        if (phaseDistortion)
+            return phaseDistortion(phasor->getPhase());
+        else
+            return phasor->getPhase();
     }
     
     long double GeneratorBase::getIncrement() const

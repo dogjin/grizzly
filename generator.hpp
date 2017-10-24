@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cassert>
+#include <functional>
 #include <memory>
 
 #include "phasor.hpp"
@@ -36,6 +37,9 @@ namespace dsp
         bool hasMaster() const;
         
         virtual void recompute() = 0;
+        
+    public:
+        std::function<long double(long double)> phaseDistortion;
         
     private:
         Phasor* phasor = nullptr;
