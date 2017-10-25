@@ -62,7 +62,7 @@ namespace dsp
     template <typename T, typename Phase>
     constexpr T generateUnipolarSine(Phase phase, Phase phaseOffset)
     {
-        return generateBipolarSine<T>(phase - 0.25f + phaseOffset) * 0.5 + 0.5;
+        return generateBipolarSine<T>(phase - math::HALF_PI<T> + phaseOffset) * 0.5 + 0.5;
     }
     
     template <typename T>
