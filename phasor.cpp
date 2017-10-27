@@ -29,12 +29,6 @@ namespace dsp
         incrementUnwrappedPhases();
         computeNewPhases();
         recomputeGenerators();
-        
-        // Tell the generators to recompute their output
-        for (auto& generator : generators)
-        {
-            generator->recompute();
-        }
     }
     
     long double Phasor::doIncrementAndGetPhase()
