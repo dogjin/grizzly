@@ -55,7 +55,7 @@ namespace dsp
     template <typename T, typename Phase>
     constexpr T generateBipolarSine(Phase phase, Phase phaseOffset)
     {
-        return std::sin(math::TWO_PI<T> * (phase + phaseOffset));
+        return fastSin<T>(math::TWO_PI<T> * (phase + phaseOffset));
     }
     
     //! Generate a unipolar sine wave given a normalized phase
