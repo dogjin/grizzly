@@ -80,9 +80,22 @@ namespace dsp
         //! Set the cut-off frequency
         void setCutOff(unit::hertz<double> cutOff)
         {
+            this->cutOff = cutOff;
+            
             gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
             
             computeResolvedGain(gain, damping);
+        }
+        
+        //! Set the cut-off frequency and q
+        void setCutOffAndQ(unit::hertz<double> cutOff, double q)
+        {
+            this->cutOff = cutOff;
+            this->q = q;
+            
+            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
+            
+            setQ(q);
         }
         
         //! Set the time
@@ -91,15 +104,32 @@ namespace dsp
              @param timeConstantFactor The factor that influences the actual time, a factor of ~5 results in a accurate time response. */
         void setTime(unit::second<double> time, double timeConstantFactor)
         {
+            this->time = time;
+            this->timeConstantFactor = timeConstantFactor;
+            
             const double t = time.value * math::SQRT_HALF<double>;
             gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
             
             computeResolvedGain(gain, damping);
         }
         
+        void setTimeAndQ(unit::second<double> time, double timeConstantFactor, double q)
+        {
+            this->time = time;
+            this->timeConstantFactor = timeConstantFactor;
+            this->q = q;
+            
+            const double t = time.value * math::SQRT_HALF<double>;
+            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
+            
+            setQ(q);
+        }
+        
         //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
         void setQ(double q)
         {
+            this->q = q;
+            
             damping = 1.0 / (2.0 * q);
             
             computeResolvedGain(gain, damping);
@@ -140,9 +170,9 @@ namespace dsp
             return resolvedGain;
         }
         
-        //////////////////////////////////////
-        // Write & read methods
-        //////////////////////////////////////
+        /////////////////////////////////////////////
+        // Write & read methods for sample processing
+        /////////////////////////////////////////////
         
         // Read low-pass output
         T readLowPass() const
@@ -248,6 +278,73 @@ namespace dsp
             return readPeak();
         }
         
+        /////////////////////////////////////////////
+        // Methods for block processing
+        /////////////////////////////////////////////
+        
+        void processLowPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+        {
+            for (auto i = 0; i < size; i++)
+            {
+                if (this->cutOff != cutOff[i] && this->q != q[i])
+                {
+                    setCutOffAndQ(cutOff[i], q[i]);
+                }
+                else if (this->cutOff != cutOff[i])
+                {
+                    setCutoff(cutOff[i]);
+                }
+                else if (this->q != q[i])
+                {
+                    setQ(q[i]);
+                }
+                
+                y[i] = writeAndReadLowPass(x[i]);
+            }
+        }
+        
+        void processBandPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+        {
+            for (auto i = 0; i < size; i++)
+            {
+                if (this->cutOff != cutOff[i] && this->q != q[i])
+                {
+                    setCutOffAndQ(cutOff[i], q[i]);
+                }
+                else if (this->cutOff != cutOff[i])
+                {
+                    setCutoff(cutOff[i]);
+                }
+                else if (this->q != q[i])
+                {
+                    setQ(q[i]);
+                }
+                
+                y[i] = writeAndReadBandPass(x[i]);
+            }
+        }
+        
+        void processHighPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+        {
+            for (auto i = 0; i < size; i++)
+            {
+                if (this->cutOff != cutOff[i] && this->q != q[i])
+                {
+                    setCutOffAndQ(cutOff[i], q[i]);
+                }
+                else if (this->cutOff != cutOff[i])
+                {
+                    setCutoff(cutOff[i]);
+                }
+                else if (this->q != q[i])
+                {
+                    setQ(q[i]);
+                }
+                
+                y[i] = writeAndReadHighPass(x[i]);
+            }
+        }
+        
     private:
         //! compute the gain factor with resolved zero delay feedack
         void computeResolvedGain(float gain, float damping)
@@ -261,7 +358,34 @@ namespace dsp
         
     private:
         //! The sample rate
-        unit::hertz<double> sampleRate = 44100;
+        unit::hertz<double> sampleRate = 0;
+        
+        /*! Cut-off frequency of the filter
+         *  The cut-off determines the gain factor which is used in the system.
+         *  We can set this to a default value of 0.
+         */
+        unit::hertz<double> cutOff = 0;
+        
+        /*! Filter Time
+         *  The time it takes to reach for the input.
+         *  The time determines the gain factor which is used in the system.
+         *  We can set this to a default value of 0.
+         */
+        unit::second<double> time = 0;
+        
+        /*! Time constant factor for the filter time
+         *  Determines the gain factor which is used in the system.
+         *  Influences the actual time to reach for the input (~5 to reach in 100%
+         *  of the given time.
+         *  We can set this to a default value of 0.
+         */
+        double timeConstantFactor = 0;
+        
+        /*! Q factor for a resonace peak
+         *  This factor determines the damping which is used in the system.
+         *  We can therefore set this to a default value of 0.
+         */
+        double q = 0;
         
         //! Damping factor, related to q
         double damping = 1;

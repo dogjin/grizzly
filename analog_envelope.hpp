@@ -42,12 +42,22 @@ namespace dsp
             decayStage.timeConstantFactor = 4.95;
             releaseStage.timeConstantFactor = 4.95;
             
-            this->sustain = sustain;
+            setSustain(sustain);
             attackStage.time = attackTime;
-            setAttackShape(attackShape); // sets attack coefficients and adjusts sustain
             
+            setAttackShape(attackShape);
             setDecayTime(decayTime);
             setReleaseTime(releaseTime);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(float sampleRate)
+        {
+            this->sampleRate = sampleRate;
+            
+            attackStage.set(attackStage.time, sampleRate);
+            decayStage.set(decayStage.time, sampleRate);
+            releaseStage.set(releaseStage.time, sampleRate);
         }
         
         //! Set the shape, from flat to steap, of the attack
@@ -62,7 +72,6 @@ namespace dsp
             long double temp = 1.l - maximumCharge;
             attackStage.timeConstantFactor = -log(temp);
             setAttackTime(attackStage.time);
-            setSustain(sustain);
         }
         
         //! Set the attack time
@@ -97,14 +106,12 @@ namespace dsp
         void setSustain(float sustain)
         {
             this->sustain = math::clamp(sustain, 0.0f, 1.0f);
-            //
-            //            // multiply with maximum charge to correct for normalizing
-            //            adjustedSustain = this->sustain * maximumCharge;
         }
         
         //! Start the envelop by setting the mode to attack
         void start()
         {
+            // Retrigger mode toevoegen. dus dat je vanuit 0 weer begint. bool als arg
             state = State::ATTACK;
             updateFilterCoefficients();
         }
