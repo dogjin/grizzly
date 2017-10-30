@@ -74,6 +74,7 @@ namespace dsp
         {
             this->sampleRate = sampleRate;
             
+            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
             computeResolvedGain(gain, damping);
         }
         
