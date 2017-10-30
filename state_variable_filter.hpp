@@ -135,6 +135,13 @@ namespace dsp
             computeResolvedGain(gain, damping);
         }
         
+        void copyCoefficients(const StateVariableFilter& rhs)
+        {
+            gain = rhs.gain;
+            resolvedGain = rhs.resolvedGain;
+            damping = rhs.damping;
+        }
+        
         //! Set the filter state directly
         /*! The 2nd state is always reaching for the input value, while the first one is reaching towards zero. */
         void setState(T state1, T state2)
@@ -168,11 +175,6 @@ namespace dsp
         double getResolvedGain() const noexcept
         {
             return resolvedGain;
-        }
-        
-        double getDamping() const noexcept
-        {
-            return damping;
         }
         
         /////////////////////////////////////////////
