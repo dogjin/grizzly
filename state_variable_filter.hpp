@@ -72,6 +72,9 @@ namespace dsp
         //! Set the sample rate
         void setSampleRate(unit::hertz<double> sampleRate)
         {
+            if (this->sampleRate == sampleRate)
+                return;
+            
             this->sampleRate = sampleRate;
             
             gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
@@ -81,6 +84,9 @@ namespace dsp
         //! Set the cut-off frequency
         void setCutOff(unit::hertz<double> cutOff)
         {
+            if (this->cutOff == cutOff)
+                return;
+            
             this->cutOff = cutOff;
             
             gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
@@ -91,6 +97,9 @@ namespace dsp
         //! Set the cut-off frequency and q
         void setCutOffAndQ(unit::hertz<double> cutOff, double q)
         {
+            if (this->cutOff == cutOff && this->q = q)
+                return;
+            
             this->cutOff = cutOff;
             this->q = q;
             
@@ -105,6 +114,9 @@ namespace dsp
              @param timeConstantFactor The factor that influences the actual time, a factor of ~5 results in a accurate time response. */
         void setTime(unit::second<double> time, double timeConstantFactor)
         {
+            if (this->time == time && this->timeConstantFactor == timeConstantFactor)
+                return;
+            
             this->time = time;
             this->timeConstantFactor = timeConstantFactor;
             
@@ -116,6 +128,9 @@ namespace dsp
         
         void setTimeAndQ(unit::second<double> time, double timeConstantFactor, double q)
         {
+            if (this->time == time && this->timeConstantFactor == timeConstantFactor && this->q = q)
+                return;
+            
             this->time = time;
             this->timeConstantFactor = timeConstantFactor;
             this->q = q;
@@ -129,6 +144,9 @@ namespace dsp
         //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
         void setQ(double q)
         {
+            if (this->q == q)
+                return;
+            
             this->q = q;
             
             damping = 1.0 / (2.0 * q);
@@ -138,6 +156,11 @@ namespace dsp
         
         void copyCoefficients(const StateVariableFilter& rhs)
         {
+            sampleRate = rhs.sampleRate;
+            cutOff = rhs.cutOff;
+            time = rhs.time;
+            timeConstantFactor = rhs.timeConstantFactor;
+            q = rhs.q;
             gain = rhs.gain;
             resolvedGain = rhs.resolvedGain;
             damping = rhs.damping;
