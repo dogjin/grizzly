@@ -89,23 +89,23 @@ namespace dsp
             auto y = computeAliasedY();
             
             // There's a hard sync going on
-            this->syncAdjust.reset();
-            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && this->syncAdjust != nullptr)
+            syncAdjusted = false;
+            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && syncAdjusted)
             {
-                y -= *this->syncAdjust;
+                y -= this->syncAdjust;
+                return y;
+            } else {
+                // If there's a syncAdjust value, it shoud never perform a 'normal' blep
+                assert(syncAdjusted == false);
+                
+                applyRegularBandLimiting(y);
                 return y;
             }
-            
-            // If there's a syncAdjust value, it shoud never perform a 'normal' blep
-            assert(this->syncAdjust == nullptr);
-            
-            applyRegularBandLimiting(y);
-            
-            return y;
         }
         
     protected:
-        std::unique_ptr<T> syncAdjust;
+        T syncAdjust;
+        bool syncAdjusted = false;
         
         long double blepScale = 0;
         
@@ -125,12 +125,14 @@ namespace dsp
             
             if (masterPhase > 1.0l - masterIncrement)
             {
-                syncAdjust = std::make_unique<T>(beforeReset(masterPhase, masterIncrement));
+                syncAdjust = beforeReset(masterPhase, masterIncrement);
+                syncAdjusted = true;
                 return true;
             }
             else if (masterPhase < masterIncrement)
             {
-                syncAdjust = std::make_unique<T>(afterReset(masterPhase, masterIncrement));
+                syncAdjust = afterReset(masterPhase, masterIncrement);
+                syncAdjusted = true;
                 return true;
             }
             
