@@ -74,14 +74,14 @@ namespace dsp
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
     private:
-        T computeAliasedY() noexcept final
+        T computeAliasedY(const long double& phase) noexcept final
         {
-            return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
+            return generateBipolarSaw<T>(phase, this->getPhaseOffset());
         }
         
-        void applyRegularBandLimiting(T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
         {
-            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final

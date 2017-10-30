@@ -85,8 +85,10 @@ namespace dsp
         
         T convert() final
         {
+            const auto phase = this->getPhase();
+            
             // Compute the y without any anti aliasing
-            auto y = computeAliasedY();
+            auto y = computeAliasedY(phase);
             
             // There's a hard sync going on
             syncAdjusted = false;
@@ -98,7 +100,7 @@ namespace dsp
                 // If there's a syncAdjust value, it shoud never perform a 'normal' blep
                 assert(syncAdjusted == false);
                 
-                applyRegularBandLimiting(y);
+                applyRegularBandLimiting(phase, this->getPhaseOffset(), this->getIncrement(), y);
                 return y;
             }
         }
@@ -110,8 +112,8 @@ namespace dsp
         long double blepScale = 0;
         
     private:
-        virtual T computeAliasedY() noexcept = 0;
-        virtual void applyRegularBandLimiting(T& y) noexcept = 0;
+        virtual T computeAliasedY(const long double& phase) noexcept = 0;
+        virtual void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept = 0;
         virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept = 0;
         virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept = 0;
         

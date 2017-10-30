@@ -150,24 +150,29 @@ namespace dsp
             this->bandShelfGain = unit::amplitude<double>(gain).value - 1;
         }
         
-        T getState1() const
+        T getState1() const noexcept
         {
             return state1;
         }
         
-        T getState2() const
+        T getState2() const noexcept
         {
             return state2;
         }
         
-        double getGain() const
+        double getGain() const noexcept
         {
             return gain;
         }
         
-        double getResolvedGain() const
+        double getResolvedGain() const noexcept
         {
             return resolvedGain;
+        }
+        
+        double getDamping() const noexcept
+        {
+            return damping;
         }
         
         /////////////////////////////////////////////

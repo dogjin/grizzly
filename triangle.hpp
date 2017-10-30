@@ -78,18 +78,16 @@ namespace dsp
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
     private:        
-        T computeAliasedY() noexcept final
+        T computeAliasedY(const long double& phase) noexcept final
         {
-            return generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
+            return generateBipolarTriangle<T>(phase, this->getPhaseOffset());
         }
         
-        void applyRegularBandLimiting(T& y) noexcept final
-        {
-            const auto increment = this->getIncrement();
-            
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        {            
             // Downward
             auto scale = 4 * increment;
-            auto modifiedPhase = this->getPhase(); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
+            auto modifiedPhase = math::wrap<long double>(phase + phaseOffset, 0, 1); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
             modifiedPhase -= floor(modifiedPhase);
             y += scale * polyBlamp(modifiedPhase, increment);
             
