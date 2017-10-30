@@ -46,10 +46,11 @@ namespace dsp
         
         void doIncrement();
         long double doIncrementAndGetPhase();
-        long double getIncrement() const;
+        long double getIncrement() const noexcept { return increment; }
         
         void setPhase(long double phase, bool recomputeGenerators);
-        long double getPhase() const;
+        long double getPhase() const noexcept { return phase; }
+        long double getUnwrappedPhase() const noexcept { return unwrappedPhase; }
         
         template <typename... Args>
         Phasor& createSlave(Args&&... args)

@@ -41,14 +41,14 @@ namespace dsp
 {
     //! Generate a bipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarSaw(Phase phase, Phase phaseOffset)
+    constexpr T generateBipolarSaw(Phase phase, Phase phaseOffset) noexcept
     {
         return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1) * 2 - 1;
     }
     
     //! Generate a unipolar saw wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarSaw(Phase phase, Phase phaseOffset)
+    constexpr T generateUnipolarSaw(Phase phase, Phase phaseOffset) noexcept
     {
         return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1);
     }
@@ -74,22 +74,25 @@ namespace dsp
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
     private:
-        T computeAliasedY() final
+        T computeAliasedY() noexcept final
         {
             return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
         }
         
-        void applyRegularBandLimiting(T& y) final
+        void applyRegularBandLimiting(T& y) noexcept final
         {
-            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            if (this->getUnwrappedPhase() >= 1)
+                y -= insertPolyBlepAfterReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            else if (this->getUnwrappedPhase() + this->getIncrement() >= 1)
+                y -= insertPolyBlepBeforeReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }

@@ -37,52 +37,12 @@ namespace dsp
         recompute();
     }
     
-    long double GeneratorBase::getPhase() const
-    {
-        if (!phasor)
-            throw std::runtime_error("generator is not attached to a phasor");
-        
-        if (phaseDistortion)
-            return phaseDistortion(phasor->getPhase());
-        else
-            return phasor->getPhase();
-    }
-    
-    long double GeneratorBase::getIncrement() const
-    {
-        if (!phasor)
-            throw std::runtime_error("generator is not attached to a phasor");
-        
-        return phasor->getIncrement();
-    }
-    
     void GeneratorBase::setPhaseOffset(long double offset, bool recompute)
     {
         phaseOffset = offset;
         
         if (recompute)
             this->recompute();
-    }
-    
-    long double GeneratorBase::getPhaseOffset() const
-    {
-        return phaseOffset;
-    }
-    
-    const Phasor* GeneratorBase::getMaster() const
-    {
-        if (!phasor)
-            throw std::runtime_error("generator is not attached to a phasor");
-        
-        return phasor->getMaster();
-    }
-    
-    bool GeneratorBase::hasMaster() const
-    {
-        if (!phasor)
-            throw std::runtime_error("generator is not attached to a phasor");
-        
-        return phasor->hasMaster();
     }
     
     void GeneratorBase::recompute()

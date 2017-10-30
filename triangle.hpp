@@ -40,7 +40,7 @@ namespace dsp
 {
     //! Generate a unipolar triangle wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarTriangle(Phase phase, Phase phaseOffset)
+    constexpr T generateUnipolarTriangle(Phase phase, Phase phaseOffset) noexcept
     {
         phase = math::wrap<Phase>(phase + phaseOffset, 0, 1);
         return phase < 0.5 ? phase * 2 : (0.5 - (phase - 0.5)) * 2;
@@ -48,7 +48,7 @@ namespace dsp
     
     //! Generate a bipolar triangle wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset)
+    constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset) noexcept
     {
         return generateUnipolarTriangle<T>(phase, phaseOffset) * 2 - 1;
 //        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
@@ -78,12 +78,12 @@ namespace dsp
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
     private:        
-        T computeAliasedY() final
+        T computeAliasedY() noexcept final
         {
             return generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
         }
         
-        void applyRegularBandLimiting(T& y) final
+        void applyRegularBandLimiting(T& y) noexcept final
         {
             const auto increment = this->getIncrement();
             
@@ -99,12 +99,12 @@ namespace dsp
             y -= scale * polyBlamp(modifiedPhase, increment);
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarTriangle<T>(phase, phaseOffset);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarTriangle<T>(phase, phaseOffset);
         }

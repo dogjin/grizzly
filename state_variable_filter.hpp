@@ -286,13 +286,13 @@ namespace dsp
         {
             for (auto i = 0; i < size; i++)
             {
-                if (this->cutOff != cutOff[i] && this->q != q[i])
+                if (this->cutOff.value != cutOff[i] && this->q != q[i])
                 {
                     setCutOffAndQ(cutOff[i], q[i]);
                 }
-                else if (this->cutOff != cutOff[i])
+                else if (this->cutOff.value != cutOff[i])
                 {
-                    setCutoff(cutOff[i]);
+                    setCutOff(cutOff[i]);
                 }
                 else if (this->q != q[i])
                 {

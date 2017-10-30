@@ -27,14 +27,22 @@ namespace dsp
         
         void setPhasor(Phasor* phasor);
 
-        long double getPhase() const;
-        long double getIncrement() const;
+        long double getPhase() const noexcept
+        {
+            if (phaseDistortion)
+                return phaseDistortion(phasor ? phasor->getPhase() : 0);
+            else
+                return phasor ? phasor->getPhase() : 0;
+        }
+                    
+        long double getIncrement() const noexcept { return phasor ? phasor->getIncrement() : 0; }
         
         void setPhaseOffset(long double offset, bool recompute);
-        long double getPhaseOffset() const;
+        long double getPhaseOffset() const noexcept { return phaseOffset; }
+        long double getUnwrappedPhase() const noexcept { return phasor ? phasor->getUnwrappedPhase() : 0; }
         
-        const Phasor* getMaster() const;
-        bool hasMaster() const;
+        const Phasor* getMaster() const noexcept { return phasor ? phasor->getMaster() : nullptr; }
+        bool hasMaster() const noexcept { return phasor ? phasor->hasMaster() : false; }
         
         void recompute();
         
@@ -102,10 +110,10 @@ namespace dsp
         long double blepScale = 0;
         
     private:
-        virtual T computeAliasedY() = 0;
-        virtual void applyRegularBandLimiting(T& y) = 0;
-        virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) = 0;
-        virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) = 0;
+        virtual T computeAliasedY() noexcept = 0;
+        virtual void applyRegularBandLimiting(T& y) noexcept = 0;
+        virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept = 0;
+        virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept = 0;
         
         bool adjustForSync(const Phasor& master)
         {

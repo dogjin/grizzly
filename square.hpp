@@ -40,7 +40,7 @@ namespace dsp
 {
     //! Generate a square wave given a normalized phase
     template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, Phase phaseOffset, PulseWidth pulseWidth, const T& low, const T& high)
+    constexpr T generateSquare(Phase phase, Phase phaseOffset, PulseWidth pulseWidth, const T& low, const T& high) noexcept
     {
         return math::wrap<Phase>(phase + phaseOffset, 0, 1) < pulseWidth ? high : low;
     }
@@ -95,27 +95,45 @@ namespace dsp
         }
         
     private:
-        T computeAliasedY() final
+        T computeAliasedY() noexcept final
         {
             return generateSquare<T>(this->getPhase(), this->getPhaseOffset(), pulseWidth, -1, 1);
         }
         
-        void applyRegularBandLimiting(T& y) final
+        void applyRegularBandLimiting(T& y) noexcept final
         {
-            const auto phase = this->getPhase();
-            const auto phaseOffset = this->getPhaseOffset();
-            const auto increment = this->getIncrement();
+//            const auto phase = this->getPhase() + this->getPhaseOffset();
+//            const auto increment = this->getIncrement();
+//
+//            y += polyBlep<long double>(math::wrap<long double>(phase, 0.0, 1.0), increment);
+//            y -= polyBlep<long double>(math::wrap<long double>(phase + (1 - pulseWidth), 0, 1), increment);
             
-            y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
-            y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + (1 - pulseWidth), 0, 1), increment);
+            
+            
+            // Regular jump (upward)
+            if (this->getUnwrappedPhase() >= 1)
+                y += insertPolyBlepAfterReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            else if (this->getUnwrappedPhase() + this->getIncrement() >= 1)
+                y += insertPolyBlepBeforeReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+                
+            // Jump at pulse width (downward)
+            else
+            {
+                const auto phasePlusPulseWidth = this->getUnwrappedPhase() + (1 - pulseWidth);
+
+                if (phasePlusPulseWidth >= 1)
+                    y -= insertPolyBlepAfterReset(math::wrap<long double>(phasePlusPulseWidth + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+                else if (phasePlusPulseWidth + this->getIncrement() >= 1)
+                    y -= insertPolyBlepBeforeReset(math::wrap<long double>(phasePlusPulseWidth + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            }
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }

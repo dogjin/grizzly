@@ -37,11 +37,6 @@ namespace dsp
         return getPhase();
     }
     
-    long double Phasor::getIncrement() const
-    {
-        return increment;
-    }
-    
     void Phasor::setPhase(long double phase, bool recomputeGenerators)
     {
         this->phase = math::wrap<long double>(phase, 0, 1);
@@ -50,11 +45,6 @@ namespace dsp
         {
             this->recomputeGenerators();
         }
-    }
-    
-    long double Phasor::getPhase() const
-    {
-        return phase;
     }
     
     Phasor& Phasor::addSlave(std::unique_ptr<Phasor> slave)

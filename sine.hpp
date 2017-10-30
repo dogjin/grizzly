@@ -36,7 +36,7 @@
 namespace dsp
 {
     template <typename T, typename Phase>
-    constexpr T fastSin(Phase x)
+    constexpr T fastSin(Phase x) noexcept
     {
         //always wrap input angle to -PI..PI
         if (x < -math::PI<T>)
@@ -53,14 +53,14 @@ namespace dsp
     
     //! Generate a bipolar sine wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateBipolarSine(Phase phase, Phase phaseOffset)
+    constexpr T generateBipolarSine(Phase phase, Phase phaseOffset) noexcept
     {
         return fastSin<T>(math::TWO_PI<T> * (phase + phaseOffset));
     }
     
     //! Generate a unipolar sine wave given a normalized phase
     template <typename T, typename Phase>
-    constexpr T generateUnipolarSine(Phase phase, Phase phaseOffset)
+    constexpr T generateUnipolarSine(Phase phase, Phase phaseOffset) noexcept
     {
         return generateBipolarSine<T>(phase - math::HALF_PI<T> + phaseOffset) * 0.5 + 0.5;
     }
@@ -87,22 +87,22 @@ namespace dsp
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
     private:
-        T computeAliasedY() final
+        T computeAliasedY() noexcept final
         {
             return generateBipolarSine<T>(this->getPhase(), this->getPhaseOffset());
         }
         
-        void applyRegularBandLimiting(T& y) final
+        void applyRegularBandLimiting(T& y) noexcept final
         {
             
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }
