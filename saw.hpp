@@ -81,10 +81,7 @@ namespace dsp
         
         void applyRegularBandLimiting(T& y) noexcept final
         {
-            if (this->getUnwrappedPhase() >= 1)
-                y -= insertPolyBlepAfterReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
-            else if (this->getUnwrappedPhase() + this->getIncrement() >= 1)
-                y -= insertPolyBlepBeforeReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
+            y -= polyBlep<long double>(math::wrap<long double>(this->getPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final

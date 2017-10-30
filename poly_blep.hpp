@@ -31,14 +31,14 @@
 namespace dsp
 {
     template <typename T>
-    inline T insertPolyBlepAfterReset(const T& phase, const T& increment)
+    constexpr T insertPolyBlepAfterReset(const T& phase, const T& increment) noexcept
     {
         const auto x = phase / increment;
         return x + x - x * x - T(1);
     }
     
     template <typename T>
-    inline T insertPolyBlepBeforeReset(const T& phase, const T& increment)
+    constexpr T insertPolyBlepBeforeReset(const T& phase, const T& increment) noexcept
     {
         const auto x = (phase - 1.0) / increment;
         return x * x + x + x + T(1);
@@ -46,7 +46,7 @@ namespace dsp
     
     //! Polynomal band limited step function
     template <typename T>
-    inline T polyBlep(const T& phase, const T& increment)
+    constexpr T polyBlep(const T& phase, const T& increment) noexcept
     {
         if (phase < increment)
             return insertPolyBlepAfterReset(phase, increment);

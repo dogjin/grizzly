@@ -102,30 +102,11 @@ namespace dsp
         
         void applyRegularBandLimiting(T& y) noexcept final
         {
-//            const auto phase = this->getPhase() + this->getPhaseOffset();
-//            const auto increment = this->getIncrement();
-//
-//            y += polyBlep<long double>(math::wrap<long double>(phase, 0.0, 1.0), increment);
-//            y -= polyBlep<long double>(math::wrap<long double>(phase + (1 - pulseWidth), 0, 1), increment);
-            
-            
-            
-            // Regular jump (upward)
-            if (this->getUnwrappedPhase() >= 1)
-                y += insertPolyBlepAfterReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
-            else if (this->getUnwrappedPhase() + this->getIncrement() >= 1)
-                y += insertPolyBlepBeforeReset(math::wrap<long double>(this->getUnwrappedPhase() + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
-                
-            // Jump at pulse width (downward)
-            else
-            {
-                const auto phasePlusPulseWidth = this->getUnwrappedPhase() + (1 - pulseWidth);
+            const auto phase = this->getPhase() + this->getPhaseOffset();
+            const auto increment = this->getIncrement();
 
-                if (phasePlusPulseWidth >= 1)
-                    y -= insertPolyBlepAfterReset(math::wrap<long double>(phasePlusPulseWidth + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
-                else if (phasePlusPulseWidth + this->getIncrement() >= 1)
-                    y -= insertPolyBlepBeforeReset(math::wrap<long double>(phasePlusPulseWidth + this->getPhaseOffset(), 0.0, 1.0), this->getIncrement());
-            }
+            y += polyBlep<long double>(math::wrap<long double>(phase, 0.0, 1.0), increment);
+            y -= polyBlep<long double>(math::wrap<long double>(phase + (1 - pulseWidth), 0, 1), increment);
         }
         
         T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
