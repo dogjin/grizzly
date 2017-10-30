@@ -97,7 +97,7 @@ namespace dsp
         //! Set the cut-off frequency and q
         void setCutOffAndQ(unit::hertz<double> cutOff, double q)
         {
-            if (this->cutOff == cutOff && this->q = q)
+            if (this->cutOff == cutOff && this->q == q)
                 return;
             
             this->cutOff = cutOff;
