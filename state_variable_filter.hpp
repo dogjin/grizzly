@@ -159,6 +159,7 @@ namespace dsp
         
         void copyCoefficients(const StateVariableFilter& rhs)
         {
+            //TODO should we also copy the input x for types like notch
             sampleRate = rhs.sampleRate;
             cutOff = rhs.cutOff;
             time = rhs.time;
