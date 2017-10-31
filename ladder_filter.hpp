@@ -40,17 +40,23 @@ namespace dsp
 {
     //! Topology preserving 4-pole ladder filter with resolved zero delay feedback.
     /*! The ladder filter contains four stages resulting in a slope of 24 dB per octave.
-        See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
-        See "The Art Of VA Filter Design" by Vadim Zavalishin. */
+     See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
+     See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T>
     class LadderFilter
     {
     public:
         //! Construct the filter with a cut-off and sample rate
-        LadderFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
-            cutOff(cutOff),
-            sampleRate(sampleRate)
+        LadderFilter(unit::hertz<float> sampleRate) :
+        sampleRate(sampleRate)
         {
+            setSampleRate(sampleRate);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
             setCoefficients(cutOff, feedbackFactor, sampleRate);
         }
         
@@ -68,33 +74,12 @@ namespace dsp
             setCoefficients(cutOff, feedbackFactor, sampleRate);
         }
         
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
-        {
-            this->sampleRate = sampleRate;
-            setCoefficients(cutOff, feedbackFactor, sampleRate);
-        }
-        
         //! Set coefficients given a cut-off, feedback factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
         {
-            // check cut-off
-            if (cutOff.value <= 0 || cutOff.value > sampleRate.value / 2 - 10)
-                throw std::invalid_argument("cut-off <= 0 or > nyquist - 10");
-            
-            // check feedback factor
-            if (feedbackFactor < 0)
-                throw std::invalid_argument("feedback factor < 0");
-            else if (nonLinear == nullptr && feedbackFactor >= 4)
-                throw std::invalid_argument("feedback factor >= 4, filter has no saturation in feedback");
-            
-            // check sample rate
-            if (sampleRate.value <= 0)
-                throw std::invalid_argument("sample rate <= 0");
-            
             this->feedbackFactor = feedbackFactor;
-            auto integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
-            auto gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
+            const double integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
+            const double gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
             
             stage1.filter.setCutOffGain(gainFactorOnePole);
             stage2.filter.setCutOffGain(gainFactorOnePole);
@@ -112,7 +97,7 @@ namespace dsp
         //! Write a sample to the filter
         void write(const T& x)
         {
-            auto feedbackSum = stage1.feedbackFactor * stage1.filter.getIntegratorState() +
+            const double feedbackSum = stage1.feedbackFactor * stage1.filter.getIntegratorState() +
             stage2.feedbackFactor * stage2.filter.getIntegratorState() +
             stage3.feedbackFactor * stage3.filter.getIntegratorState() +
             stage4.feedbackFactor * stage4.filter.getIntegratorState();
@@ -210,7 +195,7 @@ namespace dsp
         
         //! Set a function for non-linear processing (or nullptr for linear)
         /*! Add colour to the filter with a saturating function to shape the feedback.
-            Use with caution as this migth blow up the filter */
+         Use with caution as this migth blow up the filter */
         void setNonLinear(std::function<T(const T&)> nonLinear)
         {
             this->nonLinear = nonLinear;
@@ -236,7 +221,7 @@ namespace dsp
             {
                 output = filter.writeAndReadLowPass(input);
             }
-        
+            
         public:
             //! The one-pole filter
             AnalogOnePoleFilter<T> filter;
@@ -245,18 +230,18 @@ namespace dsp
             T output = 0;
             
             //! The feedback factor for the resonance peak
-            T feedbackFactor = 0;
+            double feedbackFactor = 0;
         };
         
     private:
         //! The cut-off
-        unit::hertz<float> cutOff = sampleRate.value * 0.25;
+        unit::hertz<float> cutOff = 0;
         
         //! The sample rate
-        unit::hertz<float> sampleRate = 44100;
+        unit::hertz<float> sampleRate = 0;
         
         //! Feedback factor for resonance
-        T feedbackFactor = 0;
+        double feedbackFactor = 0;
         
         //! Filter stage 1
         Stage stage1;
@@ -269,12 +254,12 @@ namespace dsp
         
         //! Filter stage 4
         Stage stage4;
-
+        
         //! The input state before the first stage of the ladder
         T ladderInput = 0;
         
         //! Filter gain factor with resolved zero delay feedback
-        T cutOffGain = 0;
+        double cutOffGain = 0;
         
         //! Function for non-linear processing
         std::function<T(const T&)> nonLinear;
@@ -282,3 +267,4 @@ namespace dsp
 }
 
 #endif
+

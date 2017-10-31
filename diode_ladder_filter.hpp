@@ -46,10 +46,16 @@ namespace dsp
     {
     public:
         //! Construct the filter with a cut-off and sample rate
-        DiodeLadderFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate) :
-        cutOff(cutOff),
+        DiodeLadderFilter(unit::hertz<float> sampleRate) :
         sampleRate(sampleRate)
         {
+            setSampleRate(sampleRate);
+        }
+        
+        //! Set the sample rate
+        void setSampleRate(unit::hertz<float> sampleRate)
+        {
+            this->sampleRate = sampleRate;
             setCoefficients(cutOff, feedbackFactor, sampleRate);
         }
         
@@ -67,92 +73,89 @@ namespace dsp
             setCoefficients(cutOff, feedbackFactor, sampleRate);
         }
         
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
-        {
-            this->sampleRate = sampleRate;
-            setCoefficients(cutOff, feedbackFactor, sampleRate);
-        }
-        
         //! Set coefficients given a cut-off, feedback factor and sample rate
         void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
         {
             this->feedbackFactor = feedbackFactor;
             g = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
-            auto gainFactorOnePole = g / (1.0 + g);
-
-            // set one pole gain factor (G = g/(1+g))
+            const double halfG = g * 0.5;
+            const double gainFactorOnePole = g / (1.0 + g);
+            
+            // set one pole gain factor
             stage1.filter.setCutOffGain(gainFactorOnePole);
             stage2.filter.setCutOffGain(gainFactorOnePole);
             stage3.filter.setCutOffGain(gainFactorOnePole);
             stage4.filter.setCutOffGain(gainFactorOnePole);
-
-
+            
             // global G's
-            G4 = (0.5 * g) / (1 + g);
-            G3 = (0.5 * g) / (1 + g - 0.5 * g * G4);
-            G2 = (0.5 * g) / (1 + g - 0.5 * g * G3);
-            G1 = g / (1 + g - g * G2);
-
-
+            const double G4Denom = (1 + g);
+            G4 = halfG / G4Denom;
+            
+            const double G3Denom = (1 + g - 0.5 * g * G4);
+            G3 = halfG / G3Denom;
+            
+            const double G2Denom = (1 + g - 0.5 * g * G3);
+            G2 = halfG / G2Denom;
+            
+            const double G1Denom = (1 + g - g * G2);
+            G1 = g / G1Denom;
+            
             //// set stage factors
-
             // a0
             stage1.a0 = 1;
             stage2.a0 = 0.5;
             stage3.a0 = 0.5;
             stage4.a0 = 0.5;
-
+            
             // gamma
             stage1.gamma = 1 + G1 * G2;
             stage2.gamma = 1 + G2 * G3;
             stage3.gamma = 1 + G3 * G4;
             stage4.gamma = 1;
-
+            
             // epsilon
             stage1.epsilon = G2;
             stage2.epsilon = G3;
             stage3.epsilon = G4;
-            stage4.epsilon = 0; // comment this out later
-
-            // beta, denominators same at the G's... ja man doe hier iets mee ofzo
-            stage1.beta = 1 / (1 + g - g * G2);
-            stage2.beta = 1 / (1 + g - 0.5 * g * G3);
-            stage3.beta = 1 / (1 + g - 0.5 * g * G4);
-            stage4.beta = 1 / (1 + g);
-
+            //stage4.epsilon = 0;
+            
+            // beta
+            stage1.beta = 1 / G1Denom;
+            stage2.beta = 1 / G2Denom;
+            stage3.beta = 1 / G3Denom;
+            stage4.beta = 1 / G4Denom;
+            
             // delta
             stage1.delta = g;
-            stage2.delta = 0.5 * g;
-            stage3.delta = 0.5 * g;
-            stage4.delta = 0; // comment this out later
-
+            stage2.delta = halfG;
+            stage3.delta = halfG;
+            //stage4.delta = 0;
+            
             // feedback-factor
             stage1.feedbackFactor = G4 * G3 * G2;
             stage2.feedbackFactor = G4 * G3;
             stage3.feedbackFactor = G4;
             stage4.feedbackFactor = 1;
-
-            cutOffGain = 1.0 / (1.0 + feedbackFactor * G4 * G3 * G2 * G1);
+            
+            cutOffGain = 1.0 / (1.0 + feedbackFactor * stage1.feedbackFactor * G1);
         }
         
         //! Write a sample to the filter
         void write(const T& x)
         {
+            const double S4 = stage4.filter.getIntegratorState() * stage4.beta;
+            const double addBefore4 = S4 * stage4.epsilon;
             
-            double S4 = stage4.filter.getIntegratorState() * stage4.beta;
-            double addBefore4 = S4 * stage4.epsilon;
+            const double S3 = (stage3.filter.getIntegratorState() + S4 * stage3.delta) * stage3.beta;
+            const double addBefore3 = S3 * stage3.epsilon + S4;
             
-            double S3 = (stage3.filter.getIntegratorState() + S4 * stage3.delta) * stage3.beta;
-            double addBefore3 = S3 * stage3.epsilon + S4;
+            const double S2 = (stage2.filter.getIntegratorState() + S3 * stage2.delta) * stage2.beta;
+            const double addBefore2 = S2 * stage2.epsilon + S3;
             
-            double S2 = (stage2.filter.getIntegratorState() + S3 * stage2.delta) * stage2.beta;
-            double addBefore2 = S2 * stage2.epsilon + S3;
+            const double S1 = (stage1.filter.getIntegratorState() + S2 * stage1.delta) * stage1.beta;
+            const double addBefore1 = S1 * stage1.epsilon + S2;
             
-            double S1 = (stage1.filter.getIntegratorState() + S2 * stage1.delta) * stage1.beta;
-            double addBefore1 = S1 * stage1.epsilon + S2;
-            
-            double feedbackSum =
+            const double feedbackSum =
             stage1.feedbackFactor * S1 +
             stage2.feedbackFactor * S2 +
             stage3.feedbackFactor * S3 +
@@ -164,16 +167,16 @@ namespace dsp
             if (nonLinear)
                 ladderInput = nonLinear(ladderInput);
             
-            double x1 = ladderInput * stage1.gamma + addBefore1;
+            const T x1 = ladderInput * stage1.gamma + addBefore1;
             stage1(x1 * stage1.a0);
             
-            double x2 = stage1.output * stage2.gamma + addBefore2;
+            const T x2 = stage1.output * stage2.gamma + addBefore2;
             stage2(x2 * stage2.a0);
             
-            double x3 = stage2.output * stage3.gamma + addBefore3;
+            const T x3 = stage2.output * stage3.gamma + addBefore3;
             stage3(x3 * stage3.a0);
             
-            double x4 = stage3.output * stage4.gamma + addBefore4;
+            const T x4 = stage3.output * stage4.gamma + addBefore4;
             stage4(x4 * stage4.a0);
         }
         
@@ -255,18 +258,6 @@ namespace dsp
             return readSecondOrderHighPass();
         }
         
-        //! Set a function for non-linear processing (or nullptr for linear) within the filter stage
-        /*! Add colour to the filter with a saturating function to shape the feedback.
-         Use with caution as this migth blow up the filter.
-         See globalNonLinear for a non-linear component before the first stage */
-//        void setNonLinearStage(std::function<T(const T&)> nonLinear)
-//        {
-//            stage1.filter.nonLinear = nonLinear;
-//            stage2.filter.nonLinear = nonLinear;
-//            stage3.filter.nonLinear = nonLinear;
-//            stage4.filter.nonLinear = nonLinear;
-//        }
-        
     public:
         //! Function for global non-linear processing
         //! A non-linear can be placed just before the first stage
@@ -302,14 +293,14 @@ namespace dsp
         };
         
     private:
-        //! The cut-off
-        unit::hertz<float> cutOff = sampleRate.value * 0.25;
-        
         //! The sample rate
-        unit::hertz<float> sampleRate = 44100;
+        unit::hertz<float> sampleRate = 0;
+        
+        //! The cut-off
+        unit::hertz<float> cutOff = 0;
         
         //! Feedback factor for resonance
-        T feedbackFactor = 0;
+        double feedbackFactor = 0;
         
         //! Filter stage 1
         Stage stage1;
@@ -327,6 +318,7 @@ namespace dsp
         T ladderInput = 0;
         
         double g = 0;
+        
         //! Filter gain factor with resolved zero delay feedback
         T cutOffGain = 0;
         
