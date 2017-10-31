@@ -104,8 +104,9 @@ namespace dsp
             this->q = q;
             
             gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
+            damping = 1.0 / (2.0 * q);
             
-            setQ(q);
+            computeResolvedGain(gain, damping);
         }
         
         //! Set the time
@@ -138,7 +139,9 @@ namespace dsp
             const double t = time.value * math::SQRT_HALF<double>;
             gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
             
-            setQ(q);
+            damping = 1.0 / (2.0 * q);
+            
+            computeResolvedGain(gain, damping);
         }
         
         //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
