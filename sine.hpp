@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <moditone/math/constants.hpp>
+#include <moditone/math/wrap.hpp>
 
 #include "generator.hpp"
 
@@ -55,7 +56,7 @@ namespace dsp
     template <typename T, typename Phase>
     constexpr T generateBipolarSine(Phase phase, Phase phaseOffset) noexcept
     {
-        return fastSin<T>(math::TWO_PI<T> * (phase + phaseOffset));
+        return fastSin<T>(math::wrap<Phase>(math::TWO_PI<T> * phase + phaseOffset, -math::PI<Phase>, math::PI<Phase>));
     }
     
     //! Generate a unipolar sine wave given a normalized phase
