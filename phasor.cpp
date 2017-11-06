@@ -57,16 +57,6 @@ namespace dsp
         return *slaves.back();
     }
     
-    const Phasor* Phasor::getMaster() const
-    {
-        return master;
-    }
-    
-    bool Phasor::hasMaster() const
-    {
-        return master != nullptr;
-    }
-    
     void Phasor::incrementUnwrappedPhases()
     {
         unwrappedPhase = phase + increment;
