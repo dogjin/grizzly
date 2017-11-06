@@ -129,7 +129,7 @@ namespace dsp
         
         void setTimeAndQ(unit::second<double> time, double timeConstantFactor, double q)
         {
-            if (this->time == time && this->timeConstantFactor == timeConstantFactor && this->q = q)
+            if (this->time == time && this->timeConstantFactor == timeConstantFactor && this->q == q)
                 return;
             
             this->time = time;
