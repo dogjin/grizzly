@@ -35,6 +35,7 @@
 
 #include "generator.hpp"
 #include "poly_blep.hpp"
+#include "wavetable.hpp"
 
 namespace dsp
 {
@@ -121,6 +122,8 @@ namespace dsp
     private:
         //! The pulse width used to generate the square
         float pulseWidth = 0.5f;
+        
+//        Wavetable wavetable;
     };
 }
 

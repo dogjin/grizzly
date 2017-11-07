@@ -36,6 +36,7 @@
 
 #include "generator.hpp"
 #include "poly_blep.hpp"
+#include "wavetable.hpp"
 
 namespace dsp
 {
@@ -71,7 +72,11 @@ namespace dsp
         public BandLimitedGenerator<T>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        BandLimitedSaw(std::size_t wavetableSize) :
+            wavetable(wavetableSize)
+        {
+            wavetable.fill([](auto phase){ return generateBipolarSaw<T, long double>(phase, 0); });
+        }
         
     private:
         T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
@@ -93,6 +98,9 @@ namespace dsp
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
+        
+    private:
+        Wavetable<T> wavetable;
     };
 }
 
