@@ -76,10 +76,10 @@ namespace dsp
     //! Generates a bipolar square wave using the polyBLEP algorithm for anti aliasing
     template <typename T>
     class BandLimitedSquare :
-        public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedSquare<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedSquare<T>>::BandLimitedGenerator;
         
         //! Change the pulse width
         /*! @param recompute Recompute the y to return from read() */
@@ -94,13 +94,12 @@ namespace dsp
                 this->recompute();
         }
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1, 1);
         }
         
-        void applyRegularBandLimiting(const long double& phase_, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase_, const long double& phaseOffset, const long double& increment, T& y)
         {
             const auto phase = phase_ + phaseOffset;
 
@@ -108,12 +107,12 @@ namespace dsp
             y -= polyBlep<long double>(math::wrap<long double>(phase + (1 - pulseWidth), 0, 1), increment);
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1.0l, 1.0l);
         }

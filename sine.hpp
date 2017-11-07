@@ -82,28 +82,27 @@ namespace dsp
     //! Generates a bipolar sine wave using the polyBLEP algorithm for anti aliasing when synced
     template <typename T>
     class BandLimitedSine :
-        public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedSine<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedSine<T>>::BandLimitedGenerator;
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
             
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }

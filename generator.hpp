@@ -76,7 +76,7 @@ namespace dsp
         T y;
     };
     
-    template <typename T>
+    template <typename T, typename Derived>
     class BandLimitedGenerator :
         public Generator<T>
     {
@@ -89,7 +89,7 @@ namespace dsp
             const auto phaseOffset = this->getPhaseOffset();
             
             // Compute the y without any anti aliasing
-            auto y = computeAliasedY(phase, phaseOffset);
+            auto y = self().computeAliasedY(phase, phaseOffset);
             
             // There's a hard sync going on
             syncAdjusted = false;
@@ -102,7 +102,7 @@ namespace dsp
                 // If there's a syncAdjust value, it shoud never perform a 'normal' blep
                 assert(syncAdjusted == false);
                 
-                applyRegularBandLimiting(phase, phaseOffset, this->getIncrement(), y);
+                self().applyRegularBandLimiting(phase, phaseOffset, this->getIncrement(), y);
                 return y;
             }
         }
@@ -114,10 +114,8 @@ namespace dsp
         long double blepScale = 0;
         
     private:
-        virtual T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept = 0;
-        virtual void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept = 0;
-        virtual T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept = 0;
-        virtual T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept = 0;
+        Derived& self() noexcept { return static_cast<Derived&>(*this); }
+        const Derived& self() const noexcept { return static_cast<Derived&>(*this); }
         
         bool adjustForSync(const Phasor& master)
         {
@@ -163,12 +161,12 @@ namespace dsp
             const long double phaseDifffSlaveToEnd = phaseEndOfSlave - phase;
             
             // bereken de 'on-geblepte' eind positie van de golf
-            const auto slaveYAtEnd = computeAliasedYBeforeReset(phase, phaseOffset);
+            const auto slaveYAtEnd = self().computeAliasedYBeforeReset(phase, phaseOffset);
             
             // bereken de 'on-geblepte' begin positie van de golf
             // we incrementen de phase door increment erbij op te tellen.
             // Maaaar, we moeten doen alsof de phaseEndOfSlave het eindpunt was en dus hiermee wrappen (aftrekken)
-            const auto slaveYatBegin = computeAliasedYAfterReset(phase + increment - phaseEndOfSlave, phaseOffset);
+            const auto slaveYatBegin = self().computeAliasedYAfterReset(phase + increment - phaseEndOfSlave, phaseOffset);
 //            const auto slaveYatBegin = computeAliasedYAfterReset(0, this->phaseOffset); // minder accuraat maar werkt wel, je moet iets verder zijn dan phase 0
             
             // Bereken de scaling relatief tot de master

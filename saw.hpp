@@ -68,28 +68,27 @@ namespace dsp
     
     template <typename T>
     class BandLimitedSaw :
-        public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedSaw<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedSaw<T>>::BandLimitedGenerator;
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
             y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
         }
         
-        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYBeforeReset(long double phase, long double phaseOffset) noexcept
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
         
-        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept final
+        T computeAliasedYAfterReset(long double phase, long double phaseOffset) noexcept
         {
             return generateBipolarSaw<T>(phase, phaseOffset);
         }
