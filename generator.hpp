@@ -93,7 +93,8 @@ namespace dsp
             
             // There's a hard sync going on
             syncAdjusted = false;
-            if (this->hasMaster() && this->adjustForSync(*this->getMaster()) && syncAdjusted)
+            auto master = this->getMaster();
+            if (master != nullptr && this->adjustForSync(*master) && syncAdjusted)
             {
                 y -= this->syncAdjust;
                 return y;
@@ -115,7 +116,7 @@ namespace dsp
         long double blepScale = 0;
         
     private:
-        virtual T computeAliasedY(const long double phase, const long double phaseOffset) noexcept = 0;
+        virtual T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept = 0;
         virtual void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept = 0;
         
         bool adjustForSync(const Phasor& master)

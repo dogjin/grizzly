@@ -95,7 +95,7 @@ namespace dsp
         }
         
     private:
-        T computeAliasedY(const long double phase, const long double phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1, 1);
         }

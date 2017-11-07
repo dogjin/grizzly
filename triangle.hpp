@@ -77,8 +77,8 @@ namespace dsp
     public:
         using BandLimitedGenerator<T>::BandLimitedGenerator;
         
-    private:        
-        T computeAliasedY(const long double phase, const long double phaseOffset) noexcept final
+    private:
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
         {
             return generateBipolarTriangle<T>(phase, phaseOffset);
         }

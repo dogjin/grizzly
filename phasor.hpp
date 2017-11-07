@@ -60,8 +60,8 @@ namespace dsp
         
         Phasor& addSlave(std::unique_ptr<Phasor> slave);
         
-        const Phasor* getMaster() const;
-        bool hasMaster() const;
+        const Phasor* getMaster() const noexcept { return master; }
+        bool hasMaster() const noexcept { return master != nullptr; }
         
     protected:
         std::set<GeneratorBase*> generators;
