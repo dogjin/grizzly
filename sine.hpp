@@ -73,7 +73,7 @@ namespace dsp
     public:
         using Generator<T>::Generator;
         
-        T convert() final
+        T convert() noexcept final
         {
             return generateBipolarSine<T>(this->getPhase(), this->getPhaseOffset());
         }

@@ -60,7 +60,7 @@ namespace dsp
     public:
         using Generator<T>::Generator;
         
-        T convert() final
+        T convert() noexcept final
         {
             return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
         }

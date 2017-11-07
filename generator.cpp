@@ -45,7 +45,7 @@ namespace dsp
             this->recompute();
     }
     
-    void GeneratorBase::recompute()
+    void GeneratorBase::recompute() noexcept
     {
         if (phasor)
             recomputeRequested();

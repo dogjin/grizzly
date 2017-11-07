@@ -44,13 +44,13 @@ namespace dsp
         const Phasor* getMaster() const noexcept { return phasor ? phasor->getMaster() : nullptr; }
         bool hasMaster() const noexcept { return phasor ? phasor->hasMaster() : false; }
         
-        void recompute();
+        void recompute() noexcept;
         
     public:
         std::function<long double(long double)> phaseDistortion;
         
     private:
-        virtual void recomputeRequested() = 0;
+        virtual void recomputeRequested() noexcept = 0;
         
     private:
         Phasor* phasor = nullptr;
@@ -67,10 +67,10 @@ namespace dsp
         
         const T& read() const { return y; }
         
-        void recomputeRequested() final { y = convert(); }
+        void recomputeRequested() noexcept final { y = convert(); }
         
     private:
-        virtual T convert() = 0;
+        virtual T convert() noexcept = 0;
         
     private:
         T y;
@@ -83,7 +83,7 @@ namespace dsp
     public:
         using Generator<T>::Generator;
         
-        T convert() final
+        T convert() noexcept final
         {
             const auto phase = this->getPhase();
             const auto phaseOffset = this->getPhaseOffset();
