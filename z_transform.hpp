@@ -3,7 +3,7 @@
  This file is a part of Grizzly, a modern C++ library for digital signal
  processing. See https://github.com/dsperados/grizzly for more information.
  
- Copyright (C) 2016-2017 Dsperados <info@dsperados.com>
+ Copyright (C) 2016-2018 Dsperados <info@dsperados.com>
  
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -25,44 +25,81 @@
  
  */
 
-#ifndef GRIZZLY_Z_TRANSFORM_HPP
-#define GRIZZLY_Z_TRANSFORM_HPP
+#pragma once
 
 #include <complex>
 
-#include <moditone/unit/radian.hpp>
-
 namespace dsp
 {
-    //! Apply z-transform on a first order filter difference equation
-    // Needs more testing
-    auto poleZeroFilter(float a0, float a1, float b1)
-    {
-        return [=](float angularFrequency)
-        {
-            return a0 * (1.f + (a1 / a0) * std::polar<float>(1, -angularFrequency)) / (1.f + b1 * std::polar<float>(1, -angularFrequency));
-        };
-    }
-    
-    
-    //! Apply z-transform on a input sequence and return the transfer function
-    /*! The transfer function can be used to retrieve the spectrum bin of your input sequence
-        at a specific frequency. The magnitude and angle of the returned complex give provide
-        you the amplitude and phase of the given frequency. */
+    /*! @brief Apply the Z-transform on an input sequence
+     *
+     *  @discussion Apply the Z-transform given a series of numbers.
+     *  The result is a function that takes a normalized frequency. Plugging in a frequency
+     *  in this function, results in the transer of a single frequency.
+     *  Possible usage: Apply it on an impulse response of a filter. Plug in several frequencies
+     *  and plot the abs() of the result to display the magnitudes.
+     *
+     *  @return A lambda with signature std::complex<Iterator::value_type>(Iterator::value_type)
+     *
+     *  @see zTransformpoleZero zTransformbiquad
+     */
     template <typename Iterator>
     auto zTransform(Iterator begin, Iterator end)
     {
-        return [=](unit::radian<float> angularFrequency)
+        return [=](typename Iterator::value_type angularFrequency)
         {
-            std::complex<float> accumulator(0, 0);
+            std::complex<typename Iterator::value_type> accumulator(0, 0);
             size_t index = 0;
             
             for (auto it = begin; it != end; ++it)
-                accumulator += *it * std::polar<float>(1, -angularFrequency.value * index++);
-
+                accumulator += *it * std::polar<typename Iterator::value_type>(1, -angularFrequency * index++);
+            
             return accumulator;
+        };
+    }
+    
+    /*! @brief Apply the Z-transform on a first order filter difference equation.
+     *
+     *  @discussion Apply the Z-transform given first order filter coefficients.
+     *  The result is a function that takes a normalized frequency. Plugging in a frequency
+     *  in this function, results in the transer of a single frequency.
+     *  Possible usage: Tesing a cetrain filter setting. Plug in several frequencies and plot
+     *  the abs() of the result to display the magnitudes.
+     *
+     *  @return A lambda with signature std::complex<T>(T)
+     *
+     *  @see zTransform zTransformbiquad
+     */
+    template <typename T>
+    auto zTransformpoleZero(T a0, T a1, T b1)
+    {
+        return [=](T angularFrequency)
+        {
+            return  (a0 + a1 * std::polar<T>(T(1), -angularFrequency)) /
+            (T(1) + b1 * std::polar<T>(T(1), -angularFrequency));
+        };
+    }
+    
+    /*! @brief Apply the Z-transform on a biquad filter difference equation.
+     *
+     *  @discussion Apply the Z-transform given biquad filter coefficients.
+     *  The result is a function that takes a normalized frequency. Plugging in a frequency
+     *  in this function, results in the transer of a single frequency.
+     *  Possible usage: Tesing a cetrain filter setting. Plug in several frequencies and plot
+     *  the abs() of the result to display the magnitudes.
+     *
+     *  @return A lambda with signature std::complex<T>(T)
+     *
+     *  @see zTransform zTransformpoleZero
+     */
+    template <typename T>
+    auto zTransformbiquad(T a0, T a1, T a2, T b1, T b2)
+    {
+        return [=](T angularFrequency)
+        {
+            return  (a0 + a1 * std::polar<T>(T(1), -angularFrequency) + a2 * std::polar<T>(T(1), T(-2) * angularFrequency)) /
+            (T(1) + b1 * std::polar<T>(T(1), -angularFrequency) + b2 * std::polar<T>(T(1), T(-2) * angularFrequency));
         };
     }
 }
 
-#endif
