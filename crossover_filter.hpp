@@ -69,18 +69,20 @@ namespace dsp
         {
             if (order == CrossoverFilterOrder::FIRST)
             {
-                lowPass.firstOrderFilter.write(input);
-                highPass.firstOrderFilter.write(input);
-            } else {
-                lowPass.cascade.write(input);
-                highPass.cascade.write(input);
+                lowBand.firstOrderFilter.write(input);
+                highBand.firstOrderFilter.write(input);
+            }
+            else
+            {
+                lowBand.cascade.write(input);
+                highBand.cascade.write(input);
             }
         }
         
         //! Read the low band of the filter
         T readLow() const
         {
-            return (order == CrossoverFilterOrder::FIRST) ? lowPass.firstOrderFilter.read() : lowPass.cascade.readOutput();
+            return (order == CrossoverFilterOrder::FIRST) ? lowBand.firstOrderFilter.read() : lowBand.cascade.readOutput();
         }
         
         //! read the high band of the filter
@@ -89,11 +91,11 @@ namespace dsp
             switch (order)
             {
                 case CrossoverFilterOrder::FIRST:
-                    return highPass.firstOrderFilter.read();
+                    return highBand.firstOrderFilter.read();
                 case CrossoverFilterOrder::SECOND:
-                    return -highPass.cascade.readOutput(); // invert high-pass band to keep the low and high in phase
+                    return -highBand.cascade.readOutput(); // invert high-pass band to keep the low and high in phase
                 default:
-                    return highPass.cascade.readOutput();
+                    return highBand.cascade.readOutput();
             }
         }
         
@@ -102,8 +104,8 @@ namespace dsp
         {
             this->order = order;
             
-            lowPass.eraseFilters();
-            highPass.eraseFilters();
+            lowBand.eraseFilters();
+            highBand.eraseFilters();
             
             std::size_t numberOfStagesInCascade = 0;
             switch (order)
@@ -114,13 +116,13 @@ namespace dsp
                 case CrossoverFilterOrder::EIGHTH: numberOfStagesInCascade = 4; break;
             }
             
-            lowPass.biquads.resize(numberOfStagesInCascade);
-            highPass.biquads.resize(numberOfStagesInCascade);
+            lowBand.biquads.resize(numberOfStagesInCascade);
+            highBand.biquads.resize(numberOfStagesInCascade);
             
             for (size_t i = 0; i < numberOfStagesInCascade; ++i)
             {
-                lowPass.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowPass.biquads[i]);
-                highPass.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &highPass.biquads[i]);
+                lowBand.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowBand.biquads[i]);
+                highBand.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &highBand.biquads[i]);
             }
             
             setCoefficients();
@@ -147,37 +149,37 @@ namespace dsp
             switch (order)
             {
                 case CrossoverFilterOrder::FIRST:
-                    lowPassOnePoleZero(lowPass.firstOrderFilter.coefficients, sampleRate, cutOff);
-                    highPassOnePoleZero(highPass.firstOrderFilter.coefficients, sampleRate, cutOff);
+                    lowPassOnePoleZero(lowBand.firstOrderFilter.coefficients, sampleRate, cutOff);
+                    highPassOnePoleZero(highBand.firstOrderFilter.coefficients, sampleRate, cutOff);
                     break;
                     
                 case CrossoverFilterOrder::SECOND:
-                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
-                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.5);
+                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, 0.5);
+                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, 0.5);
                     break;
                     
                 case CrossoverFilterOrder::FOURTH:
                     // low-pass coefficients
-                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     
                     // high-pass coefficients
-                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
                     break;
                     
                 case CrossoverFilterOrder::EIGHTH:
                     // low-pass coefficients according to Butterworth filters
-                    lowPass(lowPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    lowPass(lowPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    lowPass(lowPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    lowPass(lowPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    lowPass(lowBand.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    lowPass(lowBand.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     
                     // high-pass coefficients according to Butterworth filters
-                    highPass(highPass.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    highPass(highPass.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    highPass(highPass.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    highPass(highPass.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
+                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
+                    highPass(highBand.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
+                    highPass(highBand.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
                     break;
             }
         }
@@ -215,10 +217,10 @@ namespace dsp
         unit::hertz<float> sampleRate = 44100;
         
         //! A band for low-passing the input signal
-        Band lowPass;
+        Band lowBand;
         
         //! A band for high-passing the input signal
-        Band highPass;
+        Band highBand;
     };
 }
 

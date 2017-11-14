@@ -37,9 +37,10 @@ namespace  dsp
     class ParameterSmoother
     {
     public:
-        ParameterSmoother(unit::second<float> time, unit::hertz<float> sampleRate) :
-        filter(time, sampleRate)
+        ParameterSmoother(unit::second<double> time, unit::hertz<double> sampleRate) :
+        filter(sampleRate)
         {
+            filter.setTime(time, 5);
         }
         
         void write()
@@ -76,14 +77,14 @@ namespace  dsp
             return read();
         }
         
-        void setTime(unit::second<float> time)
+        void setTime(unit::second<double> time)
         {
             filter.setTime(time);
         }
         
         void setSampleRate(unit::hertz<float> sampleRate)
         {
-            filter.setSampleRate(sampleRate);
+            filter.setSampleRate(sampleRate.value);
         }
         
         bool reachedDestination()
