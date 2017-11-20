@@ -29,22 +29,23 @@
 #define GRIZZLY_DISTORTION_HPP
 
 #include <cmath>
+#include <stdexcept>
 
 #include "clip.hpp"
 
 namespace dsp
 {
     template <class T, T (*saturator)(T)>
-    class normalizedSaturator
+    class NormalizedSaturator
     {
     public:
-        normalizedSaturator()
+        NormalizedSaturator()
         {
             setDownwardFactor(1);
             setUpwardFactor(1);
         }
         
-        normalizedSaturator(float downwardFactor, float upwardFactor)
+        NormalizedSaturator(float downwardFactor, float upwardFactor)
         {
             if (downwardFactor <= 0 || upwardFactor <=0)
                 throw std::runtime_error("downwardFactor <= 0 || upwardFactor <= 0");
@@ -81,12 +82,82 @@ namespace dsp
             downwardNormalizeFactor = 1.0 / saturator(downwardFactor);
         }
         
+        void setDownAndUpwardFactor(float factorDown, float factorUp)
+        {
+            setDownwardFactor(factorDown);
+            setUpwardFactor(factorUp);
+        }
+        
+        // set both factor (iets sneller)
+        void setFactor(float factor)
+        {
+            upwardFactor = factor;
+            downwardFactor = factor;
+            
+            upwardNormalizeFactor = 1.0 / saturator(upwardFactor);
+            downwardNormalizeFactor = upwardNormalizeFactor;
+        }
+        
     private:
         float upwardFactor = 1;
         float upwardNormalizeFactor = 1;
         
         float downwardFactor = 1;
         float downwardNormalizeFactor = 1;
+    };
+    
+    
+    template <class T>
+    class RoundedClip
+    {
+    public:
+        RoundedClip() = default;
+        
+        RoundedClip(float threshold) :
+        threshold(threshold) {}
+        
+        T process(T x)
+        {
+            if (std::abs(x) < threshold)
+                return x;
+            
+            const float oneMinusThrehold = 1.f - threshold;
+            
+            if (x > 0)
+            {
+                const auto interpolatedValue = computeInterpolatedValue((x - threshold) / (oneMinusThrehold * 1.5));
+                return oneMinusThrehold * interpolatedValue + threshold;
+            }
+            else if (x < 0)
+            {
+                const auto interpolatedValue = computeInterpolatedValue((-x - threshold) / (oneMinusThrehold * 1.5));
+                return oneMinusThrehold * -interpolatedValue - threshold;
+            }
+            
+            return 0;
+        }
+        
+        T operator()(T x)
+        {
+            return process(x);
+        }
+        
+        void setThreshold(float threshold)
+        {
+            this->threshold = threshold;
+        }
+        
+    private:
+        T computeInterpolatedValue(T x)
+        {
+            if (std::abs(x) < 1)
+                return x * (1.5 - 0.5 * x * x);
+            else
+                return x > 0 ? 1 : -1;
+        }
+        
+    private:
+        float threshold = 1;
     };
 }
 

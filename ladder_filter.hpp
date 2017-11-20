@@ -35,6 +35,7 @@
 #include <moditone/unit/hertz.hpp>
 
 #include "analog_one_pole_filter.hpp"
+#include "topology_preserving_one_pole_filter.hpp"
 
 namespace dsp
 {
@@ -81,10 +82,10 @@ namespace dsp
             const double integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
             const double gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
             
-            stage1.filter.setCutOffGain(gainFactorOnePole);
-            stage2.filter.setCutOffGain(gainFactorOnePole);
-            stage3.filter.setCutOffGain(gainFactorOnePole);
-            stage4.filter.setCutOffGain(gainFactorOnePole);
+            stage1.filter.setGain(gainFactorOnePole);
+            stage2.filter.setGain(gainFactorOnePole);
+            stage3.filter.setGain(gainFactorOnePole);
+            stage4.filter.setGain(gainFactorOnePole);
             
             stage1.feedbackFactor = gainFactorOnePole * gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
             stage2.feedbackFactor = gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
@@ -97,10 +98,10 @@ namespace dsp
         //! Write a sample to the filter
         void write(const T& x)
         {
-            const double feedbackSum = stage1.feedbackFactor * stage1.filter.getIntegratorState() +
-            stage2.feedbackFactor * stage2.filter.getIntegratorState() +
-            stage3.feedbackFactor * stage3.filter.getIntegratorState() +
-            stage4.feedbackFactor * stage4.filter.getIntegratorState();
+            const double feedbackSum = stage1.feedbackFactor * stage1.filter.getState() +
+            stage2.feedbackFactor * stage2.filter.getState() +
+            stage3.feedbackFactor * stage3.filter.getState() +
+            stage4.feedbackFactor * stage4.filter.getState();
             
             // Multiply cut-off gain with the input minus the feedback to get the input for the first stage
             ladderInput = passBandGain ? (x * (1.0 + feedbackFactor) - feedbackFactor * feedbackSum) * cutOffGain : (x - feedbackFactor * feedbackSum) * cutOffGain;
@@ -196,19 +197,22 @@ namespace dsp
         //! Set a function for non-linear processing (or nullptr for linear)
         /*! Add colour to the filter with a saturating function to shape the feedback.
          Use with caution as this migth blow up the filter */
-        void setNonLinear(std::function<T(const T&)> nonLinear)
-        {
-            this->nonLinear = nonLinear;
-            stage1.filter.nonLinear = nonLinear;
-            stage2.filter.nonLinear = nonLinear;
-            stage3.filter.nonLinear = nonLinear;
-            stage4.filter.nonLinear = nonLinear;
-        }
+//        void setNonLinear(std::function<T(const T&)> nonLinear)
+//        {
+//            this->nonLinear = nonLinear;
+//            stage1.filter.nonLinear = nonLinear;
+//            stage2.filter.nonLinear = nonLinear;
+//            stage3.filter.nonLinear = nonLinear;
+//            stage4.filter.nonLinear = nonLinear;
+//        }
         
     public:
         //! Pass-band gain compensation
         /*! Compensate for the loss of gain when the feedback factor increases, used in ARP filter models */
         bool passBandGain = false;
+        
+        //! Function for non-linear processing
+        std::function<T(const T&)> nonLinear;
         
     private:
         //! The filter stage
@@ -224,7 +228,8 @@ namespace dsp
             
         public:
             //! The one-pole filter
-            AnalogOnePoleFilter<T> filter;
+//            AnalogOnePoleFilter<T> filter;
+            TopologyPreservingOnePoleFilterNonLinearII<float> filter;
             
             //! The output of the filter
             T output = 0;
@@ -260,9 +265,6 @@ namespace dsp
         
         //! Filter gain factor with resolved zero delay feedback
         double cutOffGain = 0;
-        
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
     };
 }
 
