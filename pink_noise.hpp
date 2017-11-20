@@ -48,8 +48,7 @@ namespace dsp
         /*! The higher the order, the better the quality */
         PinkNoise(std::size_t order)
         {
-            // Create the bins
-            bins.resize(order);
+            setOrder(order);
         }
         
         //! Generate a new pink noise sample
@@ -57,18 +56,20 @@ namespace dsp
         T generate(Engine& engine)
         {
             // Generate a new white noise sample every frame
-            const auto white = math::generateUniformRandom<T>(-1, 1, engine);
+            auto white = math::generateUniformRandom<T>(-1, 1, engine);
             if (bins.size() == 0)
                 return white;
             
+            white *= factor;
+            
             // Find the correct bin we need to update
-            const auto bin = std::min<float>(countTrailingZeroes(counter++), bins.size());
+            const auto bin = std::min<float>(countTrailingZeroes(counter++), bins.size() - 1);
             
             if (bin > 0)
             {
                 // Subtract the previous value, generate a new sample and add it to the running sum
                 runningSum -= bins[bin];
-                bins[bin] = math::generateUniformRandom<T>(-1, 1, engine);
+                bins[bin] = math::generateUniformRandom<T>(-1, 1, engine) * factor;
                 runningSum += bins[bin];
             }
             
@@ -80,6 +81,8 @@ namespace dsp
         void setOrder(std::size_t order)
         {
             bins.resize(order);
+            factor = T(1) / (order + 1);
+            
             runningSum = std::accumulate(bins.begin(), bins.end(), T(0));
         }
         
@@ -108,6 +111,9 @@ namespace dsp
         
         //! A counter to drive the bin selection algorithm
         std::uint64_t counter = 1;
+        
+        //! The factor to multiply with every octave
+        T factor = 0;
     };
 }
 
