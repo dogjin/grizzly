@@ -19,17 +19,16 @@ namespace dsp
     template <typename T>
     std::unique_ptr<float> newtonSolver(const std::function<T(T)> function,
                                         const std::function<T(T)> derivative,
-                                        T estimate, const float tolerance, const size_t maxIterations)
+                                        T estimate, const float error, const size_t maxIterations)
     {
-        T result = estimate;
-        
         for (size_t i = 0; i < maxIterations; i++)
         {
             // update result
-            result -= function(estimate) / derivative(estimate);
+            auto result = estimate - function(estimate) / derivative(estimate);
             
-            // check if the result is close enough
-            if (std::abs(result - estimate) < std::abs(result) * tolerance)
+            auto residu = std::abs(result - estimate);
+            // check if the residu is below the error
+            if (residu < error)
                 return std::make_unique<float>(result);
             
             // update estimate with current result
