@@ -5,6 +5,10 @@
 //  Created by Milan van der Meer on 22/11/2017.
 //
 
+#include <vector>
+
+#include "biquad.hpp"
+
 namespace dsp
 {
     template <typename T>
@@ -37,24 +41,24 @@ namespace dsp
             return eq;
         }
         
-        void setLowShelf(float cutOff_Hz, float q , float gain_dB)
+        void setLowShelf(float cutOff_Hz, float q, float gain_dB)
         {
             dsp::lowShelf(lowShelf.coefficients, sampleRate, cutOff_Hz, q, gain_dB);
         }
         
-        void setMidBand(size_t index, float cutOff_Hz, float q , float gain_dB)
+        void setMidBand(size_t index, float cutOff_Hz, float q, float gain_dB)
         {
             dsp::peakConstantQ(midBands[index].coefficients, sampleRate, cutOff_Hz, q, gain_dB);
         }
         
-        void setHighShelf(float cutOff_Hz, float q , float gain_dB)
+        void setHighShelf(float cutOff_Hz, float q, float gain_dB)
         {
             dsp::highShelf(highShelf.coefficients, sampleRate, cutOff_Hz, q, gain_dB);
         }
         
     public:
         BiquadDirectForm1<T> lowShelf;
-        vector<BiquadDirectForm1<T>> midBands;
+        std::vector<BiquadDirectForm1<T>> midBands;
         BiquadDirectForm1<T> highShelf;
         
     private:
