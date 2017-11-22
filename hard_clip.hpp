@@ -25,8 +25,8 @@
  
  */
 
-#ifndef GRIZZLY_CLIP_HPP
-#define GRIZZLY_CLIP_HPP
+#ifndef GRIZZLY_HARD_CLIP_HPP
+#define GRIZZLY_HARD_CLIP_HPP
 
 #include <cmath>
 
@@ -40,7 +40,6 @@ namespace dsp
         else
             return x;
     }
-    
     
     template <class T>
     class HardClipAntiAliased
