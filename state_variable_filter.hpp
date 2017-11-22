@@ -1,7 +1,7 @@
 /*
  
  This file is a part of Grizzly, a modern C++ library for digital signal
- processing. See https://github.com/dsperados/grizzly for more information.
+ processing. See https://github.com/moditone/grizzly for more information.
  
  Copyright (C) 2017 Dsperados <info@dsperados.com>
  
