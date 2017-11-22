@@ -128,7 +128,7 @@ TEST_CASE("Biquad")
         
         SECTION("peakConstantSkirt()")
         {
-            peakConstantSkirt(coefficients, 44100, 10000, 0.707, 6);
+            peak(coefficients, 44100, 10000, 0.707, 6);
             
             CHECK(coefficients.a0 == Approx(1.32968616));
             CHECK(coefficients.a1 == Approx(-0.194630221));

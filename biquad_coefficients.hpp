@@ -198,7 +198,7 @@ namespace dsp
     
     //! Set biquad to peak filtering with a constant peak gain
     template <class T>
-    void peakConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
+    void peak(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
         const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
         const auto sinw = sin(w);
@@ -216,37 +216,44 @@ namespace dsp
         coefficients.b2 = (1 - alpha / A) / b0;
     }
     
-    //! Set biquad to peak filtering with a constant Q
+    //! Set biquad to peak filtering with a constant Q, coeffs taken van Will Pirkle (TODO check if this is ok)
     template <class T>
     void peakConstantQ(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
-        const auto alpha = sinw / (2 * q);
-        const auto A = std::pow(10, gain.value / 40);
+        const T W = std::tan(math::PI<float> * cutOff.value / sampleRate.value);
+        const T W2 = W * W;
         
-        const auto b0 = 1 + alpha / A;
-
-        // Negative peak
-        if (A < 1)
+        const T A = std::pow(10, gain.value / 20);
+        
+        const T boost = 1 + (W / q) + W2;
+        const T cut = 1 + (W / (A * q)) + W2;
+        
+        const T b = 2 * (W2 - 1);
+        const T d = 1 - (W / q) + W2;
+        
+        if (gain.value > 0)
         {
-            coefficients.a0 = (1 + alpha) / b0;
-            coefficients.a1 = (-2 * cosw) / b0;
-            coefficients.a2 = (1 - alpha) / b0;
+            const T AWq = (A * W) / q;
+            const T a = 1 + AWq + W2;
+            const T c = 1 - AWq + W2;
             
-            coefficients.b1 = (-2 * cosw) / b0;
-            coefficients.b2 = (1 - alpha / A) / b0;
+            coefficients.a0 = a / boost;
+            coefficients.a1 = b / boost;
+            coefficients.a2 = c / boost;
+            
+            coefficients.b1 = b / boost;
+            coefficients.b2 = d / boost;
         }
-        // Positive peak
         else
         {
-            coefficients.a0 = (1 + alpha * A) / b0;
-            coefficients.a1 = (-2 * cosw) / b0;
-            coefficients.a2 = (1 - alpha * A) / b0;
-    
-            coefficients.b1 = (-2 * cosw) / b0;
-            coefficients.b2 = (1 - alpha) / b0;
+            const T e = 1 - (1 / (A * q)) * W + W2;
+            
+            coefficients.a0 = boost / cut;
+            coefficients.a1 = b / cut;
+            coefficients.a2 = d / cut;
+            
+            coefficients.b1 = b / cut;
+            coefficients.b2 = e / cut;
         }
     }
     
