@@ -91,7 +91,7 @@ namespace dsp
             {
                 filter.coefficients = band.filter.coefficients;
                 parameters = band.parameters;
-                setCookingMethod(band.cookingMethod);
+                cookingMethod = band.cookingMethod;
             }
             
         private:
@@ -115,17 +115,15 @@ namespace dsp
         
         T process(T x)
         {
-            T y = 0;
+            T y = x;
             for (auto& band : bands)
-                y = band.process(x);
+                y = band.process(y);
             
             return y;
         }
         
         void setSampleRate(float sampleRate_Hz)
         {
-            this->sampleRate_Hz = sampleRate_Hz;
-            
             for (auto& band : bands)
                 band.setSampleRate(sampleRate_Hz);
         }
