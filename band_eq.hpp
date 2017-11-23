@@ -5,6 +5,8 @@
 //  Created by Milan van der Meer on 22/11/2017.
 //
 
+#include <functional>
+#include <stdexcept>
 #include <vector>
 
 #include "biquad.hpp"
@@ -15,53 +17,140 @@ namespace dsp
     class BandEQ
     {
     public:
-        BandEQ(float sampleRate, float lowShelfCutOff, float highShelfCutOff) :
-        sampleRate(sampleRate)
+        class Band
         {
-            dsp::lowShelf(lowShelf.coefficients, sampleRate, lowShelfCutOff, 0.5, 0);
-            dsp::highShelf(highShelf.coefficients, sampleRate, highShelfCutOff, 0.5, 0);
-        }
+        public:
+            using CookingMethod = std::function<void(BiquadCoefficients<T>&, float, float, float, float)>;
+
+            struct Parameters
+            {
+                float cutOff_Hz = 0;
+                float q = 0.5;
+                float gain_dB = 0;
+            };
+            
+        public:
+            template <typename Function>
+            Band(float sampleRate_Hz, float cutOff_Hz, float q, float gain_dB, Function cookingMethod) :
+            sampleRate_Hz(sampleRate_Hz)
+            {
+                parameters = {cutOff_Hz, q, gain_dB};
+                setCookingMethod(cookingMethod);
+            }
+            
+            T process(T x)
+            {
+                return filter.writeAndRead(x);
+            }
+            
+            void setSampleRate(float sampleRate_Hz)
+            {
+                this->sampleRate_Hz = sampleRate_Hz;
+                cook();
+            }
+            
+            void setParameters(float cutOff_Hz, float q, float gain_dB)
+            {
+                parameters = {cutOff_Hz, q, gain_dB};
+                cook();
+            }
+            
+            void setCookingMethod(CookingMethod cookingMethod)
+            {
+                this->cookingMethod = cookingMethod;
+                cook();
+            }
+            
+            void setCookingMethod(void (*cookingMethod)(BiquadCoefficients<T>&, float, float, float, float))
+            {
+                this->cookingMethod = [=](BiquadCoefficients<T>& coefficients, float sampleRate_Hz, float cutOff_Hz, float q, float gain_dB)
+                {
+                    cookingMethod(coefficients, sampleRate_Hz, cutOff_Hz, q, gain_dB);
+                };
+                
+                cook();
+            }
+            
+            void setCookingMethod(void (*cookingMethod)(BiquadCoefficients<T>&, float, float, float))
+            {
+                this->cookingMethod = [=](BiquadCoefficients<T>& coefficients, float sampleRate_Hz, float cutOff_Hz, float q, float /* no gain */)
+                {
+                    cookingMethod(coefficients, sampleRate_Hz, cutOff_Hz, q);
+                };
+                
+                cook();
+            }
+            
+            void setCoefficients(BiquadCoefficients<T>& coefficients)
+            {
+                filter.coefficients = coefficients;
+                cook();
+            }
+            
+            void copySettings(const Band& band)
+            {
+                filter.coefficients = band.filter.coefficients;
+                parameters = band.parameters;
+                setCookingMethod(band.cookingMethod);
+            }
+            
+        private:
+            void cook()
+            {
+                if (cookingMethod)
+                    cookingMethod(filter.coefficients, sampleRate_Hz, parameters.cutOff_Hz, parameters.q, parameters.gain_dB);
+            }
+            
+        private:
+            float sampleRate_Hz = 0;
+            
+            CookingMethod cookingMethod;
+            
+            BiquadDirectForm1<T> filter;
+            
+            Parameters parameters;
+        };
+    public:
+        BandEQ() = default;
         
         T process(T x)
         {
-            T y = lowShelf.writeAndRead(x);
+            T y = 0;
+            for (auto& band : bands)
+                y = band.process(x);
             
-            for (auto& midBand : midBands)
-                y = midBand.writeAndRead(y);
+            return y;
+        }
+        
+        void setSampleRate(float sampleRate_Hz)
+        {
+            this->sampleRate_Hz = sampleRate_Hz;
             
-            return highShelf.writeAndRead(y);
+            for (auto& band : bands)
+                band.setSampleRate(sampleRate_Hz);
         }
         
-        static BandEQ<T> create3BandEQ(float sampleRate, float lowShelfCutOff, float midCutOff, float highShelfCutOff)
+        void copySettings(BandEQ& eq)
         {
-            BandEQ<T> eq(sampleRate, lowShelfCutOff, highShelfCutOff);
-            eq.midBands.emplace_back(BiquadDirectForm1<T>());
-            peakConstantQ(eq.midBands.front().coefficients, sampleRate, midCutOff, 0.5, 0);
+            if (bands.size() != eq.bands.size())
+                throw std::runtime_error("Number of bands do not match");
             
-            return eq;
+            for (auto i = 0; i < bands.size(); i++)
+                bands[i].copySettings(bands[i]);
         }
         
-        void setLowShelf(float cutOff_Hz, float q, float gain_dB)
-        {
-            dsp::lowShelf(lowShelf.coefficients, sampleRate, cutOff_Hz, q, gain_dB);
-        }
+        size_t size() const { return bands.size(); }
         
-        void setMidBand(size_t index, float cutOff_Hz, float q, float gain_dB)
-        {
-            dsp::peakConstantQ(midBands[index].coefficients, sampleRate, cutOff_Hz, q, gain_dB);
-        }
+        Band& operator[](size_t i) { return bands[i]; }
+        const Band& operator[](size_t i) const { return bands[i]; }
         
-        void setHighShelf(float cutOff_Hz, float q, float gain_dB)
-        {
-            dsp::highShelf(highShelf.coefficients, sampleRate, cutOff_Hz, q, gain_dB);
-        }
+        auto begin() { return bands.begin(); }
+        const auto begin() const { return bands.begin(); }
+        
+        auto end() { return bands.end(); }
+        const auto end() const { return bands.end(); }
         
     public:
-        BiquadDirectForm1<T> lowShelf;
-        std::vector<BiquadDirectForm1<T>> midBands;
-        BiquadDirectForm1<T> highShelf;
-        
-    private:
-        float sampleRate = 0;
+        std::vector<Band> bands;
     };
 }
