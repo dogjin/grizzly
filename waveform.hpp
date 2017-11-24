@@ -25,14 +25,9 @@
  
  */
 
-#ifndef GRIZZLY_WAVEFORM_HPP
-#define GRIZZLY_WAVEFORM_HPP
-
-#include <cmath>
+#pragma once
 
 #include "saw.hpp"
 #include "sine.hpp"
 #include "square.hpp"
 #include "triangle.hpp"
-
-#endif

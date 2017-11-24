@@ -29,24 +29,37 @@
 
 namespace dsp
 {
+    /*! @brief Differentiator
+     *
+     *  @discussion Compute the difference of
+     *  of an input value with its lastly
+     *  computed state.
+     *
+     */
     template <class T>
     class Differentiator
     {
     public:
-        T process(const T& x)
+        //! Differentiate given an input vlaue
+        T process(T x)
         {
-            auto y = x - previousX;
+            // compute difference
+            const auto y = x - previousX;
+            
+            // update previous input
             previousX = x;
             
             return y;
         }
         
+        //! Differentiate given an input vlaue
         T operator()(const T& x)
         {
             return process(x);
         }
         
     public:
+        //! The previous value, state
         T previousX = 0;
     };
 }
