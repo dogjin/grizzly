@@ -78,7 +78,7 @@ namespace dsp
             return filters[index]->readLow();
         }
         
-        //! Read al the bands
+        //! Read all the bands
         std::vector<T> readBands() const
         {
             // Return nothing if there are not bands
