@@ -67,8 +67,6 @@ namespace dsp
         }
     };
     
-    
-    
     //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
     template <typename T>
     class BandLimitedTriangle :
