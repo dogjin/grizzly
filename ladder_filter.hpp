@@ -194,18 +194,6 @@ namespace dsp
             return readSecondOrderHighPass();
         }
         
-        //! Set a function for non-linear processing (or nullptr for linear)
-        /*! Add colour to the filter with a saturating function to shape the feedback.
-         Use with caution as this migth blow up the filter */
-//        void setNonLinear(std::function<T(const T&)> nonLinear)
-//        {
-//            this->nonLinear = nonLinear;
-//            stage1.filter.nonLinear = nonLinear;
-//            stage2.filter.nonLinear = nonLinear;
-//            stage3.filter.nonLinear = nonLinear;
-//            stage4.filter.nonLinear = nonLinear;
-//        }
-        
     public:
         //! Pass-band gain compensation
         /*! Compensate for the loss of gain when the feedback factor increases, used in ARP filter models */

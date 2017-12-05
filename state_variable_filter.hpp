@@ -30,6 +30,7 @@
 
 #include "decibel_conversion.hpp"
 #include "topology_preserving_filter.hpp"
+#include "topology_preserving_one_pole_filter.hpp"
 
 
 namespace dsp

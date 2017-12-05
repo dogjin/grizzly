@@ -8,6 +8,8 @@
 #pragma once
 
 #include <cmath>
+#include <moditone/math/constants.hpp>
+#include <functional>
 
 
 namespace dsp
@@ -19,7 +21,6 @@ namespace dsp
         TopologyPreservingFilter(double sampleRate_Hz) :
         sampleRate_Hz(sampleRate_Hz)
         {
-            
         }
         
         virtual void write(T x) = 0;

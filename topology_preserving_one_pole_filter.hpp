@@ -30,7 +30,6 @@
 #include <cmath>
 #include <moditone/math/constants.hpp>
 #include <functional>
-#include <stdexcept>
 
 namespace dsp
 {
