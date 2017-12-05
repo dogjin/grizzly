@@ -293,8 +293,8 @@ namespace dsp
         }
 
     private:
-        TopologyPreservingOnePoleFilterLinear<T> onePole1;
-        TopologyPreservingOnePoleFilterLinear<T> onePole2;
+        TopologyPreservingOnePoleFilter<T> onePole1;
+        TopologyPreservingOnePoleFilter<T> onePole2;
         /*! Filter Time
          *  The time it takes to reach for the input.
          *  The time determines the gain factor which is used in the system.

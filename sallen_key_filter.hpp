@@ -43,9 +43,9 @@ namespace dsp
         double feedbackFactorS3 = 0;
         double gainFactor = 0;
         
-        TopologyPreservingOnePoleFilterLinear<T> onePole1;
-        TopologyPreservingOnePoleFilterLinear<T> onePole2;
-        TopologyPreservingOnePoleFilterLinear<T> onePole3;
+        TopologyPreservingOnePoleFilter<T> onePole1;
+        TopologyPreservingOnePoleFilter<T> onePole2;
+        TopologyPreservingOnePoleFilter<T> onePole3;
     };
     
     

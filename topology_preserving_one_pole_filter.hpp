@@ -96,7 +96,30 @@ namespace dsp
     {
     public:
         //! Write a sample to the filter
-        virtual void write(T x) = 0;
+        void write(T x)
+        {
+            const auto v = (x - this->state) * this->gain;
+            
+            // write low-pass state
+            this->lowPassOutput = v + this->state;
+            
+            // non-linear low-pass
+            if (isNonLinear)
+                this->lowPassOutput = implicitFunctionSolver(function, derivative, this->lowPassOutput, 0.00001, 20);
+            
+            // write high-pass state
+            this->highPassOutput = x - this->lowPassOutput;
+            
+            // update the new state
+            this->state = this->lowPassOutput + v;
+            
+            /* Alternative
+             * g = std::tan(math::PI<T> * cutOff.value / sampleRate.value)
+             * lowPassOutput = (g * x + state) / (g + 1); //
+             * highPassOutput = x - lowPassOutput;
+             * state = 2 * lowPassOutput - state;
+             */
+        }
         
         //! Read the low-pass output
         T readLowPass() const
@@ -161,58 +184,10 @@ namespace dsp
         
         //! Integrator state
         double state = 0;
-    };
-    
-    template <class T>
-    class TopologyPreservingOnePoleFilterLinear : public TopologyPreservingOnePoleFilter<T>
-    {
-    public:
-        void write(T x)
-        {
-            const auto v = (x - this->state) * this->gain;
-            
-            // write low-pass state
-            this->lowPassOutput = v + this->state;
-            
-            // write high-pass state
-            this->highPassOutput = x - this->lowPassOutput;
-            
-            // update the new state
-            this->state = this->lowPassOutput + v;
-            
-            /* Alternative
-             * g = std::tan(math::PI<T> * cutOff.value / sampleRate.value)
-             * lowPassOutput = (g * x + state) / (g + 1); //
-             * highPassOutput = x - lowPassOutput;
-             * state = 2 * lowPassOutput - state;
-             */
-        }
-    };
-    
-    template <class T>
-    class TopologyPreservingOnePoleFilterNonLinear : public TopologyPreservingOnePoleFilter<T>
-    {
-    public:
-        void write(T x)
-        {
-            this->x = x;
-            
-            const auto v = (x - this->state) * this->gain;
-            
-            // linear low-pass
-            this->lowPassOutput = v + this->state;
-            
-            // non-linear low-pass
-            this->lowPassOutput = implicitFunctionSolver(function, derivative, this->lowPassOutput, 0.00001, 20);
-            
-            // write high-pass state
-            this->highPassOutput = x - this->lowPassOutput;
-            
-            // update the new state
-            this->state = this->lowPassOutput + v;
-        }
         
-    private:
+        bool isNonLinear = false;
+        
+    private: // TODO voor nu even private moet werken voor andere dist functies
         T x = 0;
         
         std::function<float(float)> function = [&](const auto& estimate){ return this->g * (std::tanh(x) - std::tanh(estimate)) + this->state; };

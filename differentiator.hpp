@@ -40,26 +40,26 @@ namespace dsp
     class Differentiator
     {
     public:
-        //! Differentiate given an input vlaue
+        //! Differentiate the input
         T process(T x)
         {
-            // compute difference
-            const auto y = x - previousX;
+            // compute the difference of input and previous input
+            const auto y = x - state;
             
-            // update previous input
-            previousX = x;
+            // update the state
+            state = x;
             
             return y;
         }
         
-        //! Differentiate given an input vlaue
+        //! Differentiate the input
         T operator()(const T& x)
         {
             return process(x);
         }
         
     public:
-        //! The previous value, state
-        T previousX = 0;
+        //! The previous input
+        T state = 0;
     };
 }
