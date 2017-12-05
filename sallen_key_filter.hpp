@@ -9,106 +9,35 @@
 
 #include <functional>
 
+#include "topology_preserving_filter.hpp"
 #include "topology_preserving_one_pole_filter.hpp"
 
 namespace dsp
 {
     template <typename T>
-    class SallenKeyLowPass
+    class SallenKeyFilter :
+    public TopologyPreservingFilter<T>
     {
     public:
-        SallenKeyLowPass(double sampleRate_Hz) :
-        sampleRate_Hz(sampleRate_Hz)
+        SallenKeyFilter(double sampleRate_Hz) :
+        TopologyPreservingFilter<T>(sampleRate_Hz)
         {
-            
+            this->resonance = 0.00001;
         }
         
         T writeAndRead(T x)
         {
-            write(x);
+            this->write(x);
             return read();
-        }
-        
-        void write(T x)
-        {
-            T lowPass2Input = gainFactor * (onePole1.writeAndReadLowPass(x) + onePole2.getState() * feedbackFactorS2 + onePole3.getState() * feedbackFactorS3);
-            
-            if (nonLinear)
-                lowPass2Input = nonLinear(lowPass2Input);
-            
-            y = resonance * onePole2.writeAndReadLowPass(lowPass2Input);
-            
-            onePole3.write(y);
-            
-            if (resonance > 0)
-                y *= 1.0 / resonance;
         }
         
         T read() const
         {
-            return y;
+            return this->y;
         }
         
-        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance)
-        {
-            const double g = std::tan(math::PI<T> * cutOff_Hz / sampleRate_Hz);
-            gain = g / (1.0 + g);
-            
-            onePole1.setGain(gain);
-            onePole2.setGain(gain);
-            onePole3.setGain(gain);
-            
-            feedbackFactorS2 = (resonance - resonance * gain) / (1.0 + g);
-            feedbackFactorS3 = -1.0 / (1.0 + g);
-            
-            gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
-        }
-        
-        //! Set the sample rate
-        void setSampleRate(double sampleRate_Hz)
-        {
-            if (this->sampleRate_Hz == sampleRate_Hz)
-                return;
-            
-            this->sampleRate_Hz = sampleRate_Hz;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-        //! Set the cut-off frequency
-        void setCutOff(double cutOff_Hz)
-        {
-            if (this->cutOff_Hz == cutOff_Hz)
-                return;
-            
-            this->cutOff_Hz = cutOff_Hz;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-        //! Set the feedback factor for a resonance peak (self-oscillation at >= 4)
-        void setResonance(float factor)
-        {
-            if (resonance == factor)
-                return;
-            
-            resonance = factor;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-    public:
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
-        
-    private:
+    protected:
         T y = 0;
-        
-        double sampleRate_Hz = 0;
-        double cutOff_Hz = 0;
-        
-        double gain = 0; // resolved 1p meuk
-        double resonance = 0.01;
         
         double feedbackFactorS2 = 0;
         double feedbackFactorS3 = 0;
@@ -120,110 +49,86 @@ namespace dsp
     };
     
     
-
+    template <typename T>
+    class SallenKeyLowPass :
+    public SallenKeyFilter<T>
+    {
+    public:
+        SallenKeyLowPass(double sampleRate_Hz) :
+        SallenKeyFilter<T>(sampleRate_Hz)
+        {
+        }
+        
+        void write(T x) final
+        {
+            T lowPass2Input = this->gainFactor * (this->onePole1.writeAndReadLowPass(x) + this->onePole2.state * this->feedbackFactorS2 + this->onePole3.state * this->feedbackFactorS3);
+            
+            if (this->nonLinear)
+                lowPass2Input = this->nonLinear(lowPass2Input);
+            
+            this->y = this->resonance * this->onePole2.writeAndReadLowPass(lowPass2Input);
+            
+            this->onePole3.write(this->y);
+            
+            if (this->resonance > 0)
+                this->y *= 1.0 / this->resonance;
+        }
+        
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
+        {
+            this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
+            
+            auto g = this->onePole1.g;
+            auto gain = this->onePole1.gain;
+            
+            this->onePole2.gain = gain;
+            this->onePole3.gain = gain;
+            
+            this->feedbackFactorS2 = (resonance - resonance * gain) / (1.0 + g);
+            this->feedbackFactorS3 = -1.0 / (1.0 + g);
+            
+            this->gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
+        }
+    };
     
     
     template <typename T>
-    class SallenKeyHighPass
+    class SallenKeyHighPass :
+    public SallenKeyFilter<T>
     {
     public:
         SallenKeyHighPass(double sampleRate_Hz) :
-        sampleRate_Hz(sampleRate_Hz)
+        SallenKeyFilter<T>(sampleRate_Hz)
         {
-            
         }
         
-        T writeAndRead(T x)
+        void write(T x) final
         {
-            write(x);
-            return read();
+            this->y = (this->onePole1.writeAndReadHighPass(x) + this->onePole2.state * this->feedbackFactorS2 + this->onePole3.state * this->feedbackFactorS3) * this->gainFactor * this->resonance;
+            
+            if (this->nonLinear)
+                this->y = this->nonLinear(this->y);
+            
+            this->onePole3.write(this->onePole2.writeAndReadHighPass(this->y));
+            
+            if (this->resonance > 0)
+                this->y *= 1.0 / this->resonance;
         }
         
-        void write(T x)
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
-            y = (onePole1.writeAndReadHighPass(x) + onePole2.getState() * feedbackFactorS2 + onePole3.getState() * feedbackFactorS3) * gainFactor * resonance;
+            this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
             
-            if (nonLinear)
-                y = nonLinear(y);
+            auto g = this->onePole1.g;
+            auto gain = this->onePole1.gain;
             
-            onePole3.write(onePole2.writeAndReadHighPass(y));
+            this->onePole2.gain = gain;
+            this->onePole3.gain = gain;
             
-            if (resonance > 0)
-                y *= 1.0 / resonance;
+            this->feedbackFactorS2 = -gain / (1.0 + g);
+            this->feedbackFactorS3 = 1.0 / (1.0 + g);
+            
+            this->gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
         }
-        
-        T read() const
-        {
-            return y;
-        }
-        
-        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance)
-        {
-            const double g = std::tan(math::PI<T> * cutOff_Hz / sampleRate_Hz);
-            gain = g / (1.0 + g);
-            
-            onePole1.setGain(gain);
-            onePole2.setGain(gain);
-            onePole3.setGain(gain);
-            
-            feedbackFactorS2 = -gain / (1.0 + g);
-            feedbackFactorS3 = 1.0 / (1.0 + g);
-            
-            gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
-        }
-        
-        //! Set the sample rate
-        void setSampleRate(double sampleRate_Hz)
-        {
-            if (this->sampleRate_Hz == sampleRate_Hz)
-                return;
-            
-            this->sampleRate_Hz = sampleRate_Hz;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-        //! Set the cut-off frequency
-        void setCutOff(double cutOff_Hz)
-        {
-            if (this->cutOff_Hz == cutOff_Hz)
-                return;
-            
-            this->cutOff_Hz = cutOff_Hz;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-        //! Set the feedback factor for a resonance peak (self-oscillation at >= 4)
-        void setResonance(float factor)
-        {
-            if (resonance == factor)
-                return;
-            
-            resonance = factor;
-            
-            setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
-        }
-        
-    public:
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
-        
-    private:
-        T y = 0;
-        
-        double sampleRate_Hz = 0;
-        double cutOff_Hz = 0;
-        
-        double gain = 0; // resolved 1p meuk
-        double resonance = 0.01;
-        
-        double feedbackFactorS2 = 0;
-        double feedbackFactorS3 = 0;
-        double gainFactor = 0;
-        
-        TopologyPreservingOnePoleFilterLinear<T> onePole1;
-        TopologyPreservingOnePoleFilterLinear<T> onePole2;
-        TopologyPreservingOnePoleFilterLinear<T> onePole3;
     };
 }

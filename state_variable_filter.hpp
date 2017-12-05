@@ -28,13 +28,9 @@
 #ifndef GRIZZLY_STATE_VARIABLE_FILTER_HPP
 #define GRIZZLY_STATE_VARIABLE_FILTER_HPP
 
-#include <cmath>
-#include <moditone/math/constants.hpp>
-#include <functional>
-#include <stdexcept>
-#include <moditone/unit/amplitude.hpp>
-#include <moditone/unit/hertz.hpp>
-#include <moditone/unit/time.hpp>
+#include "decibel_conversion.hpp"
+#include "topology_preserving_filter.hpp"
+
 
 namespace dsp
 {
@@ -42,371 +38,268 @@ namespace dsp
     /*! See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
         See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T>
-    class StateVariableFilter
+    class StateVariableFilter :
+    public TopologyPreservingFilter<T>
     {
     public:
         //! Construct the filter with a cut-off and sample rate
-        StateVariableFilter(unit::hertz<double> sampleRate) :
-            sampleRate(sampleRate)
-        {}
+        StateVariableFilter(double sampleRate_Hz) :
+        TopologyPreservingFilter<T>(sampleRate_Hz)
+        {
+            this->resonance = 0.5;
+        }
         
         // Write a sample to the filter
-        void write(const T& x)
+        void write(T x) final
         {
             this->x = x;
             
-            highPass = (x - 2.0 * damping * state1 - gain * state1 - state2) * resolvedGain;
+            auto g = onePole1.gain; // in this case the g = gain;
+            auto s1 = onePole1.state;
+            auto s2 = onePole2.state;
             
-            bandPass = gain * highPass + state1;
+            highPass = (x - 2.0 * damping * s1 - g * s1 - s2) * gainFactor;
+            
+            bandPass = g * highPass + s1;
             
             // Optional non-linear processing
-            if (nonLinear)
-                bandPass = nonLinear(bandPass);
-            
-            lowPass = gain * bandPass + state2;
-            
-            state1 = gain * highPass + bandPass;
-            state2 = gain * bandPass + lowPass;
+            if (this->nonLinear)
+                bandPass = this->nonLinear(bandPass);
+                
+            lowPass = g * bandPass + s2;
+                
+            onePole1.state = g * highPass + bandPass;
+            onePole2.state = g * bandPass + lowPass;
         }
         
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<double> sampleRate)
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
-            if (this->sampleRate == sampleRate)
-                return;
+            const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
             
-            this->sampleRate = sampleRate;
-            
-            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
-            computeResolvedGain(gain, damping);
-        }
-        
-        //! Set the cut-off frequency
-        void setCutOff(unit::hertz<double> cutOff)
-        {
-            if (this->cutOff == cutOff)
-                return;
-            
-            this->cutOff = cutOff;
-            
-            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
-            
-            computeResolvedGain(gain, damping);
-        }
-        
-        //! Set the cut-off frequency and q
-        void setCutOffAndQ(unit::hertz<double> cutOff, double q)
-        {
-            if (this->cutOff == cutOff && this->q == q)
-                return;
-            
-            this->cutOff = cutOff;
-            this->q = q;
-            
-            gain = std::tan(math::PI<double> * (cutOff.value / sampleRate.value));
-            damping = 1.0 / (2.0 * q);
-            
-            computeResolvedGain(gain, damping);
+            onePole1.gain = (g); // in this case the gain = g;
+
+            damping = 1.0 / (2.0 * resonance);
+
+            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
         }
         
         //! Set the time
         /*! @param time The time is takes to reach the input value (dependant on timeConstantFactor).
              @param sampleRate The sampleRate.
              @param timeConstantFactor The factor that influences the actual time, a factor of ~5 results in a accurate time response. */
-        void setTime(unit::second<double> time, double timeConstantFactor)
+        void setTime(double time_s, double timeConstantFactor)
         {
-            if (this->time == time && this->timeConstantFactor == timeConstantFactor)
+            if (this->time_s == time_s && this->timeConstantFactor == timeConstantFactor)
                 return;
-            
-            this->time = time;
+
+            this->time_s = time_s;
             this->timeConstantFactor = timeConstantFactor;
+
+            const double t = time_s * math::SQRT_HALF<double>;
+            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
             
-            const double t = time.value * math::SQRT_HALF<double>;
-            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
+            onePole1.gain = (g); // in this case the gain = g;
             
-            computeResolvedGain(gain, damping);
+            damping = 1.0 / (2.0 * this->resonance);
+            
+            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
         }
-        
-        void setTimeAndQ(unit::second<double> time, double timeConstantFactor, double q)
+
+        void setTimeAndResonance(double time_s, double timeConstantFactor, double resonance)
         {
-            if (this->time == time && this->timeConstantFactor == timeConstantFactor && this->q == q)
+            if (this->time_s == time_s && this->timeConstantFactor == timeConstantFactor && this->resonance == resonance)
                 return;
-            
-            this->time = time;
+
+            this->time_s = time_s;
             this->timeConstantFactor = timeConstantFactor;
-            this->q = q;
+            this->resonance = resonance;
+
+            const double t = time_s * math::SQRT_HALF<double>;
+            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
             
-            const double t = time.value * math::SQRT_HALF<double>;
-            gain = std::tan(timeConstantFactor / (t * sampleRate.value * 2));
+            onePole1.gain = (g);
             
-            damping = 1.0 / (2.0 * q);
+            damping = 1.0 / (2.0 * this->resonance);
             
-            computeResolvedGain(gain, damping);
-        }
-        
-        //! Set the q factor for a resonance peak (> sqrt(0.5)) at the cut-off frequency
-        void setQ(double q)
-        {
-            if (this->q == q)
-                return;
-            
-            this->q = q;
-            
-            damping = 1.0 / (2.0 * q);
-            
-            computeResolvedGain(gain, damping);
-        }
-        
-        void copyCoefficients(const StateVariableFilter& rhs)
-        {
-            //TODO should we also copy the input x for types like notch
-            sampleRate = rhs.sampleRate;
-            cutOff = rhs.cutOff;
-            time = rhs.time;
-            timeConstantFactor = rhs.timeConstantFactor;
-            q = rhs.q;
-            gain = rhs.gain;
-            resolvedGain = rhs.resolvedGain;
-            damping = rhs.damping;
+            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
         }
         
         //! Set the filter state directly
         /*! The 2nd state is always reaching for the input value, while the first one is reaching towards zero. */
         void setState(T state1, T state2)
         {
-            this->state1 = state1;
-            this->state2 = state2;
+            onePole1.state = state1;
+            onePole2.state = state2;
         }
-        
+
         //! Set the gain (for band-shelf type)
-        void setBandShelfGain(unit::decibel<double> gain)
+        void setBandShelfGain(double gain_dB)
         {
             // Set gain as amplitude value but subtract 1 (gain = 0 for pass-band)
-            this->bandShelfGain = unit::amplitude<double>(gain).value - 1;
+            bandShelfGain_lin = decibelToAmplitude(gain_dB) - 1;
         }
         
-        T getState1() const noexcept
+        void copyCoefficients(const StateVariableFilter& rhs)
         {
-            return state1;
+            x = rhs.x;
+            this->sampleRate_Hz = rhs.sampleRate_Hz;
+            this->cutOff_Hz = rhs.cutOff_Hz;
+            onePole1.gain = rhs.onePole1.gain;
+            time_s = rhs.time_s;
+            timeConstantFactor = rhs.timeConstantFactor;
+            this->resonance = rhs.resonance;
+            gainFactor = rhs.gainFactor;
+            damping = rhs.damping;
         }
-        
-        T getState2() const noexcept
-        {
-            return state2;
-        }
-        
-        double getGain() const noexcept
-        {
-            return gain;
-        }
-        
-        double getResolvedGain() const noexcept
-        {
-            return resolvedGain;
-        }
-        
+
         /////////////////////////////////////////////
         // Write & read methods for sample processing
         /////////////////////////////////////////////
-        
+
         // Read low-pass output
         T readLowPass() const
         {
             return lowPass;
         }
-        
+
         //! Write and read low-pass output
         T writeAndReadLowPass(const T& x)
         {
             write(x);
             return readLowPass();
         }
-        
+
         // Read band-pass output
         T readBandPass() const
         {
             return bandPass;
         }
-        
+
         //! Write and read band-pass output
         T writeAndReadBandPass(const T& x)
         {
             write(x);
             return readBandPass();
         }
-        
+
         // Read high-pass output
         T readHighPass() const
         {
             return highPass;
         }
-        
+
         //! Write and read high-pass output
         T writeAndReadHighPass(const T& x)
         {
             write(x);
             return readHighPass();
         }
-        
+
         // Read unit-gain output
         T readUnitGainBandPass() const
         {
             return 2 * damping * bandPass;
         }
-        
+
         //! Write and read unit-gain output
         T writeAndReadUnitGainBandPass(const T& x)
         {
             write(x);
             return readUnitGainBandPass();
         }
-        
+
         // Read band-shelving (bell) output
         T readBandShelf() const
         {
-            return x + 2 * bandShelfGain.value * damping * bandPass;
+            return x + 2 * bandShelfGain_lin * damping * bandPass;
         }
-        
+
         //! Write and read band-shelving (bell) output
         T writeAndReadBandShelf(const T& x)
         {
             write(x);
             return readBandShelf();
         }
-        
+
         // Read notch output
         T readNotch() const
         {
             return x - 2 * damping * bandPass;
         }
-        
+
         //! Write and read notch output
         T writeAndReadNotch(const T& x)
         {
             write(x);
             return readNotch();
         }
-        
+
         // Read all-pass output
         T readAllPass() const
         {
             return x - 4 * damping * bandPass;
         }
-        
+
         //! Write and read all-pass output
         T writeAndReadAllPass(const T& x)
         {
             write(x);
             return readAllPass();
         }
-        
+
         // Read peaking output
         T readPeak() const
         {
             return lowPass - highPass;
         }
-        
+
         //! Write and read peaking output
         T writeAndReadPeak(const T& x)
         {
             write(x);
             return readPeak();
         }
-        
+
         /////////////////////////////////////////////
         // Methods for block processing
         /////////////////////////////////////////////
-        
-        void processLowPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+
+        void processLowPass(const T* x, const T* cutOff, const T* resonance, T* y, size_t size)
         {
             for (auto i = 0; i < size; i++)
             {
-                if (this->cutOff.value != cutOff[i] && this->q != q[i])
-                {
-                    setCutOffAndQ(cutOff[i], q[i]);
-                }
-                else if (this->cutOff.value != cutOff[i])
-                {
-                    setCutOff(cutOff[i]);
-                }
-                else if (this->q != q[i])
-                {
-                    setQ(q[i]);
-                }
-                
+                this->setCutOffAndResonance(cutOff[i], resonance[i]);
                 y[i] = writeAndReadLowPass(x[i]);
             }
         }
-        
-        void processBandPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+
+        void processBandPass(const T* x, const T* cutOff, const T* resonance, T* y, size_t size)
         {
             for (auto i = 0; i < size; i++)
             {
-                if (this->cutOff != cutOff[i] && this->q != q[i])
-                {
-                    setCutOffAndQ(cutOff[i], q[i]);
-                }
-                else if (this->cutOff != cutOff[i])
-                {
-                    setCutoff(cutOff[i]);
-                }
-                else if (this->q != q[i])
-                {
-                    setQ(q[i]);
-                }
-                
+                this->setCutOffAndResonance(cutOff[i], resonance[i]);
                 y[i] = writeAndReadBandPass(x[i]);
             }
         }
-        
-        void processHighPass(const T* x, const T* cutOff, const T* q, T* y, size_t size)
+
+        void processHighPass(const T* x, const T* cutOff, const T* resonance, T* y, size_t size)
         {
             for (auto i = 0; i < size; i++)
             {
-                if (this->cutOff != cutOff[i] && this->q != q[i])
-                {
-                    setCutOffAndQ(cutOff[i], q[i]);
-                }
-                else if (this->cutOff != cutOff[i])
-                {
-                    setCutoff(cutOff[i]);
-                }
-                else if (this->q != q[i])
-                {
-                    setQ(q[i]);
-                }
-                
+                this->setCutOffAndResonance(cutOff[i], resonance[i]);
                 y[i] = writeAndReadHighPass(x[i]);
             }
         }
-        
+
     private:
-        //! compute the gain factor with resolved zero delay feedack
-        void computeResolvedGain(float gain, float damping)
-        {
-            resolvedGain = 1.0 / (1.0 + 2.0 * damping * gain + gain * gain);
-        }
-        
-    public:
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
-        
-    private:
-        //! The sample rate
-        unit::hertz<double> sampleRate = 0;
-        
-        /*! Cut-off frequency of the filter
-         *  The cut-off determines the gain factor which is used in the system.
-         *  We can set this to a default value of 0.
-         */
-        unit::hertz<double> cutOff = 0;
-        
+        TopologyPreservingOnePoleFilterLinear<T> onePole1;
+        TopologyPreservingOnePoleFilterLinear<T> onePole2;
         /*! Filter Time
          *  The time it takes to reach for the input.
          *  The time determines the gain factor which is used in the system.
          *  We can set this to a default value of 0.
          */
-        unit::second<double> time = 0;
+        double time_s = 0;
         
         /*! Time constant factor for the filter time
          *  Determines the gain factor which is used in the system.
@@ -415,21 +308,12 @@ namespace dsp
          *  We can set this to a default value of 0.
          */
         double timeConstantFactor = 0;
-        
-        /*! Q factor for a resonace peak
-         *  This factor determines the damping which is used in the system.
-         *  We can therefore set this to a default value of 0.
-         */
-        double q = 0;
-        
+
         //! Damping factor, related to q
         double damping = 1;
         
-        //! The gain factor
-        double gain = 0;
-        
         //! The gain factor with resolved zero delay feedback
-        double resolvedGain = 0;
+        double gainFactor = 0;
         
         //! Input of last writing call
         T x = 0;
@@ -442,15 +326,9 @@ namespace dsp
         
         //! Low-pass output state
         T lowPass = 0;
-    
-        //! The state of the first integrator
-        T state1 = 0;
-        
-        //! The state of the second integrator
-        T state2 = 0;
         
         //! Gain (for band-shelf type)
-        unit::amplitude<double> bandShelfGain = 0;
+        double bandShelfGain_lin = 0;
     };
 }
 

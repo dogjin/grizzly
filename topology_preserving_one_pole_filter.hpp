@@ -126,64 +126,42 @@ namespace dsp
         }
         
         //! Set cut-off
-        void setCutOff(float cutOff_Hz, float sampleRate_Hz)
+        void setCoefficients(double cutOff_Hz, double sampleRate_Hz)
         {
             g = std::tan(math::PI<T> * cutOff_Hz / sampleRate_Hz);
-            gain = g / (1.0f + g);
+            gain = g / (1.0 + g);
         }
         
         //! Set time with a default time-constant-factor
         /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
-        void setTime(float time_s, float sampleRate_Hz, float timeConstantFactor = 5.f)
+        void setCoefficients(double time_s, double sampleRate_Hz, double timeConstantFactor)
         {
-            g = std::tan(timeConstantFactor / (time_s * sampleRate_Hz * 2));
+            g = std::tan(timeConstantFactor / (time_s * sampleRate_Hz * 2.0));
             gain = g / (1.0 + g);
-        }
-        
-        //! Set cut-off gain directly, useful when creating more complex filter structures (use with caution)
-        // deze gain = g / (1 + g)
-        void setGain(T gain)
-        {
-            this->gain = gain;
-        }
-        
-        //! Set the filter state to a value directly
-        void setState(T state)
-        {
-            this->state = state;
-            
-            // Wat doen we met dit...
-//            // Optional non-linear processing
-//            if (nonLinear)
-//                this->state = nonLinear(state);
-            
-            lowPassOutput = this->state;
-            highPassOutput = 0;
         }
         
         //! Reset the filter to zero
         void reset()
         {
-            setState(0);
+            state = 0;
+            lowPassOutput = T(0);
+            highPassOutput = T(0);
         }
         
-        //! Get the integrator state, useful when creating more complex filter structures
-        T getState() const { return state; }
-        
-    protected:
-        T g = 0;
-        
-        //! Filter gain factor with resolved zero delay feedback
-        T gain = 0;
-        
-        //! Integrator state
-        T state = 0;
-        
+    public:
         //! Low-pass output state
         T lowPassOutput = 0;
         
         //! Low-pass output state
         T highPassOutput = 0;
+        
+        double g = 0;
+        
+        //! Filter gain factor with resolved zero delay feedback
+        double gain = 0;
+        
+        //! Integrator state
+        double state = 0;
     };
     
     template <class T>
@@ -196,7 +174,7 @@ namespace dsp
             
             // write low-pass state
             this->lowPassOutput = v + this->state;
- 
+            
             // write high-pass state
             this->highPassOutput = x - this->lowPassOutput;
             
@@ -213,33 +191,7 @@ namespace dsp
     };
     
     template <class T>
-    class TopologyPreservingOnePoleFilterNonLinearI : public TopologyPreservingOnePoleFilter<T>
-    {
-    public:
-        void write(T x)
-        {
-            const auto v = (x - this->state) * this->gain;
-            
-            // write low-pass state
-            this->lowPassOutput = v + this->state;
-            
-            // write high-pass state
-            this->highPassOutput = x - this->lowPassOutput;
-            
-            // update the new state
-            this->state = this->lowPassOutput + v;
-            
-            if (nonLinear)
-                this->state = nonLinear(this->state);
-        }
-        
-    public:
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
-    };
-    
-    template <class T>
-    class TopologyPreservingOnePoleFilterNonLinearII : public TopologyPreservingOnePoleFilter<T>
+    class TopologyPreservingOnePoleFilterNonLinear : public TopologyPreservingOnePoleFilter<T>
     {
     public:
         void write(T x)
