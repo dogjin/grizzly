@@ -29,8 +29,8 @@
 #define GRIZZLY_STATE_VARIABLE_FILTER_HPP
 
 #include "decibel_conversion.hpp"
+#include "integrator.hpp"
 #include "topology_preserving_filter.hpp"
-#include "topology_preserving_one_pole_filter.hpp"
 
 
 namespace dsp
@@ -55,33 +55,42 @@ namespace dsp
         {
             this->x = x;
             
-            auto g = onePole1.gain; // in this case the g = gain;
-            auto s1 = onePole1.state;
-            auto s2 = onePole2.state;
+            const auto g = integrator1.g; // in this case the g = gain;
+            const auto s1 = integrator1.state;
+            const auto s2 = integrator2.state;
             
             highPass = (x - 2.0 * damping * s1 - g * s1 - s2) * gainFactor;
             
-            bandPass = g * highPass + s1;
+            bandPass = integrator1(highPass);
             
             // Optional non-linear processing
             if (this->nonLinear)
                 bandPass = this->nonLinear(bandPass);
                 
-            lowPass = g * bandPass + s2;
-                
-            onePole1.state = g * highPass + bandPass;
-            onePole2.state = g * bandPass + lowPass;
+            lowPass = integrator2(bandPass);
         }
         
         void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
             const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
             
-            onePole1.gain = (g); // in this case the gain = g;
+            integrator1.g = g;
+            integrator2.g = g;
 
-            damping = 1.0 / (2.0 * resonance);
-
-            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+            computeDampingAndGainFactor(resonance, g);
+        }
+        
+        void setCoefficients(double sampleRate_Hz, double time_s, double timeConstantFactor, double resonance)
+        {
+            const double t = time_s * math::SQRT_HALF<double>;
+            
+            
+            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
+            
+            integrator1.g = g;
+            integrator2.g = g;
+            
+            computeDampingAndGainFactor(resonance, g);
         }
         
         //! Set the time
@@ -96,14 +105,7 @@ namespace dsp
             this->time_s = time_s;
             this->timeConstantFactor = timeConstantFactor;
 
-            const double t = time_s * math::SQRT_HALF<double>;
-            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
-            
-            onePole1.gain = (g); // in this case the gain = g;
-            
-            damping = 1.0 / (2.0 * this->resonance);
-            
-            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+            setCoefficients(this->sampleRate_Hz, time_s, timeConstantFactor, this->resonance);
         }
 
         void setTimeAndResonance(double time_s, double timeConstantFactor, double resonance)
@@ -115,22 +117,15 @@ namespace dsp
             this->timeConstantFactor = timeConstantFactor;
             this->resonance = resonance;
 
-            const double t = time_s * math::SQRT_HALF<double>;
-            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
-            
-            onePole1.gain = (g);
-            
-            damping = 1.0 / (2.0 * this->resonance);
-            
-            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+            setCoefficients(this->sampleRate_Hz, time_s, timeConstantFactor, resonance);
         }
         
         //! Set the filter state directly
         /*! The 2nd state is always reaching for the input value, while the first one is reaching towards zero. */
         void setState(T state1, T state2)
         {
-            onePole1.state = state1;
-            onePole2.state = state2;
+            integrator1.state = state1;
+            integrator2.state = state2;
         }
 
         //! Set the gain (for band-shelf type)
@@ -145,7 +140,8 @@ namespace dsp
             x = rhs.x;
             this->sampleRate_Hz = rhs.sampleRate_Hz;
             this->cutOff_Hz = rhs.cutOff_Hz;
-            onePole1.gain = rhs.onePole1.gain;
+            integrator1.g = rhs.integrator1.g;
+            integrator2.g = rhs.integrator2.g;
             time_s = rhs.time_s;
             timeConstantFactor = rhs.timeConstantFactor;
             this->resonance = rhs.resonance;
@@ -293,8 +289,16 @@ namespace dsp
         }
 
     private:
-        TopologyPreservingOnePoleFilter<T> onePole1;
-        TopologyPreservingOnePoleFilter<T> onePole2;
+        void computeDampingAndGainFactor(double resonance, double g)
+        {
+            damping = 1.0 / (2.0 * resonance);
+            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+        }
+        
+    private:
+        TrapezoidalIntegrator<T> integrator1;
+        TrapezoidalIntegrator<T> integrator2;
+        
         /*! Filter Time
          *  The time it takes to reach for the input.
          *  The time determines the gain factor which is used in the system.
