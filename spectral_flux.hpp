@@ -50,12 +50,40 @@ namespace dsp
         {
             float sum = 0;
             for (auto i = 0; i < numberOfBins; ++i)
-            {
                 sum += std::norm((*next)[i] - (*prev)[i]);
-            }
             
             flux.emplace_back(std::sqrt(sum));
         }
+        
+        return flux;
+    }
+    
+    template <typename Iterator>
+    std::vector<float> spectralFlux(Iterator begin, Iterator end, std::size_t numberOfBins, float order)
+    {
+        if (begin == end)
+            return {};
+        
+        auto next = std::next(begin);
+        if (next == end)
+            return {};
+        
+        const auto reciprocalOrder = 1 / order;
+        
+        std::vector<float> flux;
+        
+        for (auto prev = begin; next != end; ++prev, ++next)
+        {
+            float sum = 0;
+            for (auto i = 0; i < numberOfBins; ++i)
+            {
+                const auto derivative = (*next)[i] - (*prev)[i];
+                sum += std::pow(std::abs(derivative), order);
+            }
+            
+            flux.emplace_back(std::pow(sum, reciprocalOrder));
+        }
+        
         
         return flux;
     }
