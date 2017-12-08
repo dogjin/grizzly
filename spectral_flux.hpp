@@ -28,14 +28,66 @@
 #ifndef GRIZZLY_SPECTRAL_FLUX_HPP
 #define GRIZZLY_SPECTRAL_FLUX_HPP
 
+#include <algorithm>
 #include <cstddef>
+#include <numeric>
 #include <iterator>
 #include <vector>
 
 namespace dsp
 {
     template <typename Iterator>
-    std::vector<float> spectralFlux(Iterator begin, Iterator end, std::size_t numberOfBins)
+    typename std::iterator_traits<Iterator>::value_type computeSpectralFluxFrame(Iterator frameBegin, Iterator frameEnd, Iterator previousFrameBegin, double order)
+    {
+        typename std::iterator_traits<Iterator>::value_type sum = 0;
+        for ( ; frameBegin != frameEnd; ++frameBegin, ++previousFrameBegin)
+        {
+            const auto d = *frameBegin - *previousFrameBegin;
+            if (d != 0)
+                sum += std::pow(std::abs(d), order);
+        }
+        
+        return std::pow(sum, 1 / order);
+    }
+    
+    template <typename Iterator>
+    typename std::iterator_traits<Iterator>::value_type computePositiveSpectralFluxFrame(Iterator frameBegin, Iterator frameEnd, Iterator previousFrameBegin, double order)
+    {
+        typename std::iterator_traits<Iterator>::value_type sum = 0;
+        for ( ; frameBegin != frameEnd; ++frameBegin, ++previousFrameBegin)
+        {
+            const auto d = *frameBegin - *previousFrameBegin;
+            if (d > 0)
+                sum += std::pow(std::abs(d), order);
+        }
+        
+        return std::pow(sum, 1 / order);
+    }
+    
+    template <typename Iterator>
+    typename std::iterator_traits<Iterator>::value_type computeNegativeSpectralFluxFrame(Iterator frameBegin, Iterator frameEnd, Iterator previousFrameBegin, double order)
+    {
+        typename std::iterator_traits<Iterator>::value_type sum = 0;
+        for ( ; frameBegin != frameEnd; ++frameBegin, ++previousFrameBegin)
+        {
+            const auto d = *frameBegin - *previousFrameBegin;
+            if (d < 0)
+                sum += std::pow(std::abs(d), order);
+        }
+        
+        return std::pow(sum, 1 / order);
+    }
+    
+    template <typename Iterator>
+    typename std::iterator_traits<Iterator>::value_type computeDifferenceSpectralFluxFrame(Iterator frameBegin, Iterator frameEnd, Iterator previousFrameBegin, double order)
+    {
+        const auto p = computePositiveSpectralFluxFrame(frameBegin, frameEnd, previousFrameBegin, order);
+        const auto n = computeNegativeSpectralFluxFrame(frameBegin, frameEnd, previousFrameBegin, order);
+        return p - n;
+    }
+    
+    template <typename Iterator>
+    std::vector<float> computeSpectralFlux(Iterator begin, Iterator end, double order)
     {
         if (begin == end)
             return {};
@@ -45,21 +97,14 @@ namespace dsp
             return {};
         
         std::vector<float> flux;
-        
         for (auto prev = begin; next != end; ++prev, ++next)
-        {
-            float sum = 0;
-            for (auto i = 0; i < numberOfBins; ++i)
-                sum += std::norm((*next)[i] - (*prev)[i]);
-            
-            flux.emplace_back(std::sqrt(sum));
-        }
+            flux.emplace_back(computeSpectralFluxFrame(std::begin(*next), std::end(*next), std::begin(*prev), order));
         
         return flux;
     }
     
     template <typename Iterator>
-    std::vector<float> spectralFlux(Iterator begin, Iterator end, std::size_t numberOfBins, float order)
+    std::vector<float> computePositiveSpectralFlux(Iterator begin, Iterator end, double order)
     {
         if (begin == end)
             return {};
@@ -68,28 +113,15 @@ namespace dsp
         if (next == end)
             return {};
         
-        const auto reciprocalOrder = 1 / order;
-        
         std::vector<float> flux;
-        
         for (auto prev = begin; next != end; ++prev, ++next)
-        {
-            float sum = 0;
-            for (auto i = 0; i < numberOfBins; ++i)
-            {
-                const auto derivative = (*next)[i] - (*prev)[i];
-                sum += std::pow(std::abs(derivative), order);
-            }
-            
-            flux.emplace_back(std::pow(sum, reciprocalOrder));
-        }
-        
+            flux.emplace_back(computePositiveSpectralFluxFrame(std::begin(*next), std::end(*next), std::begin(*prev), order));
         
         return flux;
     }
     
     template <typename Iterator>
-    std::vector<float> positiveSpectralFlux(Iterator begin, Iterator end, std::size_t numberOfBins)
+    std::vector<float> computeNegativeSpectralFlux(Iterator begin, Iterator end, double order)
     {
         if (begin == end)
             return {};
@@ -99,27 +131,14 @@ namespace dsp
             return {};
         
         std::vector<float> flux;
-        
         for (auto prev = begin; next != end; ++prev, ++next)
-        {
-            float sum = 0;
-            for (auto i = 0; i < numberOfBins; ++i)
-            {
-                const auto diff = std::abs((*next)[i]) - std::abs((*prev)[i]);
-                if (diff <= 0)
-                    continue;
-                
-                sum += diff;
-            }
-            
-            flux.emplace_back(sum);
-        }
+            flux.emplace_back(computeNegativeSpectralFluxFrame(std::begin(*next), std::end(*next), std::begin(*prev), order));
         
         return flux;
     }
     
     template <typename Iterator>
-    std::vector<float> negativeSpectralFlux(Iterator begin, Iterator end, std::size_t numberOfBins)
+    std::vector<float> computeDifferenceSpectralFlux(Iterator begin, Iterator end, double order, bool onlyPositive)
     {
         if (begin == end)
             return {};
@@ -129,20 +148,10 @@ namespace dsp
             return {};
         
         std::vector<float> flux;
-        
         for (auto prev = begin; next != end; ++prev, ++next)
         {
-            float sum = 0;
-            for (auto i = 0; i < numberOfBins; ++i)
-            {
-                const auto diff = std::abs((*next)[i]) - std::abs((*prev)[i]);
-                if (diff >= 0)
-                    continue;
-                
-                sum -= diff;
-            }
-            
-            flux.emplace_back(sum);
+            const auto f = computeDifferenceSpectralFluxFrame(std::begin(*next), std::end(*next), std::begin(*prev), order);
+            flux.emplace_back(onlyPositive && f < 0 ? 0 : f);
         }
         
         return flux;
