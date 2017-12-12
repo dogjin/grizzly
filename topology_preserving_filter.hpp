@@ -25,8 +25,6 @@ namespace dsp
         
         virtual void write(T x) = 0;
         
-        virtual void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) = 0;
-        
         void setSampleRate(double sampleRate_Hz)
         {
             if (this->sampleRate_Hz == sampleRate_Hz)
@@ -73,6 +71,9 @@ namespace dsp
     public:
         //! Function for non-linear processing
         std::function<T(const T&)> nonLinear;
+        
+    protected:
+        virtual void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) = 0;
         
     protected:
         double sampleRate_Hz = 0;

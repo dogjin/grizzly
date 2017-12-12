@@ -28,14 +28,9 @@
 #ifndef GRIZZLY_LADDER_FILTER_HPP
 #define GRIZZLY_LADDER_FILTER_HPP
 
-#include <cmath>
-#include <moditone/math/constants.hpp>
-#include <functional>
-#include <stdexcept>
-#include <moditone/unit/hertz.hpp>
-
-#include "analog_one_pole_filter.hpp"
+#include "topology_preserving_filter.hpp"
 #include "topology_preserving_one_pole_filter.hpp"
+
 
 namespace dsp
 {
@@ -44,71 +39,32 @@ namespace dsp
      See "Designing software synthesizer plug-ins in c++" by Will Pirkle.
      See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T>
-    class LadderFilter
+    class LadderFilter :
+    public TopologyPreservingFilter<T>
     {
     public:
         //! Construct the filter with a cut-off and sample rate
-        LadderFilter(unit::hertz<float> sampleRate) :
-        sampleRate(sampleRate)
+        LadderFilter(float sampleRate_Hz) :
+        TopologyPreservingFilter<T>(sampleRate_Hz)
         {
-            setSampleRate(sampleRate);
-        }
-        
-        //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
-        {
-            this->sampleRate = sampleRate;
-            setCoefficients(cutOff, feedbackFactor, sampleRate);
-        }
-        
-        //! Set the cut-off frequency
-        void setCutOff(unit::hertz<float> cutOff)
-        {
-            this->cutOff = cutOff;
-            setCoefficients(cutOff, feedbackFactor, sampleRate);
-        }
-        
-        //! Set the feedback factor for a resonance peak (self-oscillation at >= 4)
-        void setFeedback(float factor)
-        {
-            feedbackFactor = factor;
-            setCoefficients(cutOff, feedbackFactor, sampleRate);
-        }
-        
-        //! Set coefficients given a cut-off, feedback factor and sample rate
-        void setCoefficients(unit::hertz<float> cutOff, float feedbackFactor, unit::hertz<float> sampleRate)
-        {
-            this->feedbackFactor = feedbackFactor;
-            const double integratorGainFactor = std::tan(math::PI<T> * cutOff.value / sampleRate.value);
-            const double gainFactorOnePole = integratorGainFactor / (1.0 + integratorGainFactor);
-            
-            stage1.filter.setGain(gainFactorOnePole);
-            stage2.filter.setGain(gainFactorOnePole);
-            stage3.filter.setGain(gainFactorOnePole);
-            stage4.filter.setGain(gainFactorOnePole);
-            
-            stage1.feedbackFactor = gainFactorOnePole * gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
-            stage2.feedbackFactor = gainFactorOnePole * gainFactorOnePole / (1.0 + integratorGainFactor);
-            stage3.feedbackFactor = gainFactorOnePole / (1.0 + integratorGainFactor);
-            stage4.feedbackFactor = 1.0 / (1.0 + integratorGainFactor);
-            
-            cutOffGain = 1.0 / (1.0 + feedbackFactor * (gainFactorOnePole * gainFactorOnePole * gainFactorOnePole * gainFactorOnePole));
         }
         
         //! Write a sample to the filter
-        void write(const T& x)
+        void write(T x) final
         {
-            const double feedbackSum = stage1.feedbackFactor * stage1.filter.getState() +
-            stage2.feedbackFactor * stage2.filter.getState() +
-            stage3.feedbackFactor * stage3.filter.getState() +
-            stage4.feedbackFactor * stage4.filter.getState();
-            
-            // Multiply cut-off gain with the input minus the feedback to get the input for the first stage
-            ladderInput = passBandGain ? (x * (1.0 + feedbackFactor) - feedbackFactor * feedbackSum) * cutOffGain : (x - feedbackFactor * feedbackSum) * cutOffGain;
+            const double feedbackSum = stage1.feedbackFactor * stage1.filter.state +
+            stage2.feedbackFactor * stage2.filter.state +
+            stage3.feedbackFactor * stage3.filter.state +
+            stage4.feedbackFactor * stage4.filter.state;
+                        
+            if (passBandGain)
+                x *= (1 + this->resonance);
+                
+            ladderInput = (x - this->resonance * feedbackSum) * this->gainFactor;
             
             // Optional non-linear processing
-            if (nonLinear)
-                ladderInput = nonLinear(ladderInput);
+            if (this->nonLinear)
+                ladderInput = this->nonLinear(ladderInput);
             
             stage1(ladderInput);
             stage2(stage1.output);
@@ -199,9 +155,6 @@ namespace dsp
         /*! Compensate for the loss of gain when the feedback factor increases, used in ARP filter models */
         bool passBandGain = false;
         
-        //! Function for non-linear processing
-        std::function<T(const T&)> nonLinear;
-        
     private:
         //! The filter stage
         /*! Each stage contains an one-pole filter with a slope of 6 dB per octave. */
@@ -216,8 +169,7 @@ namespace dsp
             
         public:
             //! The one-pole filter
-//            AnalogOnePoleFilter<T> filter;
-            TopologyPreservingOnePoleFilterNonLinearII<float> filter;
+            TopologyPreservingOnePoleFilter<float> filter;
             
             //! The output of the filter
             T output = 0;
@@ -227,15 +179,28 @@ namespace dsp
         };
         
     private:
-        //! The cut-off
-        unit::hertz<float> cutOff = 0;
+        //! Set coefficients given a cut-off, feedback factor and sample rate
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
+        {
+            stage1.filter.setCoefficients(cutOff_Hz, sampleRate_Hz);
+            
+            const auto gain = this->stage1.filter.gain;
+            const auto gain2 = gain * gain;
+            const auto gPlus1 = this->stage1.filter.g + 1.0;
+            
+            stage2.filter.copyCoefficients(stage1.filter);
+            stage3.filter.copyCoefficients(stage1.filter);
+            stage4.filter.copyCoefficients(stage1.filter);
+            
+            stage1.feedbackFactor = gain2 * gain / gPlus1;
+            stage2.feedbackFactor = gain2 / gPlus1;
+            stage3.feedbackFactor = gain / gPlus1;
+            stage4.feedbackFactor = 1.0 / gPlus1;
+            
+            gainFactor = 1.0 / (1.0 + this->resonance * (gain2 * gain2));
+        }
         
-        //! The sample rate
-        unit::hertz<float> sampleRate = 0;
-        
-        //! Feedback factor for resonance
-        double feedbackFactor = 0;
-        
+    private:
         //! Filter stage 1
         Stage stage1;
         
@@ -251,8 +216,7 @@ namespace dsp
         //! The input state before the first stage of the ladder
         T ladderInput = 0;
         
-        //! Filter gain factor with resolved zero delay feedback
-        double cutOffGain = 0;
+        double gainFactor = 0;
     };
 }
 

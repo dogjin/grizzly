@@ -170,6 +170,12 @@ namespace dsp
             highPassOutput = T(0);
         }
         
+        void copyCoefficients(const TopologyPreservingOnePoleFilter& rhs)
+        {
+            g = rhs.g;
+            gain = rhs.gain;
+        }
+        
     public:
         //! Low-pass output state
         T lowPassOutput = 0;

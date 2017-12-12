@@ -74,15 +74,16 @@ namespace dsp
                 this->y *= 1.0 / this->resonance;
         }
         
+    private:
         void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
             this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
             
-            auto g = this->onePole1.g;
-            auto gain = this->onePole1.gain;
+            const auto g = this->onePole1.g;
+            const auto gain = this->onePole1.gain;
             
-            this->onePole2.gain = gain;
-            this->onePole3.gain = gain;
+            this->onePole2.copyCoefficients(onePole1);
+            this->onePole3.copyCoefficients(onePole1);
             
             this->feedbackFactorS2 = (resonance - resonance * gain) / (1.0 + g);
             this->feedbackFactorS3 = -1.0 / (1.0 + g);
@@ -115,15 +116,16 @@ namespace dsp
                 this->y *= 1.0 / this->resonance;
         }
         
+    private:
         void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
             this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
             
-            auto g = this->onePole1.g;
-            auto gain = this->onePole1.gain;
+            const auto g = this->onePole1.g;
+            const auto gain = this->onePole1.gain;
             
-            this->onePole2.gain = gain;
-            this->onePole3.gain = gain;
+            this->onePole2.copyCoefficients(onePole1);
+            this->onePole3.copyCoefficients(onePole1);
             
             this->feedbackFactorS2 = -gain / (1.0 + g);
             this->feedbackFactorS3 = 1.0 / (1.0 + g);

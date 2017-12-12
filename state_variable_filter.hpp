@@ -70,29 +70,6 @@ namespace dsp
             lowPass = integrator2(bandPass);
         }
         
-        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
-        {
-            const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
-            
-            integrator1.g = g;
-            integrator2.g = g;
-
-            computeDampingAndGainFactor(resonance, g);
-        }
-        
-        void setCoefficients(double sampleRate_Hz, double time_s, double timeConstantFactor, double resonance)
-        {
-            const double t = time_s * math::SQRT_HALF<double>;
-            
-            
-            const double g = std::tan(timeConstantFactor / (t * this->sampleRate_Hz * 2.0));
-            
-            integrator1.g = g;
-            integrator2.g = g;
-            
-            computeDampingAndGainFactor(resonance, g);
-        }
-        
         //! Set the time
         /*! @param time The time is takes to reach the input value (dependant on timeConstantFactor).
              @param sampleRate The sampleRate.
@@ -289,10 +266,24 @@ namespace dsp
         }
 
     private:
-        void computeDampingAndGainFactor(double resonance, double g)
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
         {
+            const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
+            
+            integrator1.g = g;
+            integrator2.g = g;
+            
             damping = 1.0 / (2.0 * resonance);
             gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+        }
+        
+        void setCoefficients(double sampleRate_Hz, double time_s, double timeConstantFactor, double resonance)
+        {
+            const double t = time_s * math::SQRT_HALF<double>;
+            
+            this->cutOff_Hz = timeConstantFactor / (t * math::TWO_PI<double>);
+            
+            setCoefficients(sampleRate_Hz, this->cutOff_Hz, resonance);
         }
         
     private:
