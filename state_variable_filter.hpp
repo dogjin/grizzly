@@ -59,7 +59,7 @@ namespace dsp
             const auto s1 = integrator1.state;
             const auto s2 = integrator2.state;
             
-            highPass = (x - 2.0 * damping * s1 - g * s1 - s2) * gainFactor;
+            highPass = (x - 2.0 * damping * s1 - g * s1 - s2) * this->gainFactor;
             
             bandPass = integrator1(highPass);
             
@@ -117,13 +117,14 @@ namespace dsp
             x = rhs.x;
             this->sampleRate_Hz = rhs.sampleRate_Hz;
             this->cutOff_Hz = rhs.cutOff_Hz;
+            this->resonance = rhs.resonance;
+            this->gainFactor = rhs.gainFactor;
+            
+            damping = rhs.damping;
             integrator1.g = rhs.integrator1.g;
             integrator2.g = rhs.integrator2.g;
             time_s = rhs.time_s;
             timeConstantFactor = rhs.timeConstantFactor;
-            this->resonance = rhs.resonance;
-            gainFactor = rhs.gainFactor;
-            damping = rhs.damping;
         }
 
         /////////////////////////////////////////////
@@ -274,7 +275,7 @@ namespace dsp
             integrator2.g = g;
             
             damping = 1.0 / (2.0 * resonance);
-            gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
+            this->gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
         }
         
         void setCoefficients(double sampleRate_Hz, double time_s, double timeConstantFactor, double resonance)
@@ -307,9 +308,6 @@ namespace dsp
 
         //! Damping factor, related to q
         double damping = 1;
-        
-        //! The gain factor with resolved zero delay feedback
-        double gainFactor = 0;
         
         //! Input of last writing call
         T x = 0;

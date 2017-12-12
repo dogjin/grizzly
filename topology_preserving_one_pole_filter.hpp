@@ -31,57 +31,11 @@
 #include <moditone/math/constants.hpp>
 #include <functional>
 
+#include "solver.hpp"
+
+
 namespace dsp
-{
-    //    inline float tanhSolver(float input, float estimate, float g, float state, float error)
-    //    {
-    //        for (auto i = 0; i < 50; i++)
-    //        {
-    //            // calculate y based on the estimate
-    //            float y = g * (input - std::tanh(estimate)) + state;
-    //
-    //            // get the resiude
-    //            float residue = y - estimate;
-    //
-    //            // if the residue is smaller than the error, the estimate is close enough
-    //            if (std::abs(residue) <= error)
-    //                return estimate;
-    //
-    //            // if not, compute a new estimate
-    //            float derivative = -g * (1.f - std::tanh(estimate) * std::tanh(estimate)) - 1.f;
-    //            estimate = estimate - residue/derivative;
-    //        }
-    //
-    //        return estimate;
-    //    }
-    
-    inline float implicitFunctionSolver(const std::function<float(float)> function,
-                                        const std::function<float(float)> derivative,
-                                        float yEstimate, const float error, const size_t maxIterations)
-    {
-        for (auto i = 0; i < maxIterations; i++)
-        {
-            // compute the y based on the function that also uses the estimate
-            float y = function(yEstimate);
-            
-            // get the resiude
-            float residue = y - yEstimate;
-            
-            // We want y and the y estimate to converge,
-            // if the residue is smaller than the error, the estimate is close enough
-            if (std::abs(residue) <= error)
-                return yEstimate;
-            
-            // if not, compute a new estimate
-            /* this will update the outputEstimate outside the function
-             * and is used in the next iteration in the function and derivative
-             */
-            yEstimate = yEstimate - residue / derivative(yEstimate);
-        }
-        
-        return yEstimate;
-    }
-    
+{    
     /*! @brief Topology preserving one pole filter with resolved zero feedback delay
      *
      *  @discussion One pole filter with resolved feedback delay. Write to the filter and
@@ -105,7 +59,7 @@ namespace dsp
             
             // non-linear low-pass
             if (isNonLinear)
-                this->lowPassOutput = implicitFunctionSolver(function, derivative, this->lowPassOutput, 0.00001, 20);
+                this->lowPassOutput = solveImplicit(function, derivative, this->lowPassOutput, 0.00001, 20);
             
             // write high-pass state
             this->highPassOutput = x - this->lowPassOutput;

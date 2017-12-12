@@ -22,7 +22,7 @@ namespace dsp
         SallenKeyFilter(double sampleRate_Hz) :
         TopologyPreservingFilter<T>(sampleRate_Hz)
         {
-            this->resonance = 0.00001;
+            this->resonance = resonanceMinimum;
         }
         
         T writeAndRead(T x)
@@ -41,11 +41,37 @@ namespace dsp
         
         double feedbackFactorS2 = 0;
         double feedbackFactorS3 = 0;
-        double gainFactor = 0;
         
         TopologyPreservingOnePoleFilter<T> onePole1;
         TopologyPreservingOnePoleFilter<T> onePole2;
         TopologyPreservingOnePoleFilter<T> onePole3;
+        
+        double resonanceReciprocal = 0;
+        
+    private:
+        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
+        {
+            onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
+            onePole2.copyCoefficients(onePole1);
+            onePole3.copyCoefficients(onePole1);
+            
+            const auto g = onePole1.g;
+            const auto gain = onePole1.gain;
+            
+            if (resonance <= 0)
+                this->resonance = resonanceMinimum;
+                
+            resonanceReciprocal = 1.0 / this->resonance;
+            
+            this->gainFactor = 1.0 / (1.0 - this->resonance * gain + this->resonance * gain * gain);
+            
+            setFeedBackFactors(g, gain, this->resonance);
+        }
+        
+        virtual void setFeedBackFactors(double g, double gain, double resonance) = 0;
+        
+    private:
+        const double resonanceMinimum = 0.0000001;
     };
     
     
@@ -70,25 +96,14 @@ namespace dsp
             
             this->onePole3.write(this->y);
             
-            if (this->resonance > 0)
-                this->y *= 1.0 / this->resonance;
+            this->y *= this->resonanceReciprocal;
         }
         
     private:
-        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
+        void setFeedBackFactors(double g, double gain, double resonance) final
         {
-            this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
-            
-            const auto g = this->onePole1.g;
-            const auto gain = this->onePole1.gain;
-            
-            this->onePole2.copyCoefficients(onePole1);
-            this->onePole3.copyCoefficients(onePole1);
-            
             this->feedbackFactorS2 = (resonance - resonance * gain) / (1.0 + g);
             this->feedbackFactorS3 = -1.0 / (1.0 + g);
-            
-            this->gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
         }
     };
     
@@ -112,25 +127,14 @@ namespace dsp
             
             this->onePole3.write(this->onePole2.writeAndReadHighPass(this->y));
             
-            if (this->resonance > 0)
-                this->y *= 1.0 / this->resonance;
+            this->y *= this->resonanceReciprocal;
         }
         
     private:
-        void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) final
+        void setFeedBackFactors(double g, double gain, double resonance) final
         {
-            this->onePole1.setCoefficients(cutOff_Hz, sampleRate_Hz);
-            
-            const auto g = this->onePole1.g;
-            const auto gain = this->onePole1.gain;
-            
-            this->onePole2.copyCoefficients(onePole1);
-            this->onePole3.copyCoefficients(onePole1);
-            
             this->feedbackFactorS2 = -gain / (1.0 + g);
             this->feedbackFactorS3 = 1.0 / (1.0 + g);
-            
-            this->gainFactor = 1.0 / (1.0 - resonance * gain + resonance * gain * gain);
         }
     };
 }

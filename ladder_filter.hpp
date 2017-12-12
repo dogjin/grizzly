@@ -52,7 +52,8 @@ namespace dsp
         //! Write a sample to the filter
         void write(T x) final
         {
-            const double feedbackSum = stage1.feedbackFactor * stage1.filter.state +
+            const double feedbackSum =
+            stage1.feedbackFactor * stage1.filter.state +
             stage2.feedbackFactor * stage2.filter.state +
             stage3.feedbackFactor * stage3.filter.state +
             stage4.feedbackFactor * stage4.filter.state;
@@ -197,7 +198,7 @@ namespace dsp
             stage3.feedbackFactor = gain / gPlus1;
             stage4.feedbackFactor = 1.0 / gPlus1;
             
-            gainFactor = 1.0 / (1.0 + this->resonance * (gain2 * gain2));
+            this->gainFactor = 1.0 / (1.0 + this->resonance * (gain2 * gain2));
         }
         
     private:
@@ -215,8 +216,6 @@ namespace dsp
         
         //! The input state before the first stage of the ladder
         T ladderInput = 0;
-        
-        double gainFactor = 0;
     };
 }
 

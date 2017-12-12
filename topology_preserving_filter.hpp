@@ -81,5 +81,7 @@ namespace dsp
         double cutOff_Hz = 0;
         
         double resonance = 0;
+        
+        double gainFactor = 0;
     };
 }

@@ -68,7 +68,7 @@ namespace dsp
             stage3.feedbackFactor * S3 +
             stage4.feedbackFactor * S4;
             
-            ladderInput = (x - this->resonance * feedbackSum) * gainFactor;
+            ladderInput = (x - this->resonance * feedbackSum) * this->gainFactor;
             
             // Optional non-linear processing
             if (this->nonLinear)
@@ -189,6 +189,7 @@ namespace dsp
             double epsilon = 0;
             double beta = 0;
             double delta = 0;
+            double G = 0;
             
             //! The feedback factor for the resonance peak
             double feedbackFactor = 0;
@@ -208,16 +209,16 @@ namespace dsp
             
             // global G's
             const double G4Denom = (1 + g);
-            G4 = gHalf / G4Denom;
+            stage4.G = gHalf / G4Denom;
             
-            const double G3Denom = (1 + g - gHalf * G4);
-            G3 = gHalf / G3Denom;
+            const double G3Denom = (1 + g - gHalf * stage4.G);
+            stage3.G = gHalf / G3Denom;
             
-            const double G2Denom = (1 + g - gHalf * G3);
-            G2 = gHalf / G2Denom;
+            const double G2Denom = (1 + g - gHalf * stage3.G);
+            stage2.G = gHalf / G2Denom;
             
-            const double G1Denom = (1 + g - g * G2);
-            G1 = g / G1Denom;
+            const double G1Denom = (1 + g - g * stage2.G);
+            stage1.G = g / G1Denom;
             
             //// set stage factors
             // a0
@@ -227,15 +228,15 @@ namespace dsp
             stage4.a0 = 0.5;
             
             // gamma
-            stage1.gamma = 1 + G1 * G2;
-            stage2.gamma = 1 + G2 * G3;
-            stage3.gamma = 1 + G3 * G4;
+            stage1.gamma = 1 + stage1.G * stage2.G;
+            stage2.gamma = 1 + stage2.G * stage3.G;
+            stage3.gamma = 1 + stage3.G * stage4.G;
             stage4.gamma = 1;
             
             // epsilon
-            stage1.epsilon = G2;
-            stage2.epsilon = G3;
-            stage3.epsilon = G4;
+            stage1.epsilon = stage2.G;
+            stage2.epsilon = stage3.G;
+            stage3.epsilon = stage4.G;
             //stage4.epsilon = 0;
             
             // beta
@@ -251,12 +252,12 @@ namespace dsp
             //stage4.delta = 0;
             
             // feedback-factor
-            stage1.feedbackFactor = G4 * G3 * G2;
-            stage2.feedbackFactor = G4 * G3;
-            stage3.feedbackFactor = G4;
+            stage1.feedbackFactor = stage4.G * stage3.G * stage2.G;
+            stage2.feedbackFactor = stage4.G * stage3.G;
+            stage3.feedbackFactor = stage4.G;
             stage4.feedbackFactor = 1;
             
-            gainFactor = 1.0 / (1.0 + this->resonance * stage1.feedbackFactor * G1);
+            this->gainFactor = 1.0 / (1.0 + this->resonance * stage1.feedbackFactor * stage1.G);
         }
         
     private:
@@ -273,17 +274,7 @@ namespace dsp
         Stage stage4;
         
         //! The input state before the first stage of the ladder
-        T ladderInput = 0;
-        
-        double g = 0;
-        
-        //! Filter gain factor with resolved zero delay feedback
-        T gainFactor = 0;
-        
-        double G1 = 0;
-        double G2 = 0;
-        double G3 = 0;
-        double G4 = 0;
+        T ladderInput = 0;        
     };
 }
 
