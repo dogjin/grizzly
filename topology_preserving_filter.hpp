@@ -23,6 +23,8 @@ namespace dsp
         {
         }
         
+        virtual ~TopologyPreservingFilter() = default;
+        
         virtual void write(T x) = 0;
         
         void setSampleRate(double sampleRate_Hz)
@@ -67,13 +69,21 @@ namespace dsp
             
             setCoefficients(sampleRate_Hz, cutOff_Hz, resonance);
         }
-        
+                
     public:
         //! Function for non-linear processing
         std::function<T(const T&)> nonLinear;
         
     protected:
         virtual void setCoefficients(double sampleRate_Hz, double cutOff_Hz, double resonance) = 0;
+        
+        void copyBaseCoefficients(const TopologyPreservingFilter<T>* rhs)
+        {
+            sampleRate_Hz = rhs->sampleRate_Hz;
+            cutOff_Hz = rhs->cutOff_Hz;
+            resonance = rhs->resonance;
+            gainFactor = rhs->gainFactor;
+        }
         
     protected:
         double sampleRate_Hz = 0;

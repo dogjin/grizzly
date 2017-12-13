@@ -26,7 +26,7 @@ namespace dsp
             const auto y = state;
             
             // update the state
-            state += (g * x);
+            state += (gain * x);
             
             // return the output
             return y;
@@ -43,7 +43,7 @@ namespace dsp
         T state = 0;
         
         //! The gain value
-        double g = 1;
+        double gain = 1;
     };
     
     template <class T>
@@ -54,7 +54,7 @@ namespace dsp
         T process(T x)
         {
             // update the state
-            state += (g * x);
+            state += (gain * x);
             
             // return state as output (previous output + input)
             return state;
@@ -71,7 +71,7 @@ namespace dsp
         T state = 0;
         
         //! The gain value
-        double g = 1;
+        double gain = 1;
     };
     
     //! in comment zo zetten dat dit transposed direct form 2 is!!
@@ -83,7 +83,7 @@ namespace dsp
         T process(T x)
         {
             // multiply the input with the gain coefficient
-            x *= g;
+            x *= gain;
             
             // form the output by adding the state to the input
             const auto y = x + state;
@@ -105,6 +105,6 @@ namespace dsp
         T state = 0;
         
         //! The gain value
-        double g = 0.5;
+        double gain = 0.5;
     };
 }

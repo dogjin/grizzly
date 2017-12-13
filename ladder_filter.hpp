@@ -53,10 +53,10 @@ namespace dsp
         void write(T x) final
         {
             const double feedbackSum =
-            stage1.feedbackFactor * stage1.filter.state +
-            stage2.feedbackFactor * stage2.filter.state +
-            stage3.feedbackFactor * stage3.filter.state +
-            stage4.feedbackFactor * stage4.filter.state;
+            stage1.feedbackFactor * stage1.filter.state() +
+            stage2.feedbackFactor * stage2.filter.state() +
+            stage3.feedbackFactor * stage3.filter.state() +
+            stage4.feedbackFactor * stage4.filter.state();
                         
             if (passBandGain)
                 x *= (1 + this->resonance);
@@ -71,6 +71,16 @@ namespace dsp
             stage2(stage1.output);
             stage3(stage2.output);
             stage4(stage3.output);
+        }
+        
+        void copyCoefficients(const LadderFilter& rhs)
+        {
+            this->copyBaseCoefficients(&rhs);
+            
+            stage1.copyCoefficients(rhs.stage1);
+            stage2.copyCoefficients(rhs.stage2);
+            stage3.copyCoefficients(rhs.stage3);
+            stage4.copyCoefficients(rhs.stage4);
         }
         
         //! Read the low-pass output
@@ -168,12 +178,18 @@ namespace dsp
                 output = filter.writeAndReadLowPass(input);
             }
             
-        public:
-            //! The one-pole filter
-            TopologyPreservingOnePoleFilter<float> filter;
+            void copyCoefficients(const Stage& rhs)
+            {
+                filter.copyCoefficients(rhs.filter);
+                feedbackFactor = rhs.feedbackFactor;
+            }
             
+        public:
             //! The output of the filter
             T output = 0;
+            
+            //! The one-pole filter
+            TopologyPreservingOnePoleFilter<float> filter;
             
             //! The feedback factor for the resonance peak
             double feedbackFactor = 0;
@@ -185,9 +201,9 @@ namespace dsp
         {
             stage1.filter.setCoefficients(cutOff_Hz, sampleRate_Hz);
             
-            const auto gain = this->stage1.filter.gain;
+            const auto gain = this->stage1.filter.gain();
             const auto gain2 = gain * gain;
-            const auto gPlus1 = this->stage1.filter.g + 1.0;
+            const auto gPlus1 = this->stage1.filter.warpedCutOff() + 1.0;
             
             stage2.filter.copyCoefficients(stage1.filter);
             stage3.filter.copyCoefficients(stage1.filter);
@@ -202,6 +218,9 @@ namespace dsp
         }
         
     private:
+        //! The input state before the first stage of the ladder
+        T ladderInput = 0;
+        
         //! Filter stage 1
         Stage stage1;
         
@@ -213,9 +232,6 @@ namespace dsp
         
         //! Filter stage 4
         Stage stage4;
-        
-        //! The input state before the first stage of the ladder
-        T ladderInput = 0;
     };
 }
 

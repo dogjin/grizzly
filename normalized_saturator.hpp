@@ -37,8 +37,8 @@ namespace dsp
     class NormalizedSaturator
     {
     public:
-        NormalizedSaturator(Function&& function) :
-            saturator(std::move(function))
+        NormalizedSaturator(Function function) :
+            saturator(function)
         {
             setDownwardFactor(1);
             setUpwardFactor(1);

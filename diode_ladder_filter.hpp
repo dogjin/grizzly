@@ -50,16 +50,16 @@ namespace dsp
         //! Write a sample to the filter
         void write(T x) final
         {
-            const double S4 = stage4.filter.state * stage4.beta;
+            const double S4 = stage4.filter.state() * stage4.beta;
             const double addBefore4 = S4 * stage4.epsilon;
             
-            const double S3 = (stage3.filter.state + S4 * stage3.delta) * stage3.beta;
+            const double S3 = (stage3.filter.state() + S4 * stage3.delta) * stage3.beta;
             const double addBefore3 = S3 * stage3.epsilon + S4;
             
-            const double S2 = (stage2.filter.state + S3 * stage2.delta) * stage2.beta;
+            const double S2 = (stage2.filter.state() + S3 * stage2.delta) * stage2.beta;
             const double addBefore2 = S2 * stage2.epsilon + S3;
             
-            const double S1 = (stage1.filter.state + S2 * stage1.delta) * stage1.beta;
+            const double S1 = (stage1.filter.state() + S2 * stage1.delta) * stage1.beta;
             const double addBefore1 = S1 * stage1.epsilon + S2;
             
             const double feedbackSum =
@@ -85,6 +85,16 @@ namespace dsp
             
             const T x4 = stage3.output * stage4.gamma + addBefore4;
             stage4(x4 * stage4.a0);
+        }
+        
+        void copyCoefficients(const DiodeLadderFilter& rhs)
+        {
+            this->copyBaseCoefficients(&rhs);
+            
+            stage1.copyCoefficients(rhs.stage1);
+            stage2.copyCoefficients(rhs.stage2);
+            stage3.copyCoefficients(rhs.stage3);
+            stage4.copyCoefficients(rhs.stage4);
         }
         
         //! Read the low-pass output
@@ -177,22 +187,35 @@ namespace dsp
                 output = filter.writeAndReadLowPass(input);
             }
             
-        public:
-            //! The one-pole filter
-            TopologyPreservingOnePoleFilter<float> filter;
+            void copyCoefficients(const Stage& rhs)
+            {
+                filter.copyCoefficients(rhs.filter);
+                
+                feedbackFactor = rhs.feedbackFactor;
+                
+                gamma = rhs.gamma;
+                a0 = rhs.a0;
+                epsilon = rhs.epsilon;
+                beta = rhs.beta;
+                delta = rhs.delta;
+                G = rhs.G;
+            }
             
+        public:
             //! The output of the filter
             T output = 0;
             
+            //! The one-pole filter
+            TopologyPreservingOnePoleFilter<float> filter;
+            
+            double feedbackFactor = 0;
+
             double gamma = 0;
             double a0 = 0;
             double epsilon = 0;
             double beta = 0;
             double delta = 0;
             double G = 0;
-            
-            //! The feedback factor for the resonance peak
-            double feedbackFactor = 0;
         };
         
     private:
@@ -200,7 +223,7 @@ namespace dsp
         {
             stage1.filter.setCoefficients(cutOff_Hz, sampleRate_Hz);
             
-            const auto g = this->stage1.filter.g;
+            const auto g = stage1.filter.warpedCutOff();
             const auto gHalf = g * 0.5;
                         
             stage2.filter.copyCoefficients(stage1.filter);
@@ -261,6 +284,9 @@ namespace dsp
         }
         
     private:
+        //! The input state before the first stage of the ladder
+        T ladderInput = 0;
+        
         //! Filter stage 1
         Stage stage1;
         
@@ -272,9 +298,6 @@ namespace dsp
         
         //! Filter stage 4
         Stage stage4;
-        
-        //! The input state before the first stage of the ladder
-        T ladderInput = 0;        
     };
 }
 

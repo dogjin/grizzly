@@ -55,11 +55,11 @@ namespace dsp
         {
             this->x = x;
             
-            const auto g = integrator1.g; // in this case the g = gain;
+            const auto gain = integrator1.gain;
             const auto s1 = integrator1.state;
             const auto s2 = integrator2.state;
             
-            highPass = (x - 2.0 * damping * s1 - g * s1 - s2) * this->gainFactor;
+            highPass = (x - 2.0 * damping * s1 - gain * s1 - s2) * this->gainFactor;
             
             bandPass = integrator1(highPass);
             
@@ -71,8 +71,7 @@ namespace dsp
         }
         
         //! Set the time
-        /*! @param time The time is takes to reach the input value (dependant on timeConstantFactor).
-             @param sampleRate The sampleRate.
+        /*! @param time_s The time is takes to reach the input value (dependant on timeConstantFactor).
              @param timeConstantFactor The factor that influences the actual time, a factor of ~5 results in a accurate time response. */
         void setTime(double time_s, double timeConstantFactor)
         {
@@ -114,19 +113,14 @@ namespace dsp
         
         void copyCoefficients(const StateVariableFilter& rhs)
         {
-            x = rhs.x;
-            this->sampleRate_Hz = rhs.sampleRate_Hz;
-            this->cutOff_Hz = rhs.cutOff_Hz;
-            this->resonance = rhs.resonance;
-            this->gainFactor = rhs.gainFactor;
-            
-            damping = rhs.damping;
-            integrator1.g = rhs.integrator1.g;
-            integrator2.g = rhs.integrator2.g;
-            time_s = rhs.time_s;
-            timeConstantFactor = rhs.timeConstantFactor;
-        }
+            this->copyBaseCoefficients(&rhs);
 
+            integrator1.gain = rhs.integrator1.gain;
+            integrator2.gain = rhs.integrator2.gain;
+            damping = rhs.damping;
+            bandShelfGain_lin = rhs.bandShelfGain_lin;
+        }
+        
         /////////////////////////////////////////////
         // Write & read methods for sample processing
         /////////////////////////////////////////////
@@ -271,8 +265,8 @@ namespace dsp
         {
             const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
             
-            integrator1.g = g;
-            integrator2.g = g;
+            integrator1.gain = g;
+            integrator2.gain = g;
             
             damping = 1.0 / (2.0 * resonance);
             this->gainFactor = 1.0 / (1.0 + 2.0 * damping * g + g * g);
@@ -288,27 +282,6 @@ namespace dsp
         }
         
     private:
-        TrapezoidalIntegrator<T> integrator1;
-        TrapezoidalIntegrator<T> integrator2;
-        
-        /*! Filter Time
-         *  The time it takes to reach for the input.
-         *  The time determines the gain factor which is used in the system.
-         *  We can set this to a default value of 0.
-         */
-        double time_s = 0;
-        
-        /*! Time constant factor for the filter time
-         *  Determines the gain factor which is used in the system.
-         *  Influences the actual time to reach for the input (~5 to reach in 100%
-         *  of the given time.
-         *  We can set this to a default value of 0.
-         */
-        double timeConstantFactor = 0;
-
-        //! Damping factor, related to q
-        double damping = 1;
-        
         //! Input of last writing call
         T x = 0;
         
@@ -320,6 +293,12 @@ namespace dsp
         
         //! Low-pass output state
         T lowPass = 0;
+        
+        TrapezoidalIntegrator<T> integrator1;
+        TrapezoidalIntegrator<T> integrator2;
+        
+        //! Damping factor, related to q
+        double damping = 1;
         
         //! Gain (for band-shelf type)
         double bandShelfGain_lin = 0;
