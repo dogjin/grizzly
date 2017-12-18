@@ -57,11 +57,13 @@ namespace dsp
          * with g begin tan(math::PI<T> * cutOff.value / sampleRate.value) */
         void write(T x)
         {
-            lowPassOutput = integrator(x - integrator.state);
+            lowPassOutput = integrator.computeY(x - integrator.state);
             
             // non-linear low-pass
             if (isNonLinear)
                 this->lowPassOutput = solveImplicit(function, derivative, this->lowPassOutput, 0.00001, 20);
+            
+            integrator.updateState();
             
             // write high-pass state
             this->highPassOutput = x - this->lowPassOutput;
@@ -124,10 +126,7 @@ namespace dsp
         void copyCoefficients(const TopologyPreservingOnePoleFilter& rhs)
         {
             warpedCutOff_ = rhs.warpedCutOff_;
-            integrator = rhs.integrator;
-            
-            function = rhs.function;
-            derivative = rhs.derivative;
+            integrator.gain = rhs.integrator.gain;
         }
         
         double warpedCutOff() const

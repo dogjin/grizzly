@@ -73,6 +73,14 @@ namespace dsp
             stage4(stage3.output);
         }
         
+        void setNonLinearStages(bool nonLinear)
+        {
+            stage1.filter.isNonLinear = nonLinear;
+            stage2.filter.isNonLinear = nonLinear;
+            stage3.filter.isNonLinear = nonLinear;
+            stage4.filter.isNonLinear = nonLinear;
+        }
+        
         void copyCoefficients(const LadderFilter& rhs)
         {
             this->copyBaseCoefficients(&rhs);

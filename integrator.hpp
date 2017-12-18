@@ -82,14 +82,11 @@ namespace dsp
         //! Integrate the input
         T process(T x)
         {
-            // multiply the input with the gain coefficient
-            x *= gain;
+            // form the output
+            computeY(x);
             
-            // form the output by adding the state to the input
-            const auto y = x + state;
-            
-            // update the stae
-            state = x + y;
+            // update the state
+            updateState();
             
             return y;
         }
@@ -100,11 +97,35 @@ namespace dsp
             return process(x);
         }
         
+        void computeY(T x)
+        {
+            // multiply the input with the gain coefficient
+            v = x * gain;
+            
+            // form the output by adding the state to the input
+            y = v + state;
+        }
+        
+        void updateState()
+        {
+            state = v + y;
+        }
+        
+        T getY() const
+        {
+            return y;
+        }
+        
     public:
         //! The previous value, state
         T state = 0;
         
         //! The gain value
         double gain = 0.5;
+        
+    private:
+        T y = 0;
+        
+        T v = 0;
     };
 }
