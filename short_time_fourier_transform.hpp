@@ -40,10 +40,8 @@ namespace dsp
 {
     //! The short-time Fourier transform without a window
     template <typename Iterator>
-    std::vector<std::vector<std::complex<float>>> shortTimeFourierTransform(Iterator begin, Iterator end, FastFourierTransform& fourier, std::size_t hopSize)
+    std::vector<std::vector<std::complex<float>>> shortTimeFourierTransform(Iterator begin, Iterator end, FastFourierTransform& fourier, std::size_t frameSize, std::size_t hopSize)
     {
-        const auto frameSize = fourier.size;
-        
         // Generate space for all spectra
         const auto size = std::distance(begin, end);
         std::vector<std::vector<std::complex<float>>> spectra;
@@ -65,9 +63,9 @@ namespace dsp
 
     //! The short-time Fourier transform with a window
     template <typename Iterator, typename WindowIterator>
-    std::vector<std::vector<std::complex<float>>> shortTimeFourierTransform(Iterator begin, Iterator end, FastFourierTransform& fourier, WindowIterator windowBegin, std::size_t hopSize)
+    std::vector<std::vector<std::complex<float>>> shortTimeFourierTransform(Iterator begin, Iterator end, FastFourierTransform& fourier, WindowIterator windowBegin, WindowIterator windowEnd, std::size_t hopSize)
     {
-        const auto frameSize = fourier.size;
+        const auto frameSize = std::distance(windowBegin, windowEnd);
         
         // Generate space for all spectra
         const auto size = std::distance(begin, end);
