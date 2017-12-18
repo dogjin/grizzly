@@ -26,7 +26,7 @@ namespace dsp
             const auto y = state;
             
             // update the state
-            state += (g * x);
+            state += (gain * x);
             
             // return the output
             return y;
@@ -43,7 +43,7 @@ namespace dsp
         T state = 0;
         
         //! The gain value
-        double g = 1;
+        double gain = 1;
     };
     
     template <class T>
@@ -54,7 +54,7 @@ namespace dsp
         T process(T x)
         {
             // update the state
-            state += (g * x);
+            state += (gain * x);
             
             // return state as output (previous output + input)
             return state;
@@ -71,7 +71,7 @@ namespace dsp
         T state = 0;
         
         //! The gain value
-        double g = 1;
+        double gain = 1;
     };
     
     //! in comment zo zetten dat dit transposed direct form 2 is!!
@@ -82,14 +82,11 @@ namespace dsp
         //! Integrate the input
         T process(T x)
         {
-            // multiply the input with the gain coefficient
-            x *= g;
+            // form the output
+            computeY(x);
             
-            // form the output by adding the state to the input
-            const auto y = x + state;
-            
-            // update the stae
-            state = x + y;
+            // update the state
+            updateState();
             
             return y;
         }
@@ -100,11 +97,35 @@ namespace dsp
             return process(x);
         }
         
+        void computeY(T x)
+        {
+            // multiply the input with the gain coefficient
+            v = x * gain;
+            
+            // form the output by adding the state to the input
+            y = v + state;
+        }
+        
+        void updateState()
+        {
+            state = v + y;
+        }
+        
+        T getY() const
+        {
+            return y;
+        }
+        
     public:
         //! The previous value, state
         T state = 0;
         
         //! The gain value
-        double g = 0.5;
+        double gain = 0.5;
+        
+    private:
+        T y = 0;
+        
+        T v = 0;
     };
 }

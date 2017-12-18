@@ -37,10 +37,10 @@ namespace  dsp
     class ParameterSmoother
     {
     public:
-        ParameterSmoother(unit::second<double> time, unit::hertz<double> sampleRate) :
-        filter(sampleRate)
+        ParameterSmoother(double time_s, double sampleRate_Hz) :
+        filter(sampleRate_Hz)
         {
-            filter.setTime(time, 5);
+            filter.setTime(time_s, 5.0);
         }
         
         void write()
@@ -77,14 +77,14 @@ namespace  dsp
             return read();
         }
         
-        void setTime(unit::second<double> time)
+        void setTime(double time_s)
         {
-            filter.setTime(time);
+            filter.setTime(time_s);
         }
         
-        void setSampleRate(unit::hertz<float> sampleRate)
+        void setSampleRate(double sampleRate_Hz)
         {
-            filter.setSampleRate(sampleRate.value);
+            filter.setSampleRate(sampleRate_Hz);
         }
         
         bool reachedDestination()
@@ -95,10 +95,10 @@ namespace  dsp
     public:
         T destination = 0;
         T value = 0;
-        T offset = 0.0000001;
+        double offset = 0.0000001;
         
     private:
-        StateVariableFilter<float> filter;
+        StateVariableFilter<double> filter;
         
     };
 }

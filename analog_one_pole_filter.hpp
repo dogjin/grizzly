@@ -37,6 +37,9 @@
 
 namespace dsp
 {
+    //! DEPRICATED !!!!!
+    
+    
     //! Topology preserving one pole filter with resolved zero feedback delay
     /*! See "The Art Of VA Filter Design" by Vadim Zavalishin. */
     template <class T>
