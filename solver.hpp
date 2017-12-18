@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <memory>
 
@@ -16,17 +17,17 @@ namespace dsp
     //! Newton solver
     /*! Root finding algorithm via newton's method. Given a function and its derivative,
      the position on the x-axis of the root is returned. A nullptr is returned if no root can be found */
-    template <typename T>
-    std::unique_ptr<float> findRoot(const std::function<T(T)> function,
-                                    const std::function<T(T)> derivative,
-                                    T estimate, const float error, const size_t maxIterations)
+    template <typename T, typename Function1, typename Function2>
+    std::unique_ptr<float> findRoot(Function1 function,
+                                    Function2 derivative,
+                                    T estimate, const float error, const std::size_t maxIterations)
     {
         for (size_t i = 0; i < maxIterations; i++)
         {
             // update result
             auto result = estimate - function(estimate) / derivative(estimate);
             
-            auto residu = std::abs(result - estimate);
+            const auto residu = std::abs(result - estimate);
             // check if the residu is below the error
             if (residu < error)
                 return std::make_unique<float>(result);
@@ -39,10 +40,10 @@ namespace dsp
         return nullptr;
     }
     
-    template <typename T>
-    T solveImplicit(const std::function<T(T)> function,
-                    const std::function<T(T)> derivative,
-                    T yEstimate, const float error, const size_t maxIterations)
+    template <typename T, typename Function1, typename Function2>
+    T solveImplicit(Function1 function,
+                    Function2 derivative,
+                    T yEstimate, const float error, const std::size_t maxIterations)
     {
         for (auto i = 0; i < maxIterations; i++)
         {
@@ -50,7 +51,7 @@ namespace dsp
             T y = function(yEstimate);
             
             // get the resiude
-            auto residue = y - yEstimate;
+            const auto residue = y - yEstimate;
             
             // We want y and the y estimate to converge,
             // if the residue is smaller than the error, the estimate is close enough
