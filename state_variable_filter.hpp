@@ -55,18 +55,25 @@ namespace dsp
         {
             this->x = x;
             
-            const auto gain = integrator1.gain;
-            const auto s1 = integrator1.state;
-            const auto s2 = integrator2.state;
+            const auto gain = integrator2.gain;
             
-            highPass = (x - 2.0 * damping * s1 - gain * s1 - s2) * this->gainFactor;
+            // Compute the high-pass output
+            highPass = (x - 2.0 * damping * state1 - gain * state1 - integrator2.state) * this->gainFactor;
             
-            bandPass = integrator1(highPass);
+            // Form the input for the first integrator
+            const auto v = gain * highPass;
+            
+            // Compute the output of the first integrator
+            bandPass = v + state1;
             
             // Optional non-linear processing
             if (this->nonLinear)
                 bandPass = this->nonLinear(bandPass);
+              
+            // Update the state for the first integrator
+            state1 = v + bandPass;
                 
+            // Compute the low-pass output and update the internal state of the second integrator
             lowPass = integrator2(bandPass);
         }
         
@@ -100,7 +107,7 @@ namespace dsp
         /*! The 2nd state is always reaching for the input value, while the first one is reaching towards zero. */
         void setState(T state1, T state2)
         {
-            integrator1.state = state1;
+            this->state1 = state1;
             integrator2.state = state2;
         }
 
@@ -294,7 +301,16 @@ namespace dsp
         //! Low-pass output state
         T lowPass = 0;
         
-        TrapezoidalIntegrator<T> integrator1;
+        // The state of the first integrator
+        /*! Notice that the first integrator is explicitly
+         *  formed in the write call because of the non-linear
+         *  processing on its output. */
+        T state1 = 0;
+        
+        //! The second integrator
+        /*! Notice that the first integrator is explicitly
+         *  formed in the write call because of the non-linear
+         *  processing on its output. */
         TrapezoidalIntegrator<T> integrator2;
         
         //! Damping factor, related to q
