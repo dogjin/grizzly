@@ -57,7 +57,8 @@ namespace dsp
          * with g begin tan(math::PI<T> * cutOff.value / sampleRate.value) */
         void write(T x)
         {
-            lowPassOutput = integrator.computeY(x - integrator.state);
+            integrator.computeY(x - integrator.state);
+            lowPassOutput = integrator.getY();
             
             // non-linear low-pass
             if (isNonLinear)
