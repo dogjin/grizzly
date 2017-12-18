@@ -57,14 +57,26 @@ namespace dsp
          * with g begin tan(math::PI<T> * cutOff.value / sampleRate.value) */
         void write(T x)
         {
-            integrator.computeY(x - integrator.state);
-            lowPassOutput = integrator.getY();
+            const auto state = integrator.state;
+            
+            lowPassOutput = integrator(x - state);
             
             // non-linear low-pass
             if (isNonLinear)
+            {
+                auto function = [&](const auto& estimate)
+                {
+                    return warpedCutOff_ * (std::tanh(x) - std::tanh(estimate)) + state;
+                };
+                
+                auto derivative = [&](const auto& estimate)
+                {
+                    const auto tanhEstimate = std::tanh(estimate);
+                    return -warpedCutOff_ * (1 - tanhEstimate * tanhEstimate) - 1;
+                };
+
                 this->lowPassOutput = solveImplicit(function, derivative, this->lowPassOutput, 0.00001, 20);
-            
-            integrator.updateState();
+            }
             
             // write high-pass state
             this->highPassOutput = x - this->lowPassOutput;
@@ -148,9 +160,7 @@ namespace dsp
     public:
         bool isNonLinear = false;
         
-    private: // TODO voor nu even private moet werken voor andere dist functies
-        T x = 0;
-        
+    private:
         //! Low-pass output state
         T lowPassOutput = 0;
         
@@ -160,9 +170,6 @@ namespace dsp
         double warpedCutOff_ = 0;
         
         TrapezoidalIntegrator<T> integrator;
-
-        std::function<float(float)> function = [&](const auto& estimate){ return warpedCutOff_ * (std::tanh(x) - std::tanh(estimate)) + integrator.state; };
-        std::function<float(float)> derivative = [&](const auto& estimate){ return -warpedCutOff_ * (1 - std::tanh(estimate) * std::tanh(estimate)) - 1; };
     };
 }
 
