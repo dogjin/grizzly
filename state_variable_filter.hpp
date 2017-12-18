@@ -122,7 +122,6 @@ namespace dsp
         {
             this->copyBaseCoefficients(&rhs);
 
-            integrator1.gain = rhs.integrator1.gain;
             integrator2.gain = rhs.integrator2.gain;
             damping = rhs.damping;
             bandShelfGain_lin = rhs.bandShelfGain_lin;
@@ -272,7 +271,6 @@ namespace dsp
         {
             const double g = std::tan(math::PI<double> * cutOff_Hz / sampleRate_Hz);
             
-            integrator1.gain = g;
             integrator2.gain = g;
             
             damping = 1.0 / (2.0 * resonance);

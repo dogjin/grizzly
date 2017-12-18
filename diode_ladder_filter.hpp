@@ -97,6 +97,14 @@ namespace dsp
             stage4.copyCoefficients(rhs.stage4);
         }
         
+        void setNonLinearStages(bool nonLinear)
+        {
+            stage1.filter.isNonLinear = nonLinear;
+            stage2.filter.isNonLinear = nonLinear;
+            stage3.filter.isNonLinear = nonLinear;
+            stage4.filter.isNonLinear = nonLinear;
+        }
+        
         //! Read the low-pass output
         T readLowPass() const
         {
