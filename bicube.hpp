@@ -12,7 +12,7 @@
 namespace dsp
 {    
     //! A bicube using Direct Form I
-    template <class T, class CoeffType = T>
+    template <class T>
     class BicubeDirectForm1
     {
     public:
@@ -62,7 +62,7 @@ namespace dsp
         
     public:
         //! The coefficients to the biquad
-        BicubeCoefficients<CoeffType> coefficients;
+        BicubeCoefficients<T> coefficients;
         
     private:
         T y = 0; //! output

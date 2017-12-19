@@ -42,7 +42,7 @@ namespace dsp
     struct FirstOrderCoefficients
     {
         //! The a0 feed-forward coefficient (gain)
-        T a0 = 0;
+        T a0 = 1;
         
         //! The a1 feed-forward coefficient
         T a1 = 0;

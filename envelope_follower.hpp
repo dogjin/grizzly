@@ -28,9 +28,7 @@
 #ifndef GRIZZLY_ENVELOPE_FOLLOWER_HPP
 #define GRIZZLY_ENVELOPE_FOLLOWER_HPP
 
-#include <algorithm>
 #include <cmath>
-#include <stdexcept>
 
 #include "biquad.hpp"
 #include "biquad_coefficients.hpp"
@@ -41,15 +39,14 @@ namespace dsp
 {
     //! AttackReleaseEnvelopeFollower
     /*! Abstract base class for envelope followers that use an attack and release time */
-    template <class T, class CoeffType = T>
+    template <class T>
     class AttackReleaseEnvelopeFollower
     {
     public:
         //! Construct the Follower
-        AttackReleaseEnvelopeFollower(unit::hertz<float> sampleRate, float timeConstantFactor = 5)
+        AttackReleaseEnvelopeFollower(float sampleRate_Hz) :
+        sampleRate_Hz(sampleRate_Hz)
         {
-            setSampleRate(sampleRate);
-            setTimeConstantFactor(timeConstantFactor);
         }
         
         //! Virtual destructor
@@ -57,56 +54,58 @@ namespace dsp
         
     public:
         //! Set the sample rate
-        void setSampleRate(unit::hertz<float> sampleRate)
+        void setSampleRate(float sampleRate_Hz)
         {
-            this->sampleRate = sampleRate;
-            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            this->sampleRate_Hz = sampleRate_Hz;
+            lowPassOnePole(attackCoefficients, sampleRate_Hz, attackTime_s, timeConstantFactor);
+            lowPassOnePole(releaseCoefficients, sampleRate_Hz, releaseTime_s, timeConstantFactor);
         }
         
         //! Set the time-constant factor
         void setTimeConstantFactor(float factor)
         {
             timeConstantFactor = factor;
-            lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            lowPassOnePole(attackCoefficients, sampleRate_Hz, attackTime_s, factor);
+            lowPassOnePole(releaseCoefficients, sampleRate_Hz, releaseTime_s, factor);
         }
         
         //! Set the attack time
-        virtual void setAttackTime(unit::second<float> attackTime)
+        virtual void setAttackTime(float attackTime_s)
         {
-            this->attackTime = attackTime;
+            this->attackTime_s = attackTime_s;
             
-            if (attackTime.value > 0)
-                lowPassOnePole(attackCoefficients, sampleRate, attackTime, timeConstantFactor);
+            if (attackTime_s > 0)
+                lowPassOnePole(attackCoefficients, sampleRate_Hz, attackTime_s, timeConstantFactor);
             else
                 throughPass(attackCoefficients);
         }
         
         //! Set the release time
-        virtual void setReleaseTime(unit::second<float> releaseTime)
+        virtual void setReleaseTime(float releaseTime_s)
         {
-            this->releaseTime = releaseTime;
+            this->releaseTime_s = releaseTime_s;
             
-            if (releaseTime.value > 0)
-                lowPassOnePole(releaseCoefficients, sampleRate, releaseTime, timeConstantFactor);
+            if (releaseTime_s > 0)
+                lowPassOnePole(releaseCoefficients, sampleRate_Hz, releaseTime_s, timeConstantFactor);
             else
                 throughPass(releaseCoefficients);
         }
         
         //! Write the new input to the follower
-        virtual void write(const T& x) = 0;
+        virtual void write(T x) = 0;
         
         //! Read the last computed value
         virtual T read() const = 0;
         
         //! Write a new sample and read the output (in that order)
-        T writeAndRead(const T& x)
+        T writeAndRead(T x)
         {
             write(x);
             return read();
         }
         
-        //! Set the envelope state
-        virtual void setState(const T& y) = 0;
+        //! Set the envelope state directly
+        virtual void setState(T y) = 0;
         
         //! Set the envelope state to zero
         void reset()
@@ -116,22 +115,22 @@ namespace dsp
         
     protected:
         //! The attack coefficients
-        FirstOrderCoefficients<CoeffType> attackCoefficients;
+        FirstOrderCoefficients<T> attackCoefficients;
         
         //! The release coefficients
-        FirstOrderCoefficients<CoeffType> releaseCoefficients;
+        FirstOrderCoefficients<T> releaseCoefficients;
         
         //! The sample rate
-        unit::hertz<float> sampleRate = 44100;
+        T sampleRate_Hz = 0;
         
         //! Time constant factor
-        float timeConstantFactor = 5;
+        T timeConstantFactor = 5.f;
         
         //! The attack time
-        unit::second<float> attackTime = 1;
+        T attackTime_s = 0;
         
         //! The release time
-        unit::second<float> releaseTime = 1;
+        T releaseTime_s = 0;
         
         //! The most recently computed value
         T y = 0;
@@ -141,15 +140,15 @@ namespace dsp
     /*! The capacitor continuously discharges via the release resistor. Due to this design, the peak will not
      reach its maximal value. choosing a bigger release time makes this less noticeably. See "Investigation
      in Dynamic Range Compression" by Massberg. */
-    template <class T, class CoeffType = T>
-    class EnvelopeFollowerRCR : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    template <class T>
+    class EnvelopeFollowerRCR : public AttackReleaseEnvelopeFollower<T>
     {
     public:
         //! Construct the Follower
-        using AttackReleaseEnvelopeFollower<T, CoeffType>::AttackReleaseEnvelopeFollower;
+        using AttackReleaseEnvelopeFollower<T>::AttackReleaseEnvelopeFollower;
         
         //! Write the new input to the follower
-        void write(const T& x) final
+        void write(T x) final
         {
             this->y = static_cast<T>(-this->releaseCoefficients.b1 * this->y + this->attackCoefficients.a0 * std::max<T>(x - this->y, 0));
         }
@@ -161,26 +160,25 @@ namespace dsp
         }
         
         //! Set the envelope state
-        void setState(const T& y) final
+        void setState(T y) final
         {
             this->y = y;
         }
     };
     
-    
     //! Envelope detector based on an analog circuit with two resistor, two capacitors and a diode
     /*! The first set of resistor/capacitor is decoupled from the second set. In contrast to the EnvelopeDetectorRCR,
      the envelope will reach the maximal value regardless of different release settings. See "Investigation in Dynamic
      Range Compression" by Massberg. */
-    template <class T, class CoeffType = T>
-    class EnvelopeFollowerDecoupled : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    template <class T>
+    class EnvelopeFollowerDecoupled : public AttackReleaseEnvelopeFollower<T>
     {
     public:
         //! Construct the Follower
-        using AttackReleaseEnvelopeFollower<T, CoeffType>::AttackReleaseEnvelopeFollower;
+        using AttackReleaseEnvelopeFollower<T>::AttackReleaseEnvelopeFollower;
         
         //! Write the new input to the follower
-        void write(const T& x) final
+        void write(T x) final
         {
             yRelease = std::max<T>(x, yRelease - this->releaseCoefficients.a0 * yRelease);
             this->y += this->attackCoefficients.a0 * (yRelease - this->y);
@@ -193,7 +191,7 @@ namespace dsp
         }
         
         //! Set the envelope state
-        void setState(const T& y) final
+        void setState(T y) final
         {
             this->y = y;
         }
@@ -205,19 +203,15 @@ namespace dsp
     
     //! Envelope detector using a one-pole low-pass filter
     /*! Notice the input is not rectified */
-    template <class T, class CoeffType = T>
-    class EnvelopeFollowerOnePole : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    template <class T>
+    class EnvelopeFollowerOnePole : public AttackReleaseEnvelopeFollower<T>
     {
     public:
         //! Construct the Follower
-        EnvelopeFollowerOnePole(unit::hertz<float> sampleRate, bool releaseToZero, float timeConstantFactor = 5) :
-            AttackReleaseEnvelopeFollower<T, CoeffType>(sampleRate, timeConstantFactor),
-            releaseToZero(releaseToZero)
-        {
-        }
+        using AttackReleaseEnvelopeFollower<T>::AttackReleaseEnvelopeFollower;
         
         //! Write the new input to the follower
-        void write(const T& x) final
+        void write(T x) final
         {
             if (x > lowPassFilter.read())
             {
@@ -238,7 +232,7 @@ namespace dsp
         }
         
         //! Set the envelope state
-        void setState(const T& y) final
+        void setState(T y) final
         {
             lowPassFilter.setState(y);
         }
@@ -250,67 +244,71 @@ namespace dsp
         
     private:
         //! First order filter
-        FirstOrderFilter<T, CoeffType> lowPassFilter;
+        FirstOrderFilter<T, T> lowPassFilter;
     };
     
     //! Envelope detector using a biquad low-pass filter
     /*! Notice the input is not rectified */
-    template <class T, class CoeffType = T>
-    class EnvelopeFollowerBiquad : public AttackReleaseEnvelopeFollower<T, CoeffType>
+    class EnvelopeFollowerBiquad
     {
     public:
         //! Construct the Follower
-        EnvelopeFollowerBiquad(unit::hertz<float> sampleRate, bool releaseToZero, float timeConstantFactor = 5) :
-            AttackReleaseEnvelopeFollower<T, CoeffType>(sampleRate, timeConstantFactor),
-            releaseToZero(releaseToZero)
+        EnvelopeFollowerBiquad(double sampleRate_Hz) :
+        sampleRate_Hz(sampleRate_Hz)
         {
         }
         
         //! Write the new input to the follower
-        void write(const T& x) final
+        void write(double x)
         {
             if (x > lowPassFilter.read())
             {
-                lowPassFilter.coefficients = this->attackCoefficients;
+                lowPassFilter.coefficients = attackCoefficients;
                 lowPassFilter.write(x);
             }
             else
             {
-                lowPassFilter.coefficients = this->releaseCoefficients;
-                lowPassFilter.write(releaseToZero ? 0 : x);
+                lowPassFilter.coefficients = releaseCoefficients;
+                lowPassFilter.write(releaseToZero ? 0.0 : x);
             }
         }
         
         //! Read the last computed value
-        T read() const final
+        double read() const
         {
             return lowPassFilter.read();
         }
         
+        double writeAndRead(double x)
+        {
+            write(x);
+            return read();
+        }
+        
         //! Set the envelope state
-        void setState(const T& y) final
+        void setState(double y)
         {
             lowPassFilter.setState(y);
         }
         
         //! Set the attack time
-        void setAttackTime(unit::second<float> attackTime) override
+        void setAttackTime(double attackTime_s)
         {
-            this->attackTime = attackTime;
+            this->attackTime_s = attackTime_s;
             
-            if (attackTime.value > 0)
-                lowPass(attackCoefficients, this->sampleRate, attackTime, 0.5);
+            if (attackTime_s > 0.0)
+                lowPass<double>(attackCoefficients, this->sampleRate_Hz, attackTime_s, 0.5, this->timeConstantFactor);
             else
                 throughPass(attackCoefficients);
         }
         
         //! Set the release time
-        void setReleaseTime(unit::second<float> releaseTime) override
+        void setReleaseTime(double releaseTime_s)
         {
-            this->releaseTime = releaseTime;
+            this->releaseTime_s = releaseTime_s;
             
-            if (releaseTime.value > 0)
-                lowPass(releaseCoefficients, this->sampleRate, releaseTime, 0.5);
+            if (releaseTime_s > 0.0)
+                lowPass<double>(releaseCoefficients, this->sampleRate_Hz, releaseTime_s, 0.5, this->timeConstantFactor);
             else
                 throughPass(releaseCoefficients);
         }
@@ -322,10 +320,25 @@ namespace dsp
         
     private:
         //! First order filter
-        BiquadDirectForm1<T, CoeffType> lowPassFilter;
+        BiquadTransposedDirectForm2<double> lowPassFilter;
         
-        BiquadCoefficients<CoeffType> attackCoefficients;
-        BiquadCoefficients<CoeffType> releaseCoefficients;
+        BiquadCoefficients<double> attackCoefficients;
+        BiquadCoefficients<double> releaseCoefficients;
+        
+        //! The sample rate
+        double sampleRate_Hz = 0.0;
+        
+        //! Time constant factor
+        double timeConstantFactor = 5.0;
+        
+        //! The attack time
+        double attackTime_s = 0.0;
+        
+        //! The release time
+        double releaseTime_s = 0.0;
+        
+        //! The most recently computed value
+        double y = 0.0;
     };
 }
 

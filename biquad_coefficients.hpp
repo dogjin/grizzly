@@ -100,11 +100,11 @@ namespace dsp
     
     //! Set biquad to low pass filtering using a cut-off frequency
     template <class T>
-    void lowPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate, T cutOff, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = math::TWO_PI<T> * cutOff / sampleRate;
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
         const auto b0 = 1 + alpha;
@@ -119,24 +119,24 @@ namespace dsp
     
     //! Set biquad to low pass filtering using a time and time constant factor
     template <class T>
-    void lowPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float q, float timeConstantFactor = 5.f)
+    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate, T time, T q, T timeConstantFactor)
     {
         // correct time for two-pole timed filtering
-        float t = time.value *= math::SQRT_HALF<float>;
+        const auto t = time * math::SQRT_HALF<T>;
         
-        const auto w = timeConstantFactor / (t * sampleRate.value);
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = timeConstantFactor / (t * sampleRate);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
         const auto b0 = 1 + alpha;
         
-        coefficients.a0 = static_cast<T>(((1 - cosw) / 2) / b0);
-        coefficients.a1 = static_cast<T>((1 - cosw) / b0);
-        coefficients.a2 = static_cast<T>(((1 - cosw) / 2) / b0);
+        coefficients.a0 = ((1 - cosw) / 2) / b0;
+        coefficients.a1 = (1 - cosw) / b0;
+        coefficients.a2 = ((1 - cosw) / 2) / b0;
         
-        coefficients.b1 = static_cast<T>((-2 * cosw) / b0);
-        coefficients.b2 = static_cast<T>((1 - alpha) / b0);
+        coefficients.b1 = (-2 * cosw) / b0;
+        coefficients.b2 = (1 - alpha) / b0;
     }
     
     //! Set biquad to high pass filtering
