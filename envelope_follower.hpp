@@ -274,6 +274,7 @@ namespace dsp
         }
         
         //! Read the last computed value
+        // WE DOEN DIT IN DOUBLES want afronding error enzo
         double read() const
         {
             return lowPassFilter.read();
@@ -297,7 +298,7 @@ namespace dsp
             this->attackTime_s = attackTime_s;
             
             if (attackTime_s > 0.0)
-                lowPass<double>(attackCoefficients, this->sampleRate_Hz, attackTime_s, 0.5, this->timeConstantFactor);
+                lowPass<double>(attackCoefficients, sampleRate_Hz, attackTime_s, 0.5, timeConstantFactor);
             else
                 throughPass(attackCoefficients);
         }
@@ -308,7 +309,7 @@ namespace dsp
             this->releaseTime_s = releaseTime_s;
             
             if (releaseTime_s > 0.0)
-                lowPass<double>(releaseCoefficients, this->sampleRate_Hz, releaseTime_s, 0.5, this->timeConstantFactor);
+                lowPass<double>(releaseCoefficients, sampleRate_Hz, releaseTime_s, 0.5, timeConstantFactor);
             else
                 throughPass(releaseCoefficients);
         }

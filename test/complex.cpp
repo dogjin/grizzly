@@ -39,10 +39,10 @@ TEST_CASE("Complex")
     SECTION("computePhases")
     {
         auto p = computePhases(complexVector.begin(), complexVector.end());
-        CHECK(p[0].value == Approx(0.9273));
-        CHECK(p[1].value == Approx(2.2143));
-        CHECK(p[2].value == Approx(-0.9273));
-        CHECK(p[3].value == Approx(-2.2143));
+        CHECK(p[0] == Approx(0.9273));
+        CHECK(p[1] == Approx(2.2143));
+        CHECK(p[2] == Approx(-0.9273));
+        CHECK(p[3] == Approx(-2.2143));
     }
     
     SECTION("computeUnwrappedPhases")
@@ -50,8 +50,8 @@ TEST_CASE("Complex")
         std::vector<std::complex<float>> complexVector = vector<complex<float>>{ {-1, 0}, {-4, -5} };
         auto unwrapped = computeUnwrappedPhases(complexVector.begin(), complexVector.end());
         
-        CHECK(unwrapped[0].value == Approx(3.14159));
-        CHECK(unwrapped[1].value == Approx(4.0377));
+        CHECK(unwrapped[0] == Approx(3.14159));
+        CHECK(unwrapped[1] == Approx(4.0377));
     }
     
     SECTION("replaceMagnitudes")

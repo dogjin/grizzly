@@ -37,7 +37,6 @@
 
 #include <moditone/math/constants.hpp>
 #include <moditone/math/wrap.hpp>
-#include <moditone/unit/radian.hpp>
 
 namespace dsp
 {
@@ -109,16 +108,16 @@ namespace dsp
     
     //! Return the phases of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> computePhases(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type::value_type> computePhases(ComplexIterator begin, ComplexIterator end)
     {
-        std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> phases(std::distance(begin, end));
+        std::vector<typename ComplexIterator::value_type::value_type> phases(std::distance(begin, end));
         std::transform(begin, end, phases.begin(), [&](auto x){ return std::arg(x); });
         return phases;
     }
     
     //! Return the unwrapped phases of a vector of complex numbers
     template <typename ComplexIterator>
-    std::vector<unit::radian<typename ComplexIterator::value_type::value_type>> computeUnwrappedPhases(ComplexIterator begin, ComplexIterator end)
+    std::vector<typename ComplexIterator::value_type::value_type> computeUnwrappedPhases(ComplexIterator begin, ComplexIterator end)
     {
         using T = typename ComplexIterator::value_type::value_type;
         
@@ -174,7 +173,7 @@ namespace dsp
         while (phaseBegin != phaseEnd)
         {
             const auto& mag = std::abs(*complexBegin);
-            const auto angle = static_cast<typename ComplexIterator::value_type::value_type>(phaseBegin->value);
+            const auto angle = static_cast<typename ComplexIterator::value_type::value_type>(*phaseBegin);
             
             *complexBegin = std::polar(std::abs(*complexBegin), angle);
             std::advance(complexBegin, 1);

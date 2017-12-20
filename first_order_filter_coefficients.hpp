@@ -29,8 +29,6 @@
 #define GRIZZLY_FIRST_ORDER_COEFFICIENTS_HPP
 
 #include <cmath>
-#include <moditone/unit/hertz.hpp>
-#include <moditone/unit/time.hpp>
 
 #include <moditone/math/constants.hpp>
 #include <moditone/math/clamp.hpp>
@@ -89,9 +87,9 @@ namespace dsp
     
     //! Set filter to low pass filtering using one pole, given a samplerate and a cutoff
     template <typename T>
-    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
     {
-        const T b1 = -std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
+        const T b1 = -std::exp(-math::TWO_PI<T> * (cutOff / sampleRate));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0f + b1;
@@ -101,9 +99,9 @@ namespace dsp
     //! Set filter to low pass filtering using one pole, given a samplerate, time and and a time constant factor.
     /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T time, T timeConstantFactor)
     {
-        const T b1 = -std::exp(-timeConstantFactor / (time.value * sampleRate.value));
+        const T b1 = -std::exp(-timeConstantFactor / (time * sampleRate));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0f + b1;
@@ -112,10 +110,10 @@ namespace dsp
     
     //! Set filter to low pass filtering using one pole and one zero, given a samplerate and a cutoff
     template <typename T>
-    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
     {
-        const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
-        const T s = (z - 1) / (z + 1);
+        const auto z = std::tan(math::PI<T> * (cutOff / sampleRate));
+        const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
         coefficients.a0 = (1.0 + s) / 2; // same as z / (1 + z)
@@ -125,10 +123,10 @@ namespace dsp
     //! Set filter to low pass filtering using one pole and one zero, given a samplerate, time and and a time constant factor.
     /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::second<float> time, float timeConstantFactor = 5.f)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T time, T timeConstantFactor)
     {
-        const auto z = std::tan(timeConstantFactor / (time.value * sampleRate.value * 2));
-        const T s = (z - 1) / (z + 1);
+        const auto z = std::tan(timeConstantFactor / (time * sampleRate * 2));
+        const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
         coefficients.a0 = (1.0 + s) / 2; // same as z / (1 + z)
@@ -137,9 +135,9 @@ namespace dsp
     
     //! Set filter to high pass filtering using one pole, given a samplerate and a cutoff
     template <typename T>
-    void highPassOnePole(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void highPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
     {
-        const T b1 = 1 - std::exp(-math::TWO_PI<T> * (cutOff.value / sampleRate.value));
+        const auto b1 = 1 - std::exp(-math::TWO_PI<T> * (cutOff / sampleRate));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0 - b1;
@@ -148,10 +146,10 @@ namespace dsp
     
     //! Set filter to high pass filtering using one pole and one zero, given a samplerate and a cutoff
     template <typename T>
-    void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff)
+    void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
     {
-        const auto z = std::tan(math::PI<double> * cutOff.value / sampleRate.value);
-        const T s = (1 - z) / (z + 1);
+        const auto z = std::tan(math::PI<double> * (cutOff / sampleRate));
+        const auto s = (1 - z) / (z + 1);
         
         coefficients.b1 = -s;
         coefficients.a0 = (1 + s) / 2;
@@ -160,19 +158,19 @@ namespace dsp
     
     //! Set filter to high all-pass filtering using one pole and one zero, given a shape value for the a0 and b1 coefficients
     template <typename T>
-    void allPass(FirstOrderCoefficients<T>& coefficients, float shape)
+    void allPass(FirstOrderCoefficients<T>& coefficients, T shape)
     {
-        coefficients.b1 = shape;
-        coefficients.a0 = shape;
+        coefficients.b1 = -shape;
+        coefficients.a0 = -shape;
         coefficients.a1 = 1;
     }
     
     //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
     template <typename T>
-    void allPass(FirstOrderCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> centerFrequency)
+    void allPass(FirstOrderCoefficients<T>& coefficients, T sampleRate, T centerFrequency)
     {
-        const auto z = std::tan(math::PI<double> * (centerFrequency.value / sampleRate.value));
-        const T s = (z - 1) / (z + 1);
+        const auto z = std::tan(math::PI<T> * (centerFrequency / sampleRate));
+        const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
         coefficients.a0 = s;
