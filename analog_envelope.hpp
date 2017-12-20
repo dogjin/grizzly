@@ -10,7 +10,6 @@
 #include <cmath>
 #include <functional>
 
-#include <moditone/unit/time.hpp>
 #include <moditone/grizzly/first_order_filter.hpp>
 #include <moditone/math/clamp.hpp>
 
@@ -20,7 +19,7 @@ namespace dsp
     /*! Envelope generator based on a charging and discharging a capacitor.
      The curve determines the skew factor (slope) of the attack (see setAttackSkew for more info).
      By tweaking the ADSR parameters, a AR, ASR or ADSD envelope is possible. */
-    template <class T, class CoeffType = float>
+    template <class T>
     class AnalogEnvelope
     {
     public:
@@ -35,19 +34,14 @@ namespace dsp
         
     public:
         //! Construct the envelope
-        AnalogEnvelope(float sampleRate, unit::second<float> attackTime, unit::second<float> decayTime, T sustain, unit::second<float> releaseTime, float attackShape = 0.77) :
+        AnalogEnvelope(T sampleRate) :
         sampleRate(sampleRate)
         {
             // Initialize the constant factors per stage
             decayStage.timeConstantFactor = 4.95;
             releaseStage.timeConstantFactor = 4.95;
             
-            setSustain(sustain);
-            attackStage.time = attackTime;
-            
-            setAttackShape(attackShape);
-            setDecayTime(decayTime);
-            setReleaseTime(releaseTime);
+            setAttackShape(maximumCharge);
         }
         
         //! Set the sample rate
@@ -71,11 +65,13 @@ namespace dsp
             // solve time constant factor for maximum charge = 1 - e^-timeConstantFactor
             long double temp = 1.l - maximumCharge;
             attackStage.timeConstantFactor = -log(temp);
+            
+            // Reset the attack time with the new time constant factor
             setAttackTime(attackStage.time);
         }
         
         //! Set the attack time
-        void setAttackTime(unit::second<float> time)
+        void setAttackTime(T time)
         {
             attackStage.set(time, sampleRate);
             
@@ -84,7 +80,7 @@ namespace dsp
         }
         
         //! Set the decay time
-        void setDecayTime(unit::second<float> time)
+        void setDecayTime(T time)
         {
             decayStage.set(time, sampleRate);
             
@@ -94,7 +90,7 @@ namespace dsp
         
         
         //! Set the release time
-        void setReleaseTime(unit::second<float> time)
+        void setReleaseTime(T time)
         {
             releaseStage.set(time, sampleRate);
             
@@ -103,9 +99,9 @@ namespace dsp
         }
         
         //! Set the sustain level
-        void setSustain(float sustain)
+        void setSustain(T sustain)
         {
-            this->sustain = math::clamp(sustain, 0.0f, 1.0f);
+            this->sustain = math::clamp<T>(sustain, 0, 1);
         }
         
         //! Start the envelop by setting the mode to attack
@@ -134,7 +130,7 @@ namespace dsp
         
         //! Returns the output of the envelope
         /*! A call to start() sets the envelope to the attack stage
-         After the release() call, the envelope will shut down when the output is significantly low and returns 0. */
+         After the release() call, the envelope will shut down when the output reaches 0. */
         T process()
         {
             T y = 0;
@@ -148,7 +144,7 @@ namespace dsp
                     
                 case State::ATTACK:
                 {
-                    if (attackStage.time.value <= 0)
+                    if (attackStage.time <= 0)
                     {
                         y = 1;
                         lowPassFilter.setState(y);
@@ -165,7 +161,7 @@ namespace dsp
                         updateFilterCoefficients();
                         
                         // Figure out at what x the attack exactly intersects the maximalCharge value with the current settings
-                        double tc = attackStage.time.value * sampleRate;
+                        double tc = attackStage.time * sampleRate;
                         double tmp = (maximumCharge - 1) * -1;
                         tmp = log(tmp);
                         tmp *= tc;
@@ -180,29 +176,13 @@ namespace dsp
                         // Compute the difference in x
                         auto xDiff = xIntercept - previousX;
                         
-                        // at the maximalCharge intersept, the true y value = 1
+                        // At the maximalCharge intersept, the true y value = 1
                         // We have to 'travel' 1 - xDiff in our decay curve to reach to the current sample Y value
                         // The 1-x can be plugged in the decay curve e^(-(1-x) * TCF / attackTime * sampleRate)
                         // We should now have the exact y value
-                        y = std::exp( (-(1 - xDiff) * decayStage.timeConstantFactor) / (decayStage.time.value * sampleRate));
+                        y = std::exp( (-(1 - xDiff) * decayStage.timeConstantFactor) / (decayStage.time * sampleRate));
                         lowPassFilter.setState(y);
                         break;
-                        
-//                        // Figure out where the attack exactly intersects the maximalCharge value
-//                        // Set the previousY value as x = 0 (y-axis intersept)
-//                        // Solve x for attack curve 1 - e^(-x * TCF / attackTime * sampleRate) + previousY = maximalCharge
-//                        // Value x should be between 0 and 1
-//                        double tc = attackStage.time.value * sampleRate;
-//                        double tmp = (y - previousY - 1) * -1;
-//                        tmp = log(tmp) * tc;
-//                        double x = tmp / -attackStage.timeConstantFactor;
-//
-//                        // at the maximalCharge intersept, the true y value = 1
-//                        // The x can be plugged in the decay curve e^(-x * TCF / attackTime * sampleRate)
-//                        // We should now have the exact y value
-//                        y = std::exp( (-x * decayStage.timeConstantFactor) / (decayStage.time.value * sampleRate));
-//                        lowPassFilter.setState(y);
-//                        break;
                     }
                     
                     y *= normalizeFactor;
@@ -211,13 +191,13 @@ namespace dsp
                     
                 case State::DECAY:
                 {
-                    y = lowPassFilter.writeAndRead(sustain);// * normalizeFactor;
+                    y = lowPassFilter.writeAndRead(sustain);
                     break;
                 }
                     
                 case State::RELEASE:
                 {
-                    y = lowPassFilter.writeAndRead(gateOff);// * normalizeFactor;
+                    y = lowPassFilter.writeAndRead(gateOff);
                     if (y < 0)
                     {
                         reset();
@@ -236,10 +216,16 @@ namespace dsp
         //! Returns the output of the envelope
         /*! A call to start() sets the envelope to the attack stage
          After the release() call, the envelope will shut down when the output is significantly low and returns 0. */
-        T operator()() { return process(); }
+        T operator()()
+        {
+            return process();
+        }
         
         // Return the current state
-        State getState() const { return state; }
+        State getState() const
+        {
+            return state;
+        }
         
     public:
         //! Called when the envelope reaches zero. Useful for updating some code elsewhere (e.g. free a voice)
@@ -263,7 +249,7 @@ namespace dsp
         class Stage
         {
         public:
-            void set(unit::second<float> time, unit::hertz<float> sampleRate)
+            void set(T time, T sampleRate)
             {
                 this->time = time;
                 lowPassOnePole(coefficients, sampleRate, time, timeConstantFactor);
@@ -274,9 +260,9 @@ namespace dsp
             
         public:
             //! The filter coefficients set to function as the state
-            FirstOrderCoefficients<CoeffType> coefficients;
+            FirstOrderCoefficients<T> coefficients;
             
-            unit::second<float> time = 0;
+            T time = 0;
             
             //! The shape of the filter curve is determined by the maximum charge of a 'capacitor' (0.1 - 0.99)
             /*! By default, the maximum charge is 77% and approximates a CEM3310 chip.
@@ -290,7 +276,7 @@ namespace dsp
         
     private:
         //! The output of the envelope is generated using a simple low-pass filter
-        FirstOrderFilter<T, CoeffType> lowPassFilter;
+        FirstOrderFilter<T> lowPassFilter;
         
         //! The envelope consists of three different stages, each with their own coefficients
         Stage attackStage;
@@ -301,22 +287,22 @@ namespace dsp
         State state = State::IDLE;
         
         //! The sample rate at which the envelope runs
-        float sampleRate;
+        T sampleRate;
         
         //! Maximum charge for the capacitor
-        float maximumCharge = 0.77;
+        T maximumCharge = 0.77;
         
         //! The normalise factor
-        float normalizeFactor = 1;
+        T normalizeFactor = 1;
         
         //! The sustain level
-        float sustain = 0;
+        T sustain = 0;
         
         //! A gate signal of 1
-        const float gateOn = 1;
+        T gateOn = 1;
         
         //! A gate signal of 0
-        const float gateOff = -0.0001;
+        T gateOff = -0.0001;
     };
 }
 
