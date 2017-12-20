@@ -30,11 +30,9 @@
 
 #include <cmath>
 #include <complex>
-#include <stdexcept>
-#include <moditone/unit/amplitude.hpp>
-#include <moditone/unit/hertz.hpp>
 
 #include <moditone/math/constants.hpp>
+
 
 namespace dsp
 {
@@ -63,13 +61,13 @@ namespace dsp
         {
             // a = 1, b = b1, c = b2
             // solve for ax^2 + bx + c
-            std::complex<float> discriminant(b1 * b1 - 4 * b2, 0);
-            auto sqrtDiscriminant = sqrt(discriminant);
+            std::complex<T> discriminant(b1 * b1 - 4 * b2, 0);
+            auto sqrtDiscriminant = std::sqrt(discriminant);
             
             auto x1 = (-b1 + sqrtDiscriminant) / 2.f;
             auto x2 = (-b1 - sqrtDiscriminant) / 2.f;
             
-            if (abs(x1) < 1 && abs(x2) < 1)
+            if (std::abs(x1) < 1 && std::abs(x2) < 1)
                 return true;
             else
                 return false;
@@ -98,239 +96,248 @@ namespace dsp
         coefficients.b2 = 0;
     }
     
+    //! Compute the radial frequency given a cut-off and sample-rate
+    template <class T>
+    constexpr T computeRadialFrequency(T cutOff_Hz, T sampleRate_Hz)
+    {
+        return math::TWO_PI<T> * (cutOff_Hz / sampleRate_Hz);
+    }
+    
     //! Set biquad to low pass filtering using a cut-off frequency
     template <class T>
-    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate, T cutOff, T q)
+    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<T> * cutOff / sampleRate;
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
         const auto sinw = std::sin(w);
         const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = ((1 - cosw) / 2) / b0;
-        coefficients.a1 = (1 - cosw) / b0;
-        coefficients.a2 = ((1 - cosw) / 2) / b0;
+        coefficients.a0 = ((1 - cosw) / 2) * b0;
+        coefficients.a1 = (1 - cosw) * b0;
+        coefficients.a2 = ((1 - cosw) / 2) * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to low pass filtering using a time and time constant factor
     template <class T>
-    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate, T time, T q, T timeConstantFactor)
+    void lowPass(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T time_s, T q, T timeConstantFactor)
     {
         // correct time for two-pole timed filtering
-        const auto t = time * math::SQRT_HALF<T>;
+        const auto t = time_s * math::SQRT_HALF<T>;
         
-        const auto w = timeConstantFactor / (t * sampleRate);
+        const auto w = timeConstantFactor / (t * sampleRate_Hz);
         const auto sinw = std::sin(w);
         const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = ((1 - cosw) / 2) / b0;
-        coefficients.a1 = (1 - cosw) / b0;
-        coefficients.a2 = ((1 - cosw) / 2) / b0;
+        coefficients.a0 = ((1 - cosw) / 2) * b0;
+        coefficients.a1 = (1 - cosw) * b0;
+        coefficients.a2 = ((1 - cosw) / 2) * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to high pass filtering
     template <class T>
-    void highPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void highPass(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = ((1 + cosw) / 2) / b0;
-        coefficients.a1 = (-(1 + cosw)) / b0;
-        coefficients.a2 = ((1 + cosw) / 2) / b0;
+        coefficients.a0 = ((1 + cosw) / 2) * b0;
+        coefficients.a1 = (-(1 + cosw)) * b0;
+        coefficients.a2 = ((1 + cosw) / 2) * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to band pass filtering with a constant skirt gain
     template <class T>
-    void bandPassConstantSkirt(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void bandPassConstantSkirt(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = (q * alpha) / b0;
+        coefficients.a0 = (q * alpha) * b0;
         coefficients.a1 = 0;
-        coefficients.a2 = (-q * alpha) / b0;
+        coefficients.a2 = (-q * alpha) * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to band pass filtering with a constant peak gain
     template <class T>
-    void bandPassConstantPeak(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void bandPassConstantPeak(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = alpha / b0;
+        coefficients.a0 = alpha * b0;
         coefficients.a1 = 0;
-        coefficients.a2 = -alpha / b0;
+        coefficients.a2 = -alpha * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to peak filtering with a constant peak gain
     template <class T>
-    void peak(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
+    void peak(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q, T gain_dB)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
-        const auto A = std::pow(10, gain.value / 40);
+        const auto A = std::pow(10.0, gain_dB / 40.0);
         
-        const auto b0 = 1 + alpha / A;
+        const auto b0 = 1 / (1 + alpha / A);
         
-        coefficients.a0 = (1 + alpha * A) / b0;
-        coefficients.a1 = (-2 * cosw) / b0;
-        coefficients.a2 = (1 - alpha * A) / b0;
+        coefficients.a0 = (1 + alpha * A) * b0;
+        coefficients.a1 = (-2 * cosw) * b0;
+        coefficients.a2 = (1 - alpha * A) * b0;
         
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha / A) / b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha / A) * b0;
     }
     
     //! Set biquad to peak filtering with a constant Q, coeffs taken van Will Pirkle (TODO check if this is ok)
     template <class T>
-    void peakConstantQ(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
+    void peakConstantQ(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q, T gain_dB)
     {
-        const T W = std::tan(math::PI<float> * cutOff.value / sampleRate.value);
-        const T W2 = W * W;
+        const auto W = std::tan(math::PI<T> * cutOff_Hz / sampleRate_Hz);
+        const auto W2 = W * W;
         
-        const T A = std::pow(10, gain.value / 20);
+        const auto A = std::pow(10.0, gain_dB / 20.0);
         
-        const T boost = 1 + (W / q) + W2;
-        const T cut = 1 + (W / (A * q)) + W2;
+        const auto boost = 1 + (W / q) + W2;
+        const auto boostReciprocal = 1 / boost;
         
-        const T b = 2 * (W2 - 1);
-        const T d = 1 - (W / q) + W2;
+        const auto cutReciprocal = 1 / (1 + (W / (A * q)) + W2);
         
-        if (gain.value > 0)
+        const auto b = 2 * (W2 - 1);
+        const auto d = 1 - (W / q) + W2;
+        
+        if (gain_dB > 0)
         {
             const T AWq = (A * W) / q;
             const T a = 1 + AWq + W2;
             const T c = 1 - AWq + W2;
             
-            coefficients.a0 = a / boost;
-            coefficients.a1 = b / boost;
-            coefficients.a2 = c / boost;
+            coefficients.a0 = a * boostReciprocal;
+            coefficients.a1 = b * boostReciprocal;
+            coefficients.a2 = c * boostReciprocal;
             
-            coefficients.b1 = b / boost;
-            coefficients.b2 = d / boost;
+            coefficients.b1 = b * boostReciprocal;
+            coefficients.b2 = d * boostReciprocal;
         }
         else
         {
             const T e = 1 - (1 / (A * q)) * W + W2;
             
-            coefficients.a0 = boost / cut;
-            coefficients.a1 = b / cut;
-            coefficients.a2 = d / cut;
+            coefficients.a0 = boost * cutReciprocal;
+            coefficients.a1 = b * cutReciprocal;
+            coefficients.a2 = d * cutReciprocal;
             
-            coefficients.b1 = b / cut;
-            coefficients.b2 = e / cut;
+            coefficients.b1 = b * cutReciprocal;
+            coefficients.b2 = e * cutReciprocal;
         }
     }
     
     //! Set biquad to low shelf filtering
     template <class T>
-    void lowShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
+    void lowShelf(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q, T gain_dB)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
-        const auto A = std::pow(10, gain.value / 40);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
+        const auto A = std::pow(10.0, gain_dB / 40.0);
         
-        const auto beta = sqrt(A)/q;
-        const auto b0 = (A + 1) + (A - 1) * cosw + beta * sinw;
+        const auto beta = std::sqrt(A)/q;
+        const auto b0 = 1 / ((A + 1) + (A - 1) * cosw + beta * sinw);
         
-        coefficients.a0 = (A * ((A + 1) - (A - 1) * cosw + beta * sinw)) / b0;
-        coefficients.a1 = (2 * A * ((A-1) - (A + 1) * cosw)) / b0;
-        coefficients.a2 = (A * ((A + 1) - (A - 1) * cosw - beta * sinw)) / b0;
+        coefficients.a0 = (A * ((A + 1) - (A - 1) * cosw + beta * sinw)) * b0;
+        coefficients.a1 = (2 * A * ((A-1) - (A + 1) * cosw)) * b0;
+        coefficients.a2 = (A * ((A + 1) - (A - 1) * cosw - beta * sinw)) * b0;
         
-        coefficients.b1 = (-2 * ((A - 1) + (A + 1) * cosw)) / b0;
-        coefficients.b2 = ((A + 1) + (A - 1) * cosw - beta * sinw) / b0;
+        coefficients.b1 = (-2 * ((A - 1) + (A + 1) * cosw)) * b0;
+        coefficients.b2 = ((A + 1) + (A - 1) * cosw - beta * sinw) * b0;
     }
     
     //! Set biquad to high shelf filtering
     template <class T>
-    void highShelf(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q, unit::decibel<float> gain)
+    void highShelf(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q, T gain_dB)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
-        const auto A = std::pow(10, gain.value / 40);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
+        const auto A = std::pow(10.0, gain_dB / 40.0);
         
-        const auto beta = sqrt(A)/q;
-        const auto b0 = (A + 1) - (A - 1) * cosw + beta * sinw;
+        const auto beta = std::sqrt(A)/q;
+        const auto b0 = 1 / ((A + 1) - (A - 1) * cosw + beta * sinw);
         
-        coefficients.a0 = (A * ((A + 1) + (A-1) * cosw + beta * sinw)) / b0;
-        coefficients.a1 = (-2 * A* ((A - 1) + (A + 1) * cosw)) / b0;
-        coefficients.a2 = (A * ((A + 1) + (A - 1) * cosw - beta * sinw)) / b0;
+        coefficients.a0 = (A * ((A + 1) + (A-1) * cosw + beta * sinw)) * b0;
+        coefficients.a1 = (-2 * A* ((A - 1) + (A + 1) * cosw)) * b0;
+        coefficients.a2 = (A * ((A + 1) + (A - 1) * cosw - beta * sinw)) * b0;
         
-        coefficients.b1 = (2 *((A - 1) - (A + 1) * cosw)) / b0;
-        coefficients.b2 = ((A + 1) - (A - 1) * cosw - beta * sinw) / b0;
+        coefficients.b1 = (2 *((A - 1) - (A + 1) * cosw)) * b0;
+        coefficients.b2 = ((A + 1) - (A - 1) * cosw - beta * sinw) * b0;
     }
     
     //! Set biquad to notch filtering
     template <class T>
-    void notch(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void notch(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
-        const auto sinw = sin(w);
-        const auto cosw = cos(w);
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
+        const auto sinw = std::sin(w);
+        const auto cosw = std::cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = 1 / b0;
-        coefficients.a1 = (-2 * cosw) / b0;
-        coefficients.a2 = 1 / b0;
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.a0 = 1 * b0;
+        coefficients.a1 = (-2 * cosw) * b0;
+        coefficients.a2 = 1 * b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
     //! Set biquad to all pass filtering
     template <class T>
-    void allPass(BiquadCoefficients<T>& coefficients, unit::hertz<float> sampleRate, unit::hertz<float> cutOff, float q)
+    void allPass(BiquadCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz, T q)
     {
-        const auto w = math::TWO_PI<float> * cutOff.value / sampleRate.value;
+        const auto w = computeRadialFrequency(cutOff_Hz, sampleRate_Hz);
         const auto sinw = sin(w);
         const auto cosw = cos(w);
         const auto alpha = sinw / (2 * q);
         
-        const auto b0 = 1 + alpha;
+        const auto b0 = 1 / (1 + alpha);
         
-        coefficients.a0 = (1 - alpha) / b0;
-        coefficients.a1 = (-2 * cosw) / b0;
-        coefficients.a2 = (1 + alpha) / b0;
-        coefficients.b1 = (-2 * cosw) / b0;
-        coefficients.b2 = (1 - alpha) / b0;
+        coefficients.a0 = (1 - alpha) * b0;
+        coefficients.a1 = (-2 * cosw) * b0;
+        coefficients.a2 = (1 + alpha) * b0;
+        coefficients.b1 = (-2 * cosw) * b0;
+        coefficients.b2 = (1 - alpha) * b0;
     }
     
 }
