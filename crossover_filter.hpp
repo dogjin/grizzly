@@ -31,7 +31,6 @@
 #include <cstddef>
 #include <moditone/math/constants.hpp>
 #include <functional>
-#include <moditone/unit/hertz.hpp>
 #include <vector>
 
 #include "biquad.hpp"
@@ -51,12 +50,12 @@ namespace dsp
     
     //! Crossover Filter
     /*! Seperates low and high frequency bands, which added together result in the original signal (in magnitudes, not phases) */
-    template <typename T, typename CoeffType = double>
+    template <typename T>
     class CrossoverFilter
     {
     public:
         //! Construct a crossover filter given a order, cut-off and sample-rate
-        CrossoverFilter(unit::hertz<float> cutOff, unit::hertz<float> sampleRate, CrossoverFilterOrder order = CrossoverFilterOrder::SECOND) :
+        CrossoverFilter(T cutOff, T sampleRate, CrossoverFilterOrder order = CrossoverFilterOrder::SECOND) :
             order(order),
             cutOff(cutOff),
             sampleRate(sampleRate)
@@ -121,22 +120,22 @@ namespace dsp
             
             for (size_t i = 0; i < numberOfStagesInCascade; ++i)
             {
-                lowBand.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &lowBand.biquads[i]);
-                highBand.cascade.emplaceBack(&BiquadDirectForm1<T, CoeffType>::writeAndRead, &highBand.biquads[i]);
+                lowBand.cascade.emplaceBack(&BiquadDirectForm1<T>::writeAndRead, &lowBand.biquads[i]);
+                highBand.cascade.emplaceBack(&BiquadDirectForm1<T>::writeAndRead, &highBand.biquads[i]);
             }
             
             setCoefficients();
         }
         
         //! Set the cut-off
-        void setCutOff(unit::hertz<float> cutOff)
+        void setCutOff(T cutOff)
         {
             this->cutOff = cutOff;
             setCoefficients();
         }
         
         //! Set the sample-rate
-        void setSampleRate(unit::hertz<float> sampleRate)
+        void setSampleRate(T sampleRate)
         {
             this->sampleRate = sampleRate;
             setCoefficients();
@@ -160,26 +159,26 @@ namespace dsp
                     
                 case CrossoverFilterOrder::FOURTH:
                     // low-pass coefficients
-                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<T>);
+                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<T>);
                     
                     // high-pass coefficients
-                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
-                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<float>);
+                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, math::SQRT_HALF<T>);
+                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, math::SQRT_HALF<T>);
                     break;
                     
                 case CrossoverFilterOrder::EIGHTH:
                     // low-pass coefficients according to Butterworth filters
-                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    lowPass(lowBand.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    lowPass(lowBand.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    lowPass(lowBand.biquads[0].coefficients, sampleRate, cutOff, T(0.541));
+                    lowPass(lowBand.biquads[1].coefficients, sampleRate, cutOff, T(1.307));
+                    lowPass(lowBand.biquads[2].coefficients, sampleRate, cutOff, T(0.541));
+                    lowPass(lowBand.biquads[3].coefficients, sampleRate, cutOff, T(1.307));
                     
                     // high-pass coefficients according to Butterworth filters
-                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, 0.541f);
-                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, 1.307f);
-                    highPass(highBand.biquads[2].coefficients, sampleRate, cutOff, 0.541f);
-                    highPass(highBand.biquads[3].coefficients, sampleRate, cutOff, 1.307f);
+                    highPass(highBand.biquads[0].coefficients, sampleRate, cutOff, T(0.541));
+                    highPass(highBand.biquads[1].coefficients, sampleRate, cutOff, T(1.307));
+                    highPass(highBand.biquads[2].coefficients, sampleRate, cutOff, T(0.541));
+                    highPass(highBand.biquads[3].coefficients, sampleRate, cutOff, T(1.307));
                     break;
             }
         }
@@ -190,10 +189,10 @@ namespace dsp
         {
         public:
             //! First-order filter for order == 1
-            FirstOrderFilter<T, CoeffType> firstOrderFilter;
+            FirstOrderFilter<T> firstOrderFilter;
             
             //! A vector of biquad filters used for an order >= 1
-            std::vector<BiquadDirectForm1<T, CoeffType>> biquads;
+            std::vector<BiquadDirectForm1<T>> biquads;
             
             //! A cascade for chaining biquads used for an order >= 1
             Cascade<T> cascade;
@@ -211,10 +210,10 @@ namespace dsp
         CrossoverFilterOrder order = CrossoverFilterOrder::SECOND;
         
         //! The cut-off
-        unit::hertz<float> cutOff = 22050;
+        T cutOff = 0;
         
         //! The sample-rate
-        unit::hertz<float> sampleRate = 44100;
+        T sampleRate = 0;
         
         //! A band for low-passing the input signal
         Band lowBand;

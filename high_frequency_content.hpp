@@ -28,7 +28,6 @@
 #ifndef GRIZZLY_HIGH_FREQUENCY_CONTENT_HPP
 #define GRIZZLY_HIGH_FREQUENCY_CONTENT_HPP
 
-#include <moditone/unit/hertz.hpp>
 
 namespace dsp
 {
