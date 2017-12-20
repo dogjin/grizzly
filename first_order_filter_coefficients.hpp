@@ -85,34 +85,34 @@ namespace dsp
         coefficients.a1 = 1 - coefficients.a0;
     }
     
-    //! Set filter to low pass filtering using one pole, given a samplerate and a cutoff
+    //! Set filter to low pass filtering using one pole, given a sampleRate and a cutOff
     template <typename T>
-    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz)
     {
-        const T b1 = -std::exp(-math::TWO_PI<T> * (cutOff / sampleRate));
+        const T b1 = -std::exp(-math::TWO_PI<T> * (cutOff_Hz / sampleRate_Hz));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0f + b1;
         coefficients.a1 = 0.f;
     }
     
-    //! Set filter to low pass filtering using one pole, given a samplerate, time and and a time constant factor.
+    //! Set filter to low pass filtering using one pole, given a sampleRate, time and and a time constant factor.
     /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T time, T timeConstantFactor)
+    void lowPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T time_s, T timeConstantFactor)
     {
-        const T b1 = -std::exp(-timeConstantFactor / (time * sampleRate));
+        const T b1 = -std::exp(-timeConstantFactor / (time_s * sampleRate_Hz));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0f + b1;
         coefficients.a1 = 0.f;
     }
     
-    //! Set filter to low pass filtering using one pole and one zero, given a samplerate and a cutoff
+    //! Set filter to low pass filtering using one pole and one zero, given a sampleRate and a cutOff
     template <typename T>
-    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz)
     {
-        const auto z = std::tan(math::PI<T> * (cutOff / sampleRate));
+        const auto z = std::tan(math::PI<T> * (cutOff_Hz / sampleRate_Hz));
         const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
@@ -120,12 +120,12 @@ namespace dsp
         coefficients.a1 = coefficients.a0;
     }
     
-    //! Set filter to low pass filtering using one pole and one zero, given a samplerate, time and and a time constant factor.
+    //! Set filter to low pass filtering using one pole and one zero, given a sampleRate, time and and a time constant factor.
     /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
     template <typename T>
-    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T time, T timeConstantFactor)
+    void lowPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T time_s, T timeConstantFactor)
     {
-        const auto z = std::tan(timeConstantFactor / (time * sampleRate * 2));
+        const auto z = std::tan(timeConstantFactor / (time_s * sampleRate_Hz * 2));
         const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;
@@ -133,22 +133,22 @@ namespace dsp
         coefficients.a1 = coefficients.a0;
     }
     
-    //! Set filter to high pass filtering using one pole, given a samplerate and a cutoff
+    //! Set filter to high pass filtering using one pole, given a sampleRate and a cutOff
     template <typename T>
-    void highPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
+    void highPassOnePole(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz)
     {
-        const auto b1 = 1 - std::exp(-math::TWO_PI<T> * (cutOff / sampleRate));
+        const auto b1 = 1 - std::exp(-math::TWO_PI<T> * (cutOff_Hz / sampleRate_Hz));
         
         coefficients.b1 = b1; // invert to fit the conventional -b notation in the direct form I
         coefficients.a0 = 1.0 - b1;
         coefficients.a1 = 0;
     }
     
-    //! Set filter to high pass filtering using one pole and one zero, given a samplerate and a cutoff
+    //! Set filter to high pass filtering using one pole and one zero, given a sampleRate and a cutOff
     template <typename T>
-    void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate, T cutOff)
+    void highPassOnePoleZero(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T cutOff_Hz)
     {
-        const auto z = std::tan(math::PI<double> * (cutOff / sampleRate));
+        const auto z = std::tan(math::PI<double> * (cutOff_Hz / sampleRate_Hz));
         const auto s = (1 - z) / (z + 1);
         
         coefficients.b1 = -s;
@@ -165,11 +165,11 @@ namespace dsp
         coefficients.a1 = 1;
     }
     
-    //! Set filter to high all-pass filtering using one pole and one zero, given a samplerate and a center frequency where the shift is 90 degrees
+    //! Set filter to high all-pass filtering using one pole and one zero, given a sampleRate and a center frequency where the shift is 90 degrees
     template <typename T>
-    void allPass(FirstOrderCoefficients<T>& coefficients, T sampleRate, T centerFrequency)
+    void allPass(FirstOrderCoefficients<T>& coefficients, T sampleRate_Hz, T centerFrequency)
     {
-        const auto z = std::tan(math::PI<T> * (centerFrequency / sampleRate));
+        const auto z = std::tan(math::PI<T> * (centerFrequency / sampleRate_Hz));
         const auto s = (z - 1) / (z + 1);
         
         coefficients.b1 = s;

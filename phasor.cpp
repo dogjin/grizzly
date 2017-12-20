@@ -19,9 +19,9 @@ namespace dsp
         this->increment = increment;
     }
     
-    void Phasor::setIncrement(unit::hertz<long double> frequency, unit::hertz<long double> sampleRate)
+    void Phasor::setIncrement(long double frequency_Hz, long double sampleRate_Hz)
     {
-        setIncrement(frequency.value / sampleRate.value);
+        setIncrement(frequency_Hz / sampleRate_Hz);
     }
     
     void Phasor::doIncrement()
