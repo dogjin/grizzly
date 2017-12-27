@@ -10,10 +10,13 @@
 
 namespace dsp
 {
-    /*! @brief Integrator
+    /*! @brief Forward Euler integrator
      *
-     *  @discussion
+     *  @discussion Forward Euler integrator. In
+     *  contrary to the reverse version, the output
+     *  does not include the current input.
      *
+     *  @see ReverseEulerIntegrator TrapezoidalIntegrator
      */
     template <class T>
     class ForwardEulerIntegrator
@@ -42,10 +45,18 @@ namespace dsp
         //! The previous value, state
         T state = 0;
         
-        //! The gain value
+        //! The gain factor
         double gain = 1;
     };
     
+    /*! @brief Reverse Euler integrator
+     *
+     *  @discussion Reverse Euler integrator. In
+     *  contrary to the forward version, the output
+     *  also included the current input.
+     *
+     *  @see ForwardEulerIntegrator TrapezoidalIntegrator
+     */
     template <class T>
     class ReverseEulerIntegrator
     {
@@ -70,11 +81,21 @@ namespace dsp
         //! The previous value, state
         T state = 0;
         
-        //! The gain value
+        //! The gain factor
         double gain = 1;
     };
     
-    //! in comment zo zetten dat dit transposed direct form 2 is!!
+    /*! @brief Trapezoidal integrator
+     *
+     *  @discussion Trapezoidal integrator in a
+     *  transposed direct form II. The gain element
+     *  is placed at the input and has a default value
+     *  of 0.5. This integrator is useful for builing
+     *  filters.
+     *
+     *  @see ForwardEulerIntegrator ReverseEulerIntegrator
+     *  TopologyPreservingOnePoleFilter
+     */
     template <class T>
     class TrapezoidalIntegrator
     {
@@ -83,13 +104,13 @@ namespace dsp
         T process(T x)
         {
             // multiply the input with the gain coefficient
-            v = x * gain;
+            gainedInput = x * gain;
             
             // form the output by adding the state to the input
-            y = v + state;
+            y = gainedInput + state;
             
             // update the state
-            state = v + y;
+            state = gainedInput + y;
             
             return y;
         }
@@ -108,8 +129,10 @@ namespace dsp
         double gain = 0.5;
         
     private:
+        // The output
         T y = 0;
         
-        T v = 0;
+        // The input multiplied with the gain factor
+        T gainedInput = 0;
     };
 }

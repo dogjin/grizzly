@@ -34,14 +34,19 @@ namespace dsp
 {
     /*! @brief Convert linear amplitude to deciBel
      *
+     *  @discussion Convert a linear amplitude to a decibel.
+     *  The lowest possible number is set to the smallest
+     *  positive number of the given float point precision.
+     *
+     *  @see decibelToAmplitude
      */
     template <typename T>
     T amplitudeToDecibel(T value)
     {
-        // get the smallest possible positive value for T
+        // Get the smallest possible positive value for T
         const T epsilon = std::numeric_limits<T>::min();
         
-        // if the value is lower, use the epsilon
+        // If the value is lower, use the epsilon
         if (value < epsilon)
             value = epsilon;
         
@@ -50,6 +55,13 @@ namespace dsp
     
     /*! @brief Convert deciBel to linear amplitude
      *
+     */
+    
+    /*! @brief Convert deciBel to linear amplitude
+     *
+     *  @discussion Convert a decibel to linear amplitude.
+     *
+     *  @see amplitudeToDecibel
      */
     template <typename T>
     T decibelToAmplitude(T value)

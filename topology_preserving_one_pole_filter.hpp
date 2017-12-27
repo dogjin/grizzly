@@ -44,7 +44,7 @@ namespace dsp
      *  This results in a low-pass response depening on the time and a time constant factor.
      *  A function for non-linear processing can be supplied which modifies the state.
      *
-     * @see "The Art Of VA Filter Design" by Vadim Zavalishin
+     *  @see "The Art Of VA Filter Design" by Vadim Zavalishin
      */
     template <class T>
     class TopologyPreservingOnePoleFilter
@@ -57,24 +57,29 @@ namespace dsp
          * with g begin tan(math::PI<T> * cutOff / sampleRate) */
         void write(T x)
         {
+            // Get the filter state
             const auto state = integrator.state;
             
+            // Tick the integtator with the current input minus the state
             lowPassOutput = integrator(x - state);
             
-            // non-linear low-pass
+            // non-linear processing
             if (isNonLinear)
             {
+                // Use a hardcoded function for now based on tanh distortion
                 auto function = [&](const auto& estimate)
                 {
                     return warpedCutOff_ * (std::tanh(x) - std::tanh(estimate)) + state;
                 };
                 
+                // Supply the derivative of the function
                 auto derivative = [&](const auto& estimate)
                 {
                     const auto tanhEstimate = std::tanh(estimate);
                     return -warpedCutOff_ * (1 - tanhEstimate * tanhEstimate) - 1;
                 };
 
+                // Solve the implicit function using the current, linear, low-passed ouput as estimate
                 this->lowPassOutput = solveImplicit(function, derivative, this->lowPassOutput, 0.00001, 20);
             }
             
@@ -94,35 +99,38 @@ namespace dsp
             return highPassOutput;
         }
         
-        //! Write and read low-pass output (in that order)
+        //! Write and read low-pass output
         T writeAndReadLowPass(const T& x)
         {
             write(x);
             return readLowPass();
         }
         
-        //! Write and read high-pass output (in that order)
+        //! Write and read high-pass output
         T writeAndReadHighPass(const T& x)
         {
             write(x);
             return readHighPass();
         }
         
-        //! Set cut-off
+        //! Set the coefficients given a cut-off and sample-rate
         void setCoefficients(double cutOff_Hz, double sampleRate_Hz)
         {
             warpedCutOff_ = std::tan(math::PI<T> * cutOff_Hz / sampleRate_Hz);
             integrator.gain = warpedCutOff_ / (1.0 + warpedCutOff_);
         }
         
-        //! Set time with a default time-constant-factor
-        /*! @param timeConstantFactor Affects the actual time. A factor of 1 means a step response where the output reaches to ~63% in the given time. A factor of 5 reaches to ~99%. */
+        //! Set the coefficients given a time, sample-rate and time constant factor
+        /*! The time constant factor affects the actual time. A factor of 1 means
+         *  a step response where the output reaches to ~63% in the given time.
+         *  A factor of 5 reaches to ~99%. */
         void setCoefficients(double time_s, double sampleRate_Hz, double timeConstantFactor)
         {
             warpedCutOff_ = std::tan(timeConstantFactor / (time_s * sampleRate_Hz * 2.0));
             integrator.gain = warpedCutOff_ / (1.0 + warpedCutOff_);
         }
         
+        //! Set the state directly
         void setState(T state)
         {
             integrator.state = state;
@@ -136,28 +144,33 @@ namespace dsp
             highPassOutput = T(0);
         }
         
+        //! Take over the coeffcients from another one-pole
         void copyCoefficients(const TopologyPreservingOnePoleFilter& rhs)
         {
             warpedCutOff_ = rhs.warpedCutOff_;
             integrator.gain = rhs.integrator.gain;
         }
         
+        //! Get the warped cut-off
         double warpedCutOff() const
         {
             return warpedCutOff_;
         }
         
+        //! Get the gain factor
         double gain() const
         {
             return integrator.gain;
         }
         
+        //! Get the filter state
         double state() const
         {
             return integrator.state;
         }
         
     public:
+        //! Boolean to the non-linear processing
         bool isNonLinear = false;
         
     private:
@@ -167,8 +180,10 @@ namespace dsp
         //! Low-pass output state
         T highPassOutput = 0;
         
+        //! Warped cut-off gain factor
         double warpedCutOff_ = 0;
         
+        //! Trapezoidal integrator
         TrapezoidalIntegrator<T> integrator;
     };
 }
