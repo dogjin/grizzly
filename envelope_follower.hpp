@@ -44,7 +44,7 @@ namespace dsp
     {
     public:
         //! Construct the Follower
-        AttackReleaseEnvelopeFollower(float sampleRate_Hz) :
+        AttackReleaseEnvelopeFollower(T sampleRate_Hz) :
         sampleRate_Hz(sampleRate_Hz)
         {
         }
@@ -54,7 +54,7 @@ namespace dsp
         
     public:
         //! Set the sample rate
-        void setSampleRate(float sampleRate_Hz)
+        void setSampleRate(T sampleRate_Hz)
         {
             this->sampleRate_Hz = sampleRate_Hz;
             lowPassOnePole(attackCoefficients, sampleRate_Hz, attackTime_s, timeConstantFactor);
@@ -62,7 +62,7 @@ namespace dsp
         }
         
         //! Set the time-constant factor
-        void setTimeConstantFactor(float factor)
+        void setTimeConstantFactor(T factor)
         {
             timeConstantFactor = factor;
             lowPassOnePole(attackCoefficients, sampleRate_Hz, attackTime_s, factor);
@@ -70,7 +70,7 @@ namespace dsp
         }
         
         //! Set the attack time
-        virtual void setAttackTime(float attackTime_s)
+        virtual void setAttackTime(T attackTime_s)
         {
             this->attackTime_s = attackTime_s;
             
@@ -81,7 +81,7 @@ namespace dsp
         }
         
         //! Set the release time
-        virtual void setReleaseTime(float releaseTime_s)
+        virtual void setReleaseTime(T releaseTime_s)
         {
             this->releaseTime_s = releaseTime_s;
             

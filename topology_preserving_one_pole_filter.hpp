@@ -54,7 +54,7 @@ namespace dsp
         /* Using the direct form II integrator
          * Alternative: y = (g * x + state) / (g + 1) then
          * update state by doing 2 * lowPassOutput - state
-         * with g begin tan(math::PI<T> * cutOff.value / sampleRate.value) */
+         * with g begin tan(math::PI<T> * cutOff / sampleRate) */
         void write(T x)
         {
             const auto state = integrator.state;

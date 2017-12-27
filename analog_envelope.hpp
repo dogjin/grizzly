@@ -271,7 +271,7 @@ namespace dsp
              and use this value to set a maximum charge. In this case 5 is the time constant factor to make this step in one sample.
              We can then solve time constant factors for different charges between 0% and 100% with maximum charge = 1 - e^-factor.
              If we then normalize the envelope, the maximum charge results in changing the filter shape. */
-            double timeConstantFactor = 0;
+            T timeConstantFactor = 0;
         };
         
     private:
