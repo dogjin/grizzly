@@ -23,18 +23,26 @@ namespace dsp
         if (phasor)
             phasor->generators.erase(this);
     }
-    
-    void GeneratorBase::setPhasor(Phasor* phasor)
+        
+    void GeneratorBase::attachPhasor(Phasor& phasor)
     {
-        if (this->phasor)
-            this->phasor->generators.erase(this);
+        // Detach the current phasor if there is one
+        detachPhasor();
         
-        this->phasor = phasor;
+        // Set the phasor
+        this->phasor = &phasor;
         
-        if (this->phasor)
-            phasor->generators.emplace(this);
+        // Register this generator to the phasor
+        phasor.generators.emplace(this);
         
+        // Set the waveform of the generator to the current state of the phasor
         recompute();
+    }
+    
+    void GeneratorBase::detachPhasor()
+    {
+        if (phasor)
+            phasor->generators.erase(this);
     }
     
     void GeneratorBase::setPhaseOffset(long double offset, bool recompute)

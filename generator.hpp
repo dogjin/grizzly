@@ -24,8 +24,10 @@ namespace dsp
         GeneratorBase(Phasor& phasor);
         
         virtual ~GeneratorBase();
+                
+        void attachPhasor(Phasor& phasor);
         
-        void setPhasor(Phasor* phasor);
+        void detachPhasor();
 
         long double getPhase() const noexcept
         {
