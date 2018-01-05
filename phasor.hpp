@@ -51,14 +51,8 @@ namespace dsp
         void setPhase(long double phase, bool recomputeGenerators);
         long double getPhase() const noexcept { return phase; }
         long double getUnwrappedPhase() const noexcept { return unwrappedPhase; }
-        
-        template <typename... Args>
-        Phasor& createSlave(Args&&... args)
-        {
-            return addSlave(std::make_unique<Phasor>(std::forward<Args&&>(args)...));
-        }
-        
-        Phasor& addSlave(std::unique_ptr<Phasor> slave);
+                
+        void addSlave(Phasor& slave);
         
         const Phasor* getMaster() const noexcept { return master; }
         bool hasMaster() const noexcept { return master != nullptr; }
@@ -79,7 +73,7 @@ namespace dsp
         long double unwrappedPhase = 0;
         long double increment = 0;
         
-        std::vector<std::unique_ptr<Phasor>> slaves;
+        std::vector<Phasor*> slaves;
     };
 }
 

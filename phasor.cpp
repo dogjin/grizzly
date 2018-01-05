@@ -47,14 +47,13 @@ namespace dsp
         }
     }
     
-    Phasor& Phasor::addSlave(std::unique_ptr<Phasor> slave)
+    void Phasor::addSlave(Phasor& slave)
     {
-        if (slave->master != nullptr)
+        if (slave.master != nullptr)
             throw std::runtime_error("slave already has a master!");
         
-        slave->master = this;
-        slaves.emplace_back(std::move(slave));
-        return *slaves.back();
+        slave.master = this;
+        slaves.emplace_back(&slave);
     }
     
     void Phasor::incrementUnwrappedPhases()
