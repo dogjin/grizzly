@@ -24,16 +24,16 @@ namespace dsp
         setIncrement(frequency.value / sampleRate.value);
     }
     
-    void Phasor::doIncrement()
+    void Phasor::tick()
     {
         incrementUnwrappedPhases();
         computeNewPhases();
         recomputeGenerators();
     }
     
-    long double Phasor::doIncrementAndGetPhase()
+    long double Phasor::tickAndGetPhase()
     {
-        doIncrement();
+        tick();
         return getPhase();
     }
     

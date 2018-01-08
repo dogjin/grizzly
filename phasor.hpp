@@ -44,8 +44,8 @@ namespace dsp
         void setIncrement(long double increment);
         void setIncrement(unit::hertz<long double> frequency, unit::hertz<long double> sampleRate);
         
-        void doIncrement();
-        long double doIncrementAndGetPhase();
+        void tick();
+        long double tickAndGetPhase();
         long double getIncrement() const noexcept { return increment; }
         
         void setPhase(long double phase, bool recomputeGenerators);
