@@ -29,6 +29,7 @@
 
 #include <cmath>
 #include <limits>
+#include <numeric>
 
 namespace dsp
 {
@@ -54,6 +55,10 @@ namespace dsp
     template <typename T>
     T decibelToAmplitude(T value)
     {
-        return std::pow(10, value * 0.05);
+        const auto y = std::pow(T(10), value * T(0.05));
+        if (std::isinf(y))
+            return std::numeric_limits<T>::max();
+        else
+            return y;
     }
 }
