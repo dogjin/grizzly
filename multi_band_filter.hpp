@@ -69,7 +69,7 @@ namespace dsp
             /*! See the setCookingMethod() functions on how to set the filter type. */
             template <typename Function>
             Band(float sampleRate_Hz, float cutOff_Hz, float q, float gain_dB, Function cookingMethod) :
-            sampleRate_Hz(sampleRate_Hz)
+                sampleRate_Hz(sampleRate_Hz)
             {
                 parameters = {cutOff_Hz, q, gain_dB};
                 setCookingMethod(cookingMethod);
@@ -89,13 +89,15 @@ namespace dsp
             }
             
             //! Set the parameters and re-cook the coefficients
-            void setParameters(float cutOff_Hz, float q, float gain_dB)
+            bool setParameters(float cutOff_Hz, float q, float gain_dB)
             {
                 if (parameters.cutOff_Hz == cutOff_Hz && parameters.q == q && parameters.gain_dB == gain_dB)
-                    return;
+                    return false;
                 
                 parameters = {cutOff_Hz, q, gain_dB};
                 cook();
+                
+                return true;
             }
             
             //! Set a cooking method for the type of filtering
@@ -136,14 +138,23 @@ namespace dsp
                 cook();
             }
             
+            //! Copy the parameters, coefficients and from another band
+            /*! Copying the settings avoids re-cooking.
+             *  Useful to take over the settings from a
+             *  left channel band to a right one. */
+            void copyParameters(const Band& band)
+            {
+                filter.coefficients = band.filter.coefficients;
+                parameters = band.parameters;
+            }
+            
             //! Copy the parameters, coefficients and cooking method from another band
             /*! Copying the settings avoids re-cooking.
              *  Useful to take over the settings from a
              *  left channel band to a right one. */
             void copySettings(const Band& band)
             {
-                filter.coefficients = band.filter.coefficients;
-                parameters = band.parameters;
+                copyParameters(band);
                 cookingMethod = band.cookingMethod;
             }
             
