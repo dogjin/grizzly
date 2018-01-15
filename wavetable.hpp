@@ -33,7 +33,16 @@ namespace dsp
             return math::linearInterpolation(begin, begin + size, phase * size, math::wrapAccess);
         }
         
+        void setWavetable(const T* data, std::size_t size)
+        {
+            begin = data;
+            this->size = size;
+        }
+        
     public:
+        math::InterpolationFunction<const T*> interpolation = math::linearInterpolation;
+        
+    private:
         const T* begin = nullptr;
         std::size_t size = 0;
     };
