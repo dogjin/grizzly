@@ -24,10 +24,10 @@ namespace dsp
             phasor->generators.erase(this);
     }
         
-    void GeneratorBase::attachPhasor(Phasor& phasor)
+    void GeneratorBase::attachToPhasor(Phasor& phasor)
     {
-        // Detach the current phasor if there is one
-        detachPhasor();
+        // Detach from the current phasor if there is one
+        detachFromPhasor();
         
         // Set the phasor
         this->phasor = &phasor;
@@ -39,7 +39,7 @@ namespace dsp
         recompute();
     }
     
-    void GeneratorBase::detachPhasor()
+    void GeneratorBase::detachFromPhasor()
     {
         if (phasor)
             phasor->generators.erase(this);

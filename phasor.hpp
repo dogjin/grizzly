@@ -43,8 +43,8 @@ namespace dsp
         void setIncrement(long double increment);
         void setIncrement(long double frequency_Hz, long double sampleRate_Hz);
         
-        void doIncrement();
-        long double doIncrementAndGetPhase();
+        void tick();
+        long double tickAndGetPhase();
         long double getIncrement() const noexcept { return increment; }
         
         void setPhase(long double phase, bool recomputeGenerators);

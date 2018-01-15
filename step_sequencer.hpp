@@ -30,6 +30,8 @@
 #include <functional>
 #include <vector>
 
+#include <moditone/math/wrap.hpp>
+
 #pragma once
 
 namespace dsp
@@ -181,6 +183,118 @@ namespace dsp
         
         //! Total cylce length
         T length = 0;
+    };
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    class StepSequencer2
+    {
+    private:
+        class Step
+        {
+        public:
+            Step(std::function<void()> onTrigger) :
+            onTrigger(onTrigger)
+            {}
+            
+            void trigger()
+            {
+                if (onTrigger)
+                    onTrigger();
+            }
+            
+            std::function<void()> onTrigger;
+        };
+        
+    public:
+        StepSequencer2()
+        {
+        }
+        
+        void increment()
+        {
+            currentStep = math::wrap<int>(currentStep + 1, 0, steps.size());
+        }
+        
+        void trigger()
+        {
+            if (steps.empty())
+                return;
+            
+            steps[currentStep].trigger();
+        }
+        
+        void triggerAndIncrement()
+        {
+            trigger();
+            increment();
+        }
+        
+        void operator()()
+        {
+            triggerAndIncrement();
+        }
+        
+        void emplace(std::function<void()> onTrigger)
+        {
+            steps.emplace_back(onTrigger);
+        }
+        
+        void remove(size_t index)
+        {
+            steps.erase(steps.begin() + index);
+        }
+        
+        void clear()
+        {
+            steps.clear();
+        }
+        
+        void setStep(size_t index, bool trigger)
+        {
+            currentStep = index;
+            
+            if (trigger)
+                steps[currentStep].trigger();
+        }
+        
+        Step& getStep(size_t index)
+        {
+            return steps[index];
+        }
+        
+        Step& operator[](size_t index)
+        {
+            return getStep(index);
+        }
+        
+        const Step& getStep(size_t index) const
+        {
+            return steps[index];
+        }
+        
+        const Step& operator[](size_t index) const
+        {
+            return getStep(index);
+        }
+        
+        auto begin() { return steps.begin(); }
+        auto end() { return steps.end(); }
+        
+        const auto begin() const { return steps.begin(); }
+        const auto end() const { return steps.end(); }
+        
+        size_t getNumberOfSteps() const
+        {
+            return steps.size();
+        }
+        
+    private:
+        std::vector<Step> steps;
+        
+        int currentStep = 0;
     };
 }
 
