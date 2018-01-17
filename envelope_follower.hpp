@@ -337,9 +337,6 @@ namespace dsp
         
         //! The release time
         double releaseTime_s = 0.0;
-        
-        //! The most recently computed value
-        double y = 0.0;
     };
 }
 
