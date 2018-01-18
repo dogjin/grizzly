@@ -117,9 +117,9 @@ namespace dsp
         }
         
         //! Write a new sample to the filter and return the result
-        T writeAndRead(const T& x, float delayTime, float feedBack)
+        T writeAndRead(const T& x, float delayTime, float feedForward)
         {
-            write(x, delayTime, feedBack);
+            write(x, delayTime, feedForward);
             return read();
         }
         

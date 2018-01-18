@@ -29,10 +29,10 @@
 #define GRIZZLY_WINDOW_HPP
 
 #include <cmath>
-#include <moditone/math/constants.hpp>
 #include <limits>
-#include <moditone/unit/radian.hpp>
 #include <vector>
+
+#include <moditone/math/constants.hpp>
 
 #include "triangle.hpp"
 
@@ -78,7 +78,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = (1 - cos(math::TWO_PI<long double> * i / size)) * 0.5;
+            window[i] = (1 - std::cos(math::TWO_PI<long double> * i / size)) * 0.5;
         
         return window;
     }
@@ -90,7 +90,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = (1 - cos(math::TWO_PI<long double> * i / (size - 1))) * 0.5;
+            window[i] = (1 - std::cos(math::TWO_PI<long double> * i / (size - 1))) * 0.5;
         
         return window;
     }
@@ -102,7 +102,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.54 - 0.46 * cos(math::TWO_PI<long double> * i / size);
+            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<long double> * i / size);
         
         return window;
     }
@@ -114,7 +114,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.54 - 0.46 * cos(math::TWO_PI<long double> * i / (size - 1));
+            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<long double> * i / (size - 1));
         
         return window;
     }
@@ -126,7 +126,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.42 - 0.5 * cos(math::TWO_PI<long double> * i / size) + 0.08 * cos(2 * math::TWO_PI<long double> * i / size);
+            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<long double> * i / size) + 0.08 * std::cos(2 * math::TWO_PI<long double> * i / size);
         
         return window;
     }
@@ -138,7 +138,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.42 - 0.5 * cos(math::TWO_PI<long double> * i / (size - 1)) + 0.08 * cos(2 * math::TWO_PI<long double> * i / (size - 1));
+            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<long double> * i / (size - 1)) + 0.08 * std::cos(2 * math::TWO_PI<long double> * i / (size - 1));
         
         return window;
     }
@@ -148,7 +148,7 @@ namespace dsp
         @param bandWidth The band width in radians
         @param peakPosition The peak position */
     template <typename T>
-    std::vector<T> createSincWindow(std::size_t size, unit::radian<double> bandWidth, float peakPosition)
+    std::vector<T> createSincWindow(std::size_t size, T bandWidth, T peakPosition)
     {
         std::vector<T> sinc(size);
         
@@ -159,7 +159,7 @@ namespace dsp
             if (x == 0)
                 sinc[i] = 1;
             else
-                sinc[i] = (sin(bandWidth.value * x * size) / size) / (bandWidth.value * x);
+                sinc[i] = (std::sin(bandWidth * x * size) / size) / (bandWidth * x);
         }
         
         return sinc;

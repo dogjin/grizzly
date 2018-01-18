@@ -28,7 +28,6 @@
 #ifndef GRIZZLY_SPECTRAL_CENTROID_HPP
 #define GRIZZLY_SPECTRAL_CENTROID_HPP
 
-#include <moditone/unit/hertz.hpp>
 
 namespace dsp
 {

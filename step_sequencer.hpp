@@ -64,20 +64,20 @@ namespace dsp
             this->length = length;
         }
         
-        void process(T time)
+        void process(T time, T epsilon)
         {
             if (steps.empty())
                 return;
             
-            auto previousStep = currentStep;
-            currentStep = getStepIndex(time);
+            const auto currentStepIndex = getStepIndex(time);
             
-            if (currentStep - previousStep == 1 || (currentStep == 0 && previousStep == steps.size() - 1))
-            {
-                auto& step = steps[currentStep];
-                
+            if (currentStepIndex < 0)
+                return;
+            
+            auto& step = steps[currentStepIndex];
+            
+            if (std::fmod(time, length) - step.time < epsilon)
                 step.trigger();
-            }
         }
         
         void operator()(T time)
@@ -122,14 +122,6 @@ namespace dsp
                 steps[i].time = i * stepLength + stepLength * amount;
         }
         
-        void setStep(size_t index, bool trigger)
-        {
-            currentStep = index;
-            
-            if (trigger)
-                steps[currentStep].trigger();
-        }
-        
         Step& getStep(size_t index)
         {
             return steps[index];
@@ -150,12 +142,6 @@ namespace dsp
             return getStep(index);
         }
         
-        auto begin() { return steps.begin(); }
-        auto end() { return steps.end(); }
-        
-        const auto begin() const { return steps.begin(); }
-        const auto end() const { return steps.end(); }
-        
         T getLength() const
         {
             return length;
@@ -166,24 +152,37 @@ namespace dsp
             return steps.size();
         }
         
+        //! Get 
+        auto begin() { return steps.begin(); }
+        auto end() { return steps.end(); }
+        
+        const auto begin() const { return steps.begin(); }
+        const auto end() const { return steps.end(); }
+        
     private:
+        //! Get the current step index given the time
         int getStepIndex(T time)
         {
+            // Get the last index of the steps
             auto reverseIndex = static_cast<int>(steps.size()) - 1;
+            
+            // Iterate in reverse direction.
+            /* If the time of the step at index is equal or below
+                the time in the loop (modulo with length), return the index. */
             for (; reverseIndex >= 0; reverseIndex--)
                 if (steps[reverseIndex].time <= std::fmod(time, length))
                     return reverseIndex;
             
+            // If there's no step below the current time, return -1
             return -1;
         }
         
     private:
+        //! A Container with steps
         std::vector<Step> steps;
         
         //! Total cylce length
         T length = 0;
-        
-        int currentStep = -1;
     };
     
     
@@ -298,3 +297,4 @@ namespace dsp
         int currentStep = 0;
     };
 }
+

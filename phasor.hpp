@@ -28,7 +28,6 @@
 #pragma once
 
 #include <memory>
-#include <moditone/unit/hertz.hpp>
 #include <set>
 #include <vector>
 
@@ -42,7 +41,7 @@ namespace dsp
         
     public:
         void setIncrement(long double increment);
-        void setIncrement(unit::hertz<long double> frequency, unit::hertz<long double> sampleRate);
+        void setIncrement(long double frequency_Hz, long double sampleRate_Hz);
         
         void tick();
         long double tickAndGetPhase();

@@ -35,14 +35,14 @@ namespace dsp
     //! A biquad using Direct Form I
     /*! Biquad that computes samples using the Direct Form I topology.
      This topology gives you less side-effects when chaning coefficients during processing. */
-    template <class T, class CoeffType = T>
+    template <class T>
     class BiquadDirectForm1
     {
     public:
         //! Compute a sample
         void write(const T& x)
         {
-            y = static_cast<T>(x * coefficients.a0 + xz1 * coefficients.a1 + xz2 * coefficients.a2 - coefficients.b1 * yz1 - coefficients.b2 * yz2);
+            y = x * coefficients.a0 + xz1 * coefficients.a1 + xz2 * coefficients.a2 - coefficients.b1 * yz1 - coefficients.b2 * yz2;
             
             // Update the delays
             xz2 = xz1;
@@ -79,7 +79,7 @@ namespace dsp
         
     public:
         //! The coefficients to the biquad
-        BiquadCoefficients<CoeffType> coefficients;
+        BiquadCoefficients<T> coefficients;
         
     private:
         T y = 0; //! output
@@ -93,7 +93,7 @@ namespace dsp
     /*! Biquad that computes samples using the Direct Form II topology.
      This topology minimizes the use of delays as it is shared between branches.
      A better floating-point accuracy is achieved in the transposed version. */
-    template <class T, class CoeffType = T>
+    template <class T>
     class BiquadDirectForm2
     {
     public:
@@ -101,7 +101,7 @@ namespace dsp
         void write(const T& x)
         {
             auto v = x - coefficients.b1 * z1 - coefficients.b2 * z2;
-            y = static_cast<T>(coefficients.a0 * v + coefficients.a1 * z1 + coefficients.a2 * z2);
+            y = coefficients.a0 * v + coefficients.a1 * z1 + coefficients.a2 * z2;
             
             z2 = z1;
             z1 = v;
@@ -132,7 +132,7 @@ namespace dsp
         
     public:
         //! The coefficients to the biquad
-        BiquadCoefficients<CoeffType> coefficients;
+        BiquadCoefficients<T> coefficients;
         
     private:
         T y = 0; //! output
@@ -144,7 +144,7 @@ namespace dsp
     /*! Biquad that computes samples using the Transposed Direct Form I topology.
      Use transposed direct form II for better floating-point accuracy.
      Use direct form I for less side-effects when chaning coefficients during processing. */
-    template <class T, class CoeffType = T>
+    template <class T>
     class BiquadTransposedDirectForm1
     {
     public:
@@ -152,12 +152,12 @@ namespace dsp
         void write(const T& x)
         {
             auto v = x + yz1;
-            yz1 = static_cast<T>(-coefficients.b1 * v + yz2);
-            yz2 = static_cast<T>(-coefficients.b2 * v);
+            yz1 = -coefficients.b1 * v + yz2;
+            yz2 = -coefficients.b2 * v;
             
-            y = static_cast<T>(coefficients.a0 * v + xz1);
-            xz1 = static_cast<T>(coefficients.a1 * v + xz2);
-            xz2 = static_cast<T>(coefficients.a2 * v);
+            y = coefficients.a0 * v + xz1;
+            xz1 = coefficients.a1 * v + xz2;
+            xz2 = coefficients.a2 * v;
         }
         
         //! Insert a new sample in the Biquad
@@ -188,7 +188,7 @@ namespace dsp
         
     public:
         //! The coefficients to the biquad
-        BiquadCoefficients<CoeffType> coefficients;
+        BiquadCoefficients<T> coefficients;
         
     private:
         T y = 0; //! output
@@ -202,18 +202,18 @@ namespace dsp
     /*! Biquad that computes samples using the Transposed Direct Form II topology.
      This structes minimizes the use of delays and has a good floating-point accuracy,
      although it has more side-effects when you change the coefficients during processing. */
-    template <class T, class CoeffType = T>
+    template <class T>
     class BiquadTransposedDirectForm2
     {
     public:
         //! Insert a new sample in the Biquad
         void write(const T& x)
         {
-            y = static_cast<T>(x * coefficients.a0 + z1);
+            y = x * coefficients.a0 + z1;
             
             // Update the delays
-            z1 = static_cast<T>(x * coefficients.a1 + y * -coefficients.b1 + z2);
-            z2 = static_cast<T>(x * coefficients.a2 + y * -coefficients.b2);
+            z1 = x * coefficients.a1 + y * -coefficients.b1 + z2;
+            z2 = x * coefficients.a2 + y * -coefficients.b2;
         }
         
         //! Insert a new sample in the Biquad
@@ -241,7 +241,7 @@ namespace dsp
         
     public:
         //! The coefficients to the biquad
-        BiquadCoefficients<CoeffType> coefficients;
+        BiquadCoefficients<T> coefficients;
         
     private:
         T y = 0; //! output
@@ -249,8 +249,8 @@ namespace dsp
         T z2 = 0; //!< 2-sample delay
     };
     
-    template <class T, class CoeffType = T>
-    using Biquad = BiquadTransposedDirectForm2<T, CoeffType>;
+    template <class T>
+    using Biquad = BiquadTransposedDirectForm2<T>;
 }
 
 #endif

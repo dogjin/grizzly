@@ -314,6 +314,10 @@ namespace dsp
         //! Damping factor, related to q
         double damping = 1;
         
+        double time_s = 0;
+        
+        double timeConstantFactor = 0;
+        
         //! Gain (for band-shelf type)
         double bandShelfGain_lin = 0;
     };

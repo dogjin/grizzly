@@ -32,91 +32,99 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
-#include <moditone/unit/amplitude.hpp>
+
 
 namespace dsp
 {
-    //! Compressor make-up gain estimation for a 'standard' mixing situation
-    inline static unit::decibel<float> computeCompressorMakeUpGain(unit::decibel<float> threshold, float ratio)
+    //! Compressor make-up gain (in dB) estimation for a 'standard' mixing situation
+    template <class T>
+    T computeCompressorMakeUpGain(T threshold_dB, T ratio)
     {
         if (ratio <= 0)
             throw std::invalid_argument("ratio <= zero");
         
-        return 0.5f * threshold.value * (1.0f / ratio - 1.0f);
+        return 0.5 * threshold_dB * (1 / ratio - 1);
     }
     
     //! Dynamic Gain
-    /*! Compute a gain factor for signals below/above a given threshold or within a knee range.
-     A typical application is a compressor/expander where the the gain factor is computed from a followed input and multiplied with the original input. */
+    /*! Compute a gain factor for signals below/above a given threshold (dB) or within a knee range.
+     A typical application would a compressor or expander.
+     For this application we need to compute the gain factor from a followed
+     input given a threshold, both in the log domain (e.g. deciBels).
+     A gain factor, in log domain, is returned.
+     This factor can be added to the original signal is it's also in log domain.
+     More common however is to to convert the factor to the
+     linear domain and multiply it with the orignal linear signal. */
+    template <class T>
     class DynamicGain
     {
     public:
-        //! Compute a gain factor for signals exceeding a threshold
-        unit::decibel<float> computeGainAbove(unit::decibel<float> input, unit::decibel<float> threshold) const
+        //! Compute a gain factor (dB) for signals exceeding a threshold (dB)
+        T computeGainAbove(T input_dB, T threshold_dB) const
         {
             // Compute gain factor above the threshold and knee range
-            if (input.value > threshold.value + halfKnee)
-                return -slope * (input.value - threshold.value);
+            if (input_dB > threshold_dB + halfKnee_dB)
+                return -slope * (input_dB - threshold_dB);
             
             // Throughput, no gain
-            if (input.value <= threshold.value - halfKnee)
+            if (input_dB <= threshold_dB - halfKnee_dB)
                 return 0;
             
             // One of the two above if statements should fire if the knee is 0, so we should never reach this
-            assert(knee != 0);
+            assert(knee_dB != 0);
             
             // Compute gain factor within the knee range
-            return -slope * std::pow(input.value - threshold.value + halfKnee, 2.f) * doubleKneeReciprocal;
+            return -slope * std::pow(input_dB - threshold_dB + halfKnee_dB, 2) * doubleKneeReciprocal;
         }
         
-        //! Compute a gain factor for signals below a threshold
-        unit::decibel<float> computeGainBelow(unit::decibel<float> input, unit::decibel<float> threshold) const
+        //! Compute a gain factor (dB) for signals below a threshold (dB)
+        T computeGainBelow(T input_dB, T threshold_dB) const
         {
             // Throughput, no gain
-            if (input.value >= threshold.value + halfKnee)
+            if (input_dB >= threshold_dB + halfKnee_dB)
                 return 0;
             
             //! Compute gain factor below the threshold and knee range
-            if (input.value < threshold.value - halfKnee)
-                return -slope * (input.value - threshold.value);
+            if (input_dB < threshold_dB - halfKnee_dB)
+                return -slope * (input_dB - threshold_dB);
             
             // One of the two above if statements should fire if the knee is 0, so we should never reach this
-            assert(knee != 0);
+            assert(knee_dB != 0);
             
             //! Apply compression within knee range
-            return slope * std::pow(threshold.value - input.value + halfKnee, 2.f) * doubleKneeReciprocal;
+            return slope * std::pow(threshold_dB - input_dB + halfKnee_dB, 2) * doubleKneeReciprocal;
         }
         
         //! Set the ratio
-        void setRatio(float ratio)
+        void setRatio(T ratio)
         {
             if (ratio <= 0)
                 throw std::invalid_argument("ratio <= zero");
             
-            slope = 1.f - 1.f / ratio;
+            slope = 1 - 1 / ratio;
         }
         
-        //! The the knee range around the threshold
-        void setKnee(unit::decibel<float> knee)
+        //! The the knee range (dB) around the threshold (dB)
+        void setKnee(T knee_dB)
         {
-            this->knee = knee.value;
-            halfKnee = knee.value * 0.5f;
-            doubleKneeReciprocal = 1.f / (knee.value * 2.f);
+            this->knee_dB = knee_dB;
+            halfKnee_dB = knee_dB * 0.5;
+            doubleKneeReciprocal = 1 / (knee_dB * 2);
         }
         
     public:
         //! The slope factor
-        float slope = 0;
+        T slope = 0;
         
     private:
-        //! The knee range
-        float knee = 0;
+        //! The knee range (dB)
+        T knee_dB = 0;
         
-        //! Half-knee
-        float halfKnee = 0;
+        //! Half-knee (dB)
+        T halfKnee_dB = 0;
         
-        //! Double-knee reciprocal
-        float doubleKneeReciprocal = 0;
+        //! Double-knee reciprocal (dB)
+        T doubleKneeReciprocal = 0;
     };
 }
 

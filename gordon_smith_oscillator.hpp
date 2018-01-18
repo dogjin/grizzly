@@ -29,14 +29,14 @@
 #define GRIZZLY_GORDON_SMITH_OSCILLATOR_HPP
 
 #include <cmath>
-#include <moditone/unit/hertz.hpp>
-#include <moditone/unit/radian.hpp>
 
 #include <moditone/math/constants.hpp>
+
 
 namespace dsp
 {
     //! Sine approximation using Gordon-Smith
+    /*  TODO: Add/replace interface for setting the frequency */
     template <class T>
     class GordonSmithOscillator
     {
@@ -45,9 +45,9 @@ namespace dsp
         constexpr GordonSmithOscillator() = default;
         
         //! Construct the oscillator
-        constexpr GordonSmithOscillator(unit::radian<float> angle)
+        constexpr GordonSmithOscillator(T angle_rad)
         {
-            setAngle(angle);
+            setAngle(angle_rad);
         }
         
         //! Compute the next sample
@@ -64,12 +64,12 @@ namespace dsp
             return process();
         }
         
-        //! Change the angle the oscillator should increment every process
-        constexpr void setAngle(unit::radian<float> angle)
+        //! Change the angle (in radians)
+        constexpr void setAngle(T angle_rad)
         {
-            epsilon = 2 * std::sin(angle.value / 2);
-            y = std::sin(-angle.value);
-            yq = std::cos(-angle.value);
+            epsilon = 2 * std::sin(angle_rad / 2);
+            y = std::sin(-angle_rad);
+            yq = std::cos(-angle_rad);
         }
         
     private:
@@ -80,10 +80,7 @@ namespace dsp
         T yq = 0;
         
         //! The Gordon-Smith epsilon = 2 * sin(theta / 2)
-        double epsilon = 0;
-        
-        //! The frequency of the sine
-        unit::hertz<float> frequency;
+        T epsilon = 0;
     };
 }
 

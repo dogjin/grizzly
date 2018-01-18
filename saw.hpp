@@ -89,6 +89,30 @@ namespace dsp
     public:
         bool up = true;
     };
+    
+    template <typename T>
+    class BandLimitedSawUnipolar :
+    public BandLimitedGenerator<T>
+    {
+    public:
+        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        
+    private:
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        {
+            return up ? generateUnipolarSaw<T>(phase, phaseOffset) : generateUnipolarSaw<T>(phase, phaseOffset) * -1 + 1;
+        }
+        
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        {
+            up ?
+            y -= (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l) :
+            y += (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
+        }
+        
+    public:
+        bool up = true;
+    };
 }
 
 #endif /* GRIZZLY_SAW_HPP */
