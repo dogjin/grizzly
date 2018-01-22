@@ -63,7 +63,7 @@ namespace dsp
             normalizeFactor = 1.0 / maximumCharge;
             
             // solve time constant factor for maximum charge = 1 - e^-timeConstantFactor
-            long double temp = 1.l - maximumCharge;
+            double temp = 1.0 - maximumCharge;
             attackStage.timeConstantFactor = -log(temp);
             
             // Reset the attack time with the new time constant factor

@@ -78,7 +78,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = (1 - std::cos(math::TWO_PI<long double> * i / size)) * 0.5;
+            window[i] = (1 - std::cos(math::TWO_PI<T> * i / size)) * 0.5;
         
         return window;
     }
@@ -90,7 +90,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = (1 - std::cos(math::TWO_PI<long double> * i / (size - 1))) * 0.5;
+            window[i] = (1 - std::cos(math::TWO_PI<T> * i / (size - 1))) * 0.5;
         
         return window;
     }
@@ -102,7 +102,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<long double> * i / size);
+            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<T> * i / size);
         
         return window;
     }
@@ -114,7 +114,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<long double> * i / (size - 1));
+            window[i] = 0.54 - 0.46 * std::cos(math::TWO_PI<T> * i / (size - 1));
         
         return window;
     }
@@ -126,7 +126,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<long double> * i / size) + 0.08 * std::cos(2 * math::TWO_PI<long double> * i / size);
+            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<T> * i / size) + 0.08 * std::cos(2 * math::TWO_PI<T> * i / size);
         
         return window;
     }
@@ -138,7 +138,7 @@ namespace dsp
         std::vector<T> window(size);
         
         for (auto i = 0; i < size; ++i)
-            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<long double> * i / (size - 1)) + 0.08 * std::cos(2 * math::TWO_PI<long double> * i / (size - 1));
+            window[i] = 0.42 - 0.5 * std::cos(math::TWO_PI<T> * i / (size - 1)) + 0.08 * std::cos(2 * math::TWO_PI<T> * i / (size - 1));
         
         return window;
     }
