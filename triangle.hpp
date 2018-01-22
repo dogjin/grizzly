@@ -39,16 +39,16 @@
 namespace dsp
 {
     //! Generate a unipolar triangle wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateUnipolarTriangle(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateUnipolarTriangle(T phase, T phaseOffset) noexcept
     {
-        phase = math::wrap<Phase>(phase + phaseOffset, 0, 1);
+        phase = math::wrap<T>(phase + phaseOffset, 0, 1);
         return phase < 0.5 ? phase * 2 : (0.5 - (phase - 0.5)) * 2;
     }
     
     //! Generate a bipolar triangle wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateBipolarTriangle(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateBipolarTriangle(T phase, T phaseOffset) noexcept
     {
         return generateUnipolarTriangle<T>(phase, phaseOffset) * 2 - 1;
 //        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;

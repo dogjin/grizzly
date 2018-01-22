@@ -36,8 +36,8 @@
 
 namespace dsp
 {
-    template <typename T, typename Phase>
-    constexpr T fastSin(Phase x) noexcept
+    template <typename T>
+    constexpr T fastSin(T x) noexcept
     {
         //always wrap input angle to -PI..PI
         if (x < -math::PI<T>)
@@ -47,23 +47,23 @@ namespace dsp
         
         //compute sine
         if (x < 0)
-            return 1.27323954 * x + .405284735 * x * x;
+            return T(1.27323954) * x + T(.405284735) * x * x;
         else
-            return 1.27323954 * x - 0.405284735 * x * x;
+            return T(1.27323954) * x - T(0.405284735) * x * x;
     }
     
     //! Generate a bipolar sine wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateBipolarSine(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateBipolarSine(T phase, T phaseOffset) noexcept
     {
-        return fastSin<T>(math::wrap<Phase>(math::TWO_PI<T> * phase + phaseOffset, -math::PI<Phase>, math::PI<Phase>));
+        return fastSin<T>(math::wrap<T>(math::TWO_PI<T> * phase + phaseOffset, -math::PI<T>, math::PI<T>));
     }
     
     //! Generate a unipolar sine wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateUnipolarSine(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateUnipolarSine(T phase, T phaseOffset) noexcept
     {
-        return generateBipolarSine<T>(phase - math::HALF_PI<T> + phaseOffset) * 0.5 + 0.5;
+        return generateBipolarSine<T>(phase - math::HALF_PI<T> + phaseOffset) * T(0.5) + T(0.5);
     }
     
     template <typename T>

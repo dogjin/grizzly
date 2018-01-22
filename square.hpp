@@ -39,10 +39,10 @@
 namespace dsp
 {
     //! Generate a square wave given a normalized phase
-    template <typename T, typename Phase, typename PulseWidth>
-    constexpr T generateSquare(Phase phase, Phase phaseOffset, PulseWidth pulseWidth, const T& low, const T& high) noexcept
+    template <typename T>
+    constexpr T generateSquare(T phase, T phaseOffset, T pulseWidth, T low, T high) noexcept
     {
-        return math::wrap<Phase>(phase + phaseOffset, 0, 1) < pulseWidth ? high : low;
+        return math::wrap<T>(phase + phaseOffset, 0, 1) < pulseWidth ? high : low;
     }
     
     //! Generates a bipolar square wave

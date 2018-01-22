@@ -40,17 +40,17 @@
 namespace dsp
 {
     //! Generate a bipolar saw wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateBipolarSaw(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateBipolarSaw(T phase, T phaseOffset) noexcept
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1) * 2 - 1;
+        return math::wrap<T>(phase + phaseOffset, T(0), T(1)) * T(2) - T(1);
     }
     
     //! Generate a unipolar saw wave given a normalized phase
-    template <typename T, typename Phase>
-    constexpr T generateUnipolarSaw(Phase phase, Phase phaseOffset) noexcept
+    template <typename T>
+    constexpr T generateUnipolarSaw(T phase, T phaseOffset) noexcept
     {
-        return math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset, 0, 1);
+        return math::wrap<T>(phase + phaseOffset, T(0), T(1));
     }
     
     template <typename T>
