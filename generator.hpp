@@ -29,7 +29,7 @@ namespace dsp
         
         void detachFromPhasor();
 
-        long double getPhase() const noexcept
+        double getPhase() const noexcept
         {
             if (phaseDistortion)
                 return phaseDistortion(phasor ? phasor->getPhase() : 0);
@@ -37,11 +37,11 @@ namespace dsp
                 return phasor ? phasor->getPhase() : 0;
         }
                     
-        long double getIncrement() const noexcept { return phasor ? phasor->getIncrement() : 0; }
+        double getIncrement() const noexcept { return phasor ? phasor->getIncrement() : 0; }
         
-        void setPhaseOffset(long double offset, bool recompute);
-        long double getPhaseOffset() const noexcept { return phaseOffset; }
-        long double getUnwrappedPhase() const noexcept { return phasor ? phasor->getUnwrappedPhase() : 0; }
+        void setPhaseOffset(double offset, bool recompute);
+        double getPhaseOffset() const noexcept { return phaseOffset; }
+        double getUnwrappedPhase() const noexcept { return phasor ? phasor->getUnwrappedPhase() : 0; }
         
         const Phasor* getMaster() const noexcept { return phasor ? phasor->getMaster() : nullptr; }
         bool hasMaster() const noexcept { return phasor ? phasor->hasMaster() : false; }
@@ -49,14 +49,14 @@ namespace dsp
         void recompute();
         
     public:
-        std::function<long double(long double)> phaseDistortion;
+        std::function<double(double)> phaseDistortion;
         
     private:
         virtual void recomputeRequested() = 0;
         
     private:
         Phasor* phasor = nullptr;
-        long double phaseOffset = 0;
+        double phaseOffset = 0;
     };
     
     template <typename T>
@@ -115,7 +115,7 @@ namespace dsp
         T syncAdjust;
         bool syncAdjusted = false;
         
-        long double blepScale = 0;
+        double blepScale = 0;
         
     private:
         bool adjustForSync(const Phasor& master)
@@ -142,24 +142,24 @@ namespace dsp
             return false;
         }
         
-        T beforeReset(long double masterPhase, long double masterIncrement) noexcept
+        T beforeReset(double masterPhase, double masterIncrement) noexcept
         {
             const auto phase = this->getPhase();
             const auto phaseOffset = this->getPhaseOffset();
             const auto increment = this->getIncrement();
             
-            const long double ratio = increment / masterIncrement;
+            const double ratio = increment / masterIncrement;
             
             // hoever verschilt de phase tot precies 1 waar reset echt plaats vindt
-            const long double phaseDiffMasterToEnd = 1 - masterPhase;
+            const double phaseDiffMasterToEnd = 1 - masterPhase;
             
             // gebruik dit verschil om bij de slave op te tellen
             // vermenigvuldig met de ratio want slave gaat sneller
             // dit is de phase waar de slave exact zou resetten
-            const long double phaseEndOfSlave = phase + (phaseDiffMasterToEnd * ratio);
+            const double phaseEndOfSlave = phase + (phaseDiffMasterToEnd * ratio);
             
             // Hoeveel phase moet de slave nog tot hij bij bovenstaand einde is
-            const long double phaseDifffSlaveToEnd = phaseEndOfSlave - phase;
+            const double phaseDifffSlaveToEnd = phaseEndOfSlave - phase;
             
             // bereken de 'on-geblepte' eind positie van de golf
             const auto slaveYAtEnd = static_cast<const Derivative&>(*this).computeAliasedY(phase, phaseOffset);
@@ -175,13 +175,13 @@ namespace dsp
             blepScale = (slaveYAtEnd - slaveYatBegin) / 2;
             
             // Doe een echte blep step, alsof van -1 naar 1...
-            const long double x = insertPolyBlepBeforeReset(1 - phaseDifffSlaveToEnd, increment);
+            const double x = insertPolyBlepBeforeReset(1 - phaseDifffSlaveToEnd, increment);
             
             // ...end scale dat met de zojuist berekende scale
             return x * blepScale;
         }
         
-        T afterReset(long double masterPhase, long double masterIncrement) const noexcept
+        T afterReset(double masterPhase, double masterIncrement) const noexcept
         {
             auto x = insertPolyBlepAfterReset(this->getPhase(), this->getIncrement());
             

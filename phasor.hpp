@@ -40,15 +40,15 @@ namespace dsp
         friend class GeneratorBase;
         
     public:
-        void setIncrement(long double increment);
+        void setIncrement(double increment);
         
         void tick();
-        long double tickAndGetPhase();
-        long double getIncrement() const noexcept { return increment; }
+        double tickAndGetPhase();
+        double getIncrement() const noexcept { return increment; }
         
-        void setPhase(long double phase, bool recomputeGenerators);
-        long double getPhase() const noexcept { return phase; }
-        long double getUnwrappedPhase() const noexcept { return unwrappedPhase; }
+        void setPhase(double phase, bool recomputeGenerators);
+        double getPhase() const noexcept { return phase; }
+        double getUnwrappedPhase() const noexcept { return unwrappedPhase; }
                 
         void addSlave(Phasor& slave);
         
@@ -67,9 +67,9 @@ namespace dsp
     private:
         Phasor* master = nullptr;
         
-        long double phase = 0;
-        long double unwrappedPhase = 0;
-        long double increment = 0;
+        double phase = 0;
+        double unwrappedPhase = 0;
+        double increment = 0;
         
         std::vector<Phasor*> slaves;
     };

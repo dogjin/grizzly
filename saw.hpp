@@ -92,18 +92,20 @@ namespace dsp
     public:
         using BandLimitedGenerator<T, BandLimitedSaw<T>>::BandLimitedGenerator;
         
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
+        T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
             return up ? generateBipolarSaw<T>(phase, phaseOffset) : generateBipolarSaw<T>(phase, phaseOffset) * -1;
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
+        void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {
+            const auto p = math::wrap<double>(phase + phaseOffset + 0.5, 0.0, 1.0);
+            
             // add 0.5 when starting the wave from 0
             if (up)
-                y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + 0.5, 0.0, 1.0), increment);
+                y -= polyBlep<double>(p, increment);
             else
-                y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + 0.5, 0.0, 1.0), increment);
+                y += polyBlep<double>(p, increment);
         }
         
     public:
@@ -117,17 +119,19 @@ namespace dsp
     public:
         using BandLimitedGenerator<T, BandLimitedSawUnipolar<T>>::BandLimitedGenerator;
         
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
+        T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
             return up ? generateUnipolarSaw<T>(phase, phaseOffset) : generateUnipolarSaw<T>(phase, phaseOffset) * -1 + 1;
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
+        void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {
+            const auto p = math::wrap<double>(phase + phaseOffset, 0.0, 1.0);
+            
             if (up)
-                y -= (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
+                y -= (polyBlep<double>(p, increment) / 2.l);
             else
-                y += (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
+                y += (polyBlep<double>(p, increment) / 2.l);
         }
         
     public:

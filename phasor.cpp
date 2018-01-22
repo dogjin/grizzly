@@ -14,7 +14,7 @@
 
 namespace dsp
 {
-    void Phasor::setIncrement(long double increment)
+    void Phasor::setIncrement(double increment)
     {
         this->increment = increment;
     }
@@ -26,15 +26,15 @@ namespace dsp
         recomputeGenerators();
     }
     
-    long double Phasor::tickAndGetPhase()
+    double Phasor::tickAndGetPhase()
     {
         tick();
         return getPhase();
     }
     
-    void Phasor::setPhase(long double phase, bool recomputeGenerators)
+    void Phasor::setPhase(double phase, bool recomputeGenerators)
     {
-        this->phase = math::wrap<long double>(phase, 0, 1);
+        this->phase = math::wrap<double>(phase, 0, 1);
         
         if (recomputeGenerators)
         {
@@ -61,7 +61,7 @@ namespace dsp
     
     void Phasor::computeNewPhases()
     {
-        phase = math::wrap<long double>(unwrappedPhase, 0, 1);
+        phase = math::wrap<double>(unwrappedPhase, 0.0, 1.0);
         
         if (unwrappedPhase >= 1.0l)
         {

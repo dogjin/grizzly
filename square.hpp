@@ -96,17 +96,19 @@ namespace dsp
                 this->recompute();
         }
         
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
+        T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
             return generateSquare<T>(phase, phaseOffset, pulseWidth, -1, 1);
         }
         
-        void applyRegularBandLimiting(const long double& phase_, const long double& phaseOffset, const long double& increment, T& y) noexcept
+        void applyRegularBandLimiting(const double& phase_, const double& phaseOffset, const double& increment, T& y) noexcept
         {
             const auto phase = phase_ + phaseOffset;
-
-            y += polyBlep<long double>(math::wrap<long double>(phase, 0.0, 1.0), increment);
-            y -= polyBlep<long double>(math::wrap<long double>(phase + (1 - pulseWidth), 0, 1), increment);
+            const auto p1 = math::wrap<double>(phase, 0.0, 1.0);
+            const auto p2 = math::wrap<double>(phase + (1 - pulseWidth), 0.0, 1.0);
+            
+            y += polyBlep<double>(p1, increment);
+            y -= polyBlep<double>(p2, increment);
         }
         
     private:

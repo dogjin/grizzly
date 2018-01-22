@@ -87,12 +87,12 @@ namespace dsp
     public:
         using BandLimitedGenerator<T, BandLimitedSine<T>>::BandLimitedGenerator;
         
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
+        T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
             return generateBipolarSine<T>(phase, phaseOffset);
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
+        void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {
             
         }

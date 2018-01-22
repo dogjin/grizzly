@@ -87,17 +87,17 @@ namespace dsp
     public:
         using BandLimitedGenerator<T, BandLimitedTriangle<T>>::BandLimitedGenerator;
         
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
+        T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
             return generateBipolarTriangle<T>(phase, phaseOffset);
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
+        void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {            
             // Downward
             const auto scale = 4 * increment;
             // add 0.25 when starting the wave from 0
-            auto modifiedPhase = math::wrap<long double>(phase + phaseOffset + 0.25, 0, 1); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
+            auto modifiedPhase = math::wrap<double>(phase + phaseOffset + 0.25, 0.0, 1.0); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
             modifiedPhase -= floor(modifiedPhase);
             const auto blamp = polyBlamp(modifiedPhase, increment);
             y += scale * blamp;

@@ -45,7 +45,7 @@ namespace dsp
             phasor->generators.erase(this);
     }
     
-    void GeneratorBase::setPhaseOffset(long double offset, bool recompute)
+    void GeneratorBase::setPhaseOffset(double offset, bool recompute)
     {
         phaseOffset = offset;
         
