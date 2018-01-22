@@ -62,8 +62,11 @@ namespace dsp
         
         T convert() final
         {
-            return generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset());
+            return up ? generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset()) : generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset()) * -1;
         }
+        
+    public:
+        bool up = true;
     };
     
     template <typename T>
