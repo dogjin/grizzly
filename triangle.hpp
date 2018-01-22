@@ -83,10 +83,15 @@ namespace dsp
         void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {            
             // Downward
-            auto scale = 4 * increment;
+            const auto scale = 4 * increment;
             auto modifiedPhase = math::wrap<long double>(phase + phaseOffset, 0, 1); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
             modifiedPhase -= floor(modifiedPhase);
-            y += scale * polyBlamp(modifiedPhase, increment);
+            const auto blamp = polyBlamp(modifiedPhase, increment);
+            y += scale * blamp;
+            
+            // If there is a value for the downward blamp, upward can't take place
+            if (blamp)
+                return;
             
             // Upward
             modifiedPhase += 0.5;
