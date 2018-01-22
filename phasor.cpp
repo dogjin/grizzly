@@ -19,11 +19,6 @@ namespace dsp
         this->increment = increment;
     }
     
-    void Phasor::setIncrement(long double frequency_Hz, long double sampleRate_Hz)
-    {
-        setIncrement(frequency_Hz / sampleRate_Hz);
-    }
-    
     void Phasor::tick()
     {
         incrementUnwrappedPhases();

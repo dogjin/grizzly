@@ -42,11 +42,6 @@ namespace dsp
     public:
         void setIncrement(long double increment);
         
-        //! Set the increment of the phasor
-        /*! @warning This function will divide by sampleRate_Hz. If you can store the reciprocal and call
-         *  the other setIncrement(), this is usually faster! */
-        void setIncrement(long double frequency_Hz, long double sampleRate_Hz);
-        
         void tick();
         long double tickAndGetPhase();
         long double getIncrement() const noexcept { return increment; }
