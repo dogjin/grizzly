@@ -175,7 +175,7 @@ namespace dsp
             blepScale = (slaveYAtEnd - slaveYatBegin) / 2;
             
             // Doe een echte blep step, alsof van -1 naar 1...
-            const long double x = insertPolyBlepBeforeReset(1.l - phaseDifffSlaveToEnd, increment);
+            const long double x = insertPolyBlepBeforeReset(1 - phaseDifffSlaveToEnd, increment);
             
             // ...end scale dat met de zojuist berekende scale
             return x * blepScale;

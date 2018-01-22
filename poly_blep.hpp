@@ -40,7 +40,7 @@ namespace dsp
     template <typename T>
     constexpr T insertPolyBlepBeforeReset(const T& phase, const T& increment) noexcept
     {
-        const auto x = (phase - 1.0) / increment;
+        const auto x = (phase - T(1)) / increment;
         return x * x + x + x + T(1);
     }
     

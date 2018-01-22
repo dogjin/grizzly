@@ -32,20 +32,22 @@ namespace dsp
 {
     //! Polynomal band limited ramp function
     template <typename T>
-    inline auto polyBlamp(const T& phase, const T& increment)
+    constexpr T polyBlamp(const T& phase, const T& increment) noexcept
     {
         if (phase < increment)
         {
-            auto x = phase / increment - 1;
-            return (-x * x * x) / T(3);
+            const auto x = phase / increment - T(1);
+            return (-x * x * x) * T(0.3333333333333333333);
         }
         else if (phase > 1 - increment)
         {
-            auto x = (phase - 1) / increment + 1;
-            return (x * x * x) / T(3);
+            const auto x = (phase - T(1)) / increment + T(1);
+            return (x * x * x) * T(0.3333333333333333333);
         }
         else
+        {
             return T();
+        }
     }
 }
 

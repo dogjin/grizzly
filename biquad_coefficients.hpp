@@ -57,17 +57,17 @@ namespace dsp
         //! The b2 feed-back coefficient
         T b2 = 0;
         
-        bool isStable()
+        bool isStable() const
         {
             // a = 1, b = b1, c = b2
             // solve for ax^2 + bx + c
-            std::complex<T> discriminant(b1 * b1 - 4 * b2, 0);
+            const std::complex<T> discriminant(b1 * b1 - T(4) * b2, T(0));
             auto sqrtDiscriminant = std::sqrt(discriminant);
             
-            auto x1 = (-b1 + sqrtDiscriminant) / 2.f;
-            auto x2 = (-b1 - sqrtDiscriminant) / 2.f;
+            const auto x1 = (-b1 + sqrtDiscriminant) / T(2);
+            const auto x2 = (-b1 - sqrtDiscriminant) / T(2);
             
-            if (std::abs(x1) < 1 && std::abs(x2) < 1)
+            if (std::abs(x1) < T(1) && std::abs(x2) < T(1))
                 return true;
             else
                 return false;
