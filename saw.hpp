@@ -80,9 +80,10 @@ namespace dsp
         
         void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
-            up ?
-            y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) :
-            y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
+            if (up)
+                y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
+            else
+                y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
         }
         
     public:
@@ -103,9 +104,10 @@ namespace dsp
         
         void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
-            up ?
-            y -= (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l) :
-            y += (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
+            if (up)
+                y -= (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
+            else
+                y += (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l);
         }
         
     public:
