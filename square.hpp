@@ -51,6 +51,8 @@ namespace dsp
         public Generator<T>
     {
     public:
+        using Generator<T>::Generator;
+        
         //! Change the pulse width
         /*! @param recompute Recompute the y to return from read() */
         void setPulseWidth(float pulseWidth, bool recompute)

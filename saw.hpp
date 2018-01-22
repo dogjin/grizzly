@@ -43,7 +43,7 @@ namespace dsp
     template <typename T>
     constexpr T generateBipolarSaw(T phase, T phaseOffset) noexcept
     {
-        return math::wrap<T>(phase + phaseOffset, T(0), T(1)) * T(2) - T(1);
+        return math::wrap<T>(phase + phaseOffset + 0.5, T(0), T(1)) * T(2) - T(1);
     }
     
     //! Generate a unipolar saw wave given a normalized phase
@@ -70,6 +70,22 @@ namespace dsp
     };
     
     template <typename T>
+    class SawUnipolar :
+    public Generator<T>
+    {
+    public:
+        using Generator<T>::Generator;
+        
+        T convert() final
+        {
+            return up ? generateUnipolarSaw<T>(this->getPhase(), this->getPhaseOffset()) : generateBipolarSaw<T>(this->getPhase(), this->getPhaseOffset()) * -1;
+        }
+        
+    public:
+        bool up = true;
+    };
+    
+    template <typename T>
     class BandLimitedSaw :
         public BandLimitedGenerator<T, BandLimitedSaw<T>>
     {
@@ -83,10 +99,11 @@ namespace dsp
         
         void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
+            // add 0.5 when starting the wave from 0
             if (up)
-                y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
+                y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + 0.5, 0.0, 1.0), increment);
             else
-                y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment);
+                y += polyBlep<long double>(math::wrap<long double>(phase + phaseOffset + 0.5, 0.0, 1.0), increment);
         }
         
     public:

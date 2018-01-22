@@ -50,8 +50,7 @@ namespace dsp
     template <typename T>
     constexpr T generateBipolarTriangle(T phase, T phaseOffset) noexcept
     {
-        return generateUnipolarTriangle<T>(phase, phaseOffset) * 2 - 1;
-//        return 2 * std::fabs(2 * math::wrap<std::common_type_t<Phase, T>>(phase + phaseOffset - 0.25, 0, 1) - 1) - 1;
+        return generateUnipolarTriangle<T>(phase + 0.25, phaseOffset) * 2 - 1;
     }
     
     template <typename T>
@@ -64,6 +63,19 @@ namespace dsp
         T convert() final
         {
             return generateBipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
+        }
+    };
+        
+    template <typename T>
+    class TriangleUnipolar :
+    public Generator<T>
+    {
+    public:
+        using Generator<T>::Generator;
+        
+        T convert() final
+        {
+            return generateUnipolarTriangle<T>(this->getPhase(), this->getPhaseOffset());
         }
     };
     
@@ -84,7 +96,8 @@ namespace dsp
         {            
             // Downward
             const auto scale = 4 * increment;
-            auto modifiedPhase = math::wrap<long double>(phase + phaseOffset, 0, 1); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
+            // add 0.25 when starting the wave from 0
+            auto modifiedPhase = math::wrap<long double>(phase + phaseOffset + 0.25, 0, 1); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
             modifiedPhase -= floor(modifiedPhase);
             const auto blamp = polyBlamp(modifiedPhase, increment);
             y += scale * blamp;
