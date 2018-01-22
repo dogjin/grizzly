@@ -78,7 +78,7 @@ namespace dsp
         T y;
     };
     
-    template <typename T>
+    template <typename T, typename Derivative>
     class BandLimitedGenerator :
         public Generator<T>
     {
@@ -91,7 +91,7 @@ namespace dsp
             const auto phaseOffset = this->getPhaseOffset();
             
             // Compute the y without any anti aliasing
-            auto y = computeAliasedY(phase, phaseOffset);
+            auto y = static_cast<const Derivative&>(*this).computeAliasedY(phase, phaseOffset);
             
             // There's a hard sync going on
             syncAdjusted = false;
@@ -106,7 +106,7 @@ namespace dsp
                 // If there's a syncAdjust value, it shoud never perform a 'normal' blep
                 assert(syncAdjusted == false);
                 
-                applyRegularBandLimiting(phase, phaseOffset, this->getIncrement(), y);
+                static_cast<Derivative&>(*this).applyRegularBandLimiting(phase, phaseOffset, this->getIncrement(), y);
                 return y;
             }
         }
@@ -118,9 +118,6 @@ namespace dsp
         long double blepScale = 0;
         
     private:
-        virtual T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept = 0;
-        virtual void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept = 0;
-        
         bool adjustForSync(const Phasor& master)
         {
             if (master.hasMaster() && adjustForSync(*master.getMaster()))
@@ -145,7 +142,7 @@ namespace dsp
             return false;
         }
         
-        T beforeReset(long double masterPhase, long double masterIncrement)
+        T beforeReset(long double masterPhase, long double masterIncrement) noexcept
         {
             const auto phase = this->getPhase();
             const auto phaseOffset = this->getPhaseOffset();
@@ -165,13 +162,13 @@ namespace dsp
             const long double phaseDifffSlaveToEnd = phaseEndOfSlave - phase;
             
             // bereken de 'on-geblepte' eind positie van de golf
-            const auto slaveYAtEnd = computeAliasedY(phase, phaseOffset);
+            const auto slaveYAtEnd = static_cast<const Derivative&>(*this).computeAliasedY(phase, phaseOffset);
             
             // bereken de 'on-geblepte' begin positie van de golf
             // we incrementen de phase door increment erbij op te tellen.
             // Maaaar, we moeten doen alsof de phaseEndOfSlave het eindpunt was en dus hiermee wrappen (aftrekken)
-            const auto slaveYatBegin = computeAliasedY(phase + increment - phaseEndOfSlave, phaseOffset);
-//            const auto slaveYatBegin = computeAliasedYAfterReset(0, this->phaseOffset); // minder accuraat maar werkt wel, je moet iets verder zijn dan phase 0
+            const auto slaveYatBegin = static_cast<const Derivative&>(*this).computeAliasedY(phase + increment - phaseEndOfSlave, phaseOffset);
+//            const auto slaveYatBegin = static_cast<Derivative&>(*this).computeAliasedYAfterReset(0, this->phaseOffset); // minder accuraat maar werkt wel, je moet iets verder zijn dan phase 0
             
             // Bereken de scaling relatief tot de master
             // Je deelt omdat je normaliter van -1 tot 1 gaat
@@ -184,7 +181,7 @@ namespace dsp
             return x * blepScale;
         }
         
-        T afterReset(long double masterPhase, long double masterIncrement)
+        T afterReset(long double masterPhase, long double masterIncrement) const noexcept
         {
             auto x = insertPolyBlepAfterReset(this->getPhase(), this->getIncrement());
             

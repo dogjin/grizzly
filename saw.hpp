@@ -68,18 +68,17 @@ namespace dsp
     
     template <typename T>
     class BandLimitedSaw :
-        public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedSaw<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedSaw<T>>::BandLimitedGenerator;
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
         {
             return up ? generateBipolarSaw<T>(phase, phaseOffset) : generateBipolarSaw<T>(phase, phaseOffset) * -1;
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
             up ?
             y -= polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) :
@@ -92,18 +91,17 @@ namespace dsp
     
     template <typename T>
     class BandLimitedSawUnipolar :
-    public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedSawUnipolar<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedSawUnipolar<T>>::BandLimitedGenerator;
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
         {
             return up ? generateUnipolarSaw<T>(phase, phaseOffset) : generateUnipolarSaw<T>(phase, phaseOffset) * -1 + 1;
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {
             up ?
             y -= (polyBlep<long double>(math::wrap<long double>(phase + phaseOffset, 0.0, 1.0), increment) / 2.l) :

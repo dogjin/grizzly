@@ -70,18 +70,17 @@ namespace dsp
     //! Generates a bipolar triangle wave using the polyBLAMP algorithm for anti aliasing
     template <typename T>
     class BandLimitedTriangle :
-        public BandLimitedGenerator<T>
+        public BandLimitedGenerator<T, BandLimitedTriangle<T>>
     {
     public:
-        using BandLimitedGenerator<T>::BandLimitedGenerator;
+        using BandLimitedGenerator<T, BandLimitedTriangle<T>>::BandLimitedGenerator;
         
-    private:
-        T computeAliasedY(const long double& phase, const long double& phaseOffset) noexcept final
+        T computeAliasedY(const long double& phase, const long double& phaseOffset) const noexcept
         {
             return generateBipolarTriangle<T>(phase, phaseOffset);
         }
         
-        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept final
+        void applyRegularBandLimiting(const long double& phase, const long double& phaseOffset, const long double& increment, T& y) noexcept
         {            
             // Downward
             auto scale = 4 * increment;
