@@ -40,10 +40,7 @@ namespace dsp
     constexpr T fastSin(T x) noexcept
     {
         //always wrap input angle to -PI..PI
-        if (x < -math::PI<T>)
-            x += math::TWO_PI<T>;
-        else if (x >  math::PI<T>)
-            x -= math::TWO_PI<T>;
+        x = math::wrap<T>(x, -math::PI<T>, math::PI<T>);
         
         //compute sine
         if (x < 0)
@@ -56,7 +53,7 @@ namespace dsp
     template <typename T>
     constexpr T generateBipolarSine(T phase, T phaseOffset) noexcept
     {
-        return fastSin<T>(math::wrap<T>(math::TWO_PI<T> * phase + phaseOffset, -math::PI<T>, math::PI<T>));
+        return fastSin<T>((phase + phaseOffset) * math::TWO_PI<T>);
     }
     
     //! Generate a unipolar sine wave given a normalized phase
@@ -85,10 +82,22 @@ namespace dsp
         public BandLimitedGenerator<T, BandLimitedSine<T>>
     {
     public:
-        using BandLimitedGenerator<T, BandLimitedSine<T>>::BandLimitedGenerator;
+        BandLimitedSine()
+        {
+            wavetable.resize(44100);
+            for (auto i = 0; i < wavetable.size(); ++i)
+                wavetable[i] = std::sin(math::TWO_PI<T> * static_cast<T>(i) / wavetable.size());
+        }
+        
+        BandLimitedSine(Phasor& phasor) :
+            BandLimitedSine()
+        {
+            this->attachToPhasor(phasor);
+        }
         
         T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
+//            return wavetable[math::wrap<double>(phase + phaseOffset, 0, 1) * wavetable.size()];
             return generateBipolarSine<T>(phase, phaseOffset);
         }
         
@@ -96,6 +105,9 @@ namespace dsp
         {
             
         }
+        
+    private:
+        std::vector<T> wavetable;
     };
 }
 
