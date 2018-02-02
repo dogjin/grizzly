@@ -44,6 +44,7 @@ endif()
 
 # Create the target
 add_library(Grizzly ${HEADERS} ${SOURCES})
+set_target_properties(Grizzly PROPERTIES DEBUG_POSTFIX -d)
 install(TARGETS Grizzly DESTINATION lib)
 
 if(WIN32)
