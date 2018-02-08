@@ -145,8 +145,16 @@ namespace dsp
         T beforeReset(double masterPhase, double masterIncrement) noexcept
         {
             const auto phase = this->getPhase();
-            const auto phaseOffset = this->getPhaseOffset();
             const auto increment = this->getIncrement();
+
+            // If the phase is before it's own reset point, don't adjust
+            if (phase >= 1.0 - increment)
+            {
+                blepScale = 0;
+                return 0;
+            }
+            
+            const auto phaseOffset = this->getPhaseOffset();
             
             const double ratio = increment / masterIncrement;
             
@@ -167,7 +175,7 @@ namespace dsp
             // bereken de 'on-geblepte' begin positie van de golf
             // we incrementen de phase door increment erbij op te tellen.
             // Maaaar, we moeten doen alsof de phaseEndOfSlave het eindpunt was en dus hiermee wrappen (aftrekken)
-            const auto slaveYatBegin = static_cast<const Derivative&>(*this).computeAliasedY(phase + increment - phaseEndOfSlave, phaseOffset);
+            const auto slaveYatBegin = static_cast<const Derivative&>(*this).computeAliasedY(phase + increment /*- phaseEndOfSlave*/, phaseOffset);
 //            const auto slaveYatBegin = static_cast<Derivative&>(*this).computeAliasedYAfterReset(0, this->phaseOffset); // minder accuraat maar werkt wel, je moet iets verder zijn dan phase 0
             
             // Bereken de scaling relatief tot de master
