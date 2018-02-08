@@ -98,14 +98,14 @@ namespace dsp
         
         T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
-            return generateSquare<T>(phase, phaseOffset, pulseWidth, -1, 1);
+            return generateSquare<double>(phase, phaseOffset, pulseWidth, -1.0, 1.0);
         }
         
         void applyRegularBandLimiting(const double& phase_, const double& phaseOffset, const double& increment, T& y) noexcept
         {
-            const auto phase = phase_ + phaseOffset;
-            const auto p1 = math::wrap<double>(phase, 0.0, 1.0);
-            const auto p2 = math::wrap<double>(phase + (1 - pulseWidth), 0.0, 1.0);
+            const long double phaseWithOffset = phase_ + phaseOffset;
+            const auto p1 = math::wrap<long double>(phaseWithOffset, 0.0, 1.0);
+            const auto p2 = math::wrap<long double>(phaseWithOffset + (1 - pulseWidth), 0.0, 1.0);
             
             y += polyBlep<double>(p1, increment);
             y -= polyBlep<double>(p2, increment);

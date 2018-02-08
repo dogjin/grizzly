@@ -96,10 +96,11 @@ namespace dsp
         {            
             // Downward
             const auto scale = 4 * increment;
-            // add 0.25 when starting the wave from 0
-            auto modifiedPhase = math::wrap<double>(phase + phaseOffset + 0.25, 0.0, 1.0); // this->phase + 0.25; als we de triangle off-setten, dan hier ook!
+            const long double phaseWithOffset = phase + phaseOffset;
+            auto modifiedPhase = math::wrap<long double>(phaseWithOffset + 0.25, 0.0, 1.0); // add 0.25 when starting the wave from 0
+            
             modifiedPhase -= floor(modifiedPhase);
-            const auto blamp = polyBlamp(modifiedPhase, increment);
+            const auto blamp = polyBlamp<double>(modifiedPhase, increment);
             y += scale * blamp;
             
             // If there is a value for the downward blamp, upward can't take place
@@ -109,7 +110,7 @@ namespace dsp
             // Upward
             modifiedPhase += 0.5;
             modifiedPhase -= floor(modifiedPhase);
-            y -= scale * polyBlamp(modifiedPhase, increment);
+            y -= scale * polyBlamp<double>(modifiedPhase, increment);
         }
     };
 }

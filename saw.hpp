@@ -94,14 +94,14 @@ namespace dsp
         
         T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
-            return up ? generateBipolarSaw<T>(phase, phaseOffset) : generateBipolarSaw<T>(phase, phaseOffset) * -1;
+            return up ? generateBipolarSaw<double>(phase, phaseOffset) : generateBipolarSaw<double>(phase, phaseOffset) * -1;
         }
         
         void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {
+            // add 0.5 to the phaseOffset when starting the wave from 0
             const auto p = math::wrap<double>(phase + phaseOffset + 0.5, 0.0, 1.0);
             
-            // add 0.5 when starting the wave from 0
             if (up)
                 y -= polyBlep<double>(p, increment);
             else
@@ -121,17 +121,18 @@ namespace dsp
         
         T computeAliasedY(const double& phase, const double& phaseOffset) const noexcept
         {
-            return up ? generateUnipolarSaw<T>(phase, phaseOffset) : generateUnipolarSaw<T>(phase, phaseOffset) * -1 + 1;
+            return up ? generateUnipolarSaw<double>(phase, phaseOffset) : generateUnipolarSaw<double>(phase, phaseOffset) * -1 + 1;
         }
         
         void applyRegularBandLimiting(const double& phase, const double& phaseOffset, const double& increment, T& y) noexcept
         {
-            const auto p = math::wrap<double>(phase + phaseOffset, 0.0, 1.0);
+            const long double phaseWithOffset = phase + phaseOffset;
+            const auto p = math::wrap<long double>(phaseWithOffset, 0.0, 1.0);
             
             if (up)
-                y -= (polyBlep<double>(p, increment) / 2.l);
+                y -= (polyBlep<double>(p, increment) / 2);
             else
-                y += (polyBlep<double>(p, increment) / 2.l);
+                y += (polyBlep<double>(p, increment) / 2);
         }
         
     public:
